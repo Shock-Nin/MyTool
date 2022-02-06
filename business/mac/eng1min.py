@@ -144,7 +144,3 @@ def _write_log(msg):
 
 def _get_time(ymd=True):
     return datetime.datetime.now().strftime(('%Y-%m-%d ' if ymd else '') + '%H:%M:%S')
-
-
-if __name__ == '__main__':
-    Eng1Min().do_loop()
