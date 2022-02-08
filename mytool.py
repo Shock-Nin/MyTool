@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os.path
 
-from common import com
 from const import cst
+from common import com
 
 import argparse
 import importlib
@@ -23,6 +24,10 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-b', '--Batch')
     args = parser.parse_args()
+
+    log_path = cst.TEMP_PATH[cst.PC] + 'Log'
+    if not os.path.exists(log_path):
+        os.mkdir(log_path)
 
     # バッチの場合
     if 'Batch' == args.Batch:
