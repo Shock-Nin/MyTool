@@ -10,9 +10,9 @@ GDRIVE_PATH = {
     'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
     'Win': CURRENT_PATH['Win'] + 'Google ドライブ/',
 }
-LOG_PATH = {
-    'Mac': CURRENT_PATH['Mac'] + 'Log/',
-    'Win': CURRENT_PATH['Win'] + 'Log/',
+TEMP_PATH = {
+    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
+    'Win': CURRENT_PATH['Win'] + 'MyToolTmp/',
 }
 
 
