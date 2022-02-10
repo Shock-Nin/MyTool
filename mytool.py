@@ -60,8 +60,11 @@ def main():
             else:
                 is_end = None
                 if event in cst.SINGLE:
-                    command = 'python mytool.py -f ' + BTNS[cst.PC][event]
-                    subprocess.run(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
+                    command = ' mytool.py -f ' + BTNS[cst.PC][event]
+                    if 'Mac' == cst.PC:
+                        subprocess.run('python' + command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
+                    else:
+                        subprocess.run(os.getcwd() + '/venv/Scripts/python.exe' + command, shell=True, stdout=subprocess.PIPE, encoding="shift-jis")
                 else:
                     is_end = _run(BTNS[cst.PC][event])
 

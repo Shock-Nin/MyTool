@@ -4,7 +4,7 @@
 import PySimpleGUI as sg
 
 
-# 標準ダイヤログをレベルに応じて表示
+# 標準ダイアログをレベルに応じて表示
 def dialog(msg, title, lv=''):
 
     color = '#FF7777' if 'E' == lv else 'FFFF77' if 'W' == lv else '#77CCFF'

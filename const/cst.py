@@ -7,7 +7,7 @@ pf = platform.system()
 PC = 'Win' if 'Windows' == pf else 'Mac' if 'Darwin' == pf else ''
 
 MAIN_BGCOLOR = '#AAFFAA'
-SINGLE = ['英語']
+SINGLE = ['英語', 'Pochi']
 
 # Path
 from const import path
