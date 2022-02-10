@@ -9,6 +9,8 @@ import argparse
 import importlib
 import pyautogui as pgui
 import PySimpleGUI as sg
+import subprocess
+from subprocess import PIPE
 
 CHANGE_MENU = 0
 
@@ -36,21 +38,12 @@ WIN_Y_MINUS = 170
 
 def main():
 
-    # 引数受け取り
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-b', '--Batch')
-    args = parser.parse_args()
-
     log_path = cst.TEMP_PATH[cst.PC] + 'Log'
     if not os.path.exists(log_path):
         os.mkdir(log_path)
 
-    # バッチの場合
-    if 'Batch' == args.Batch:
-        com.log('Batch')
-
     # 通常の場合、画面表示
-    else:
+    if args.Function is None:
         com.log('Open')
         win_x, win_y = pgui.size()
         layout = [[sg.Button(btn, key=btn, font=('', 16), size=(15, 1))] for btn in BTNS[cst.PC]]
@@ -65,13 +58,12 @@ def main():
                 com.log('ツール終了')
                 exit()
             else:
-                module_name = 'business.' + BTNS[cst.PC][event]
-                class_name = BTNS[cst.PC][event].split('.')[len(BTNS[cst.PC][event].split('.')) - 1]
-                class_name = "".join([name[0].upper() + name[1:] for name in class_name.split('_')])
-
-                instance = importlib.import_module(module_name)
-                module = getattr(instance, class_name)
-                is_end = module().do()
+                is_end = None
+                if event in cst.SINGLE:
+                    command = 'python mytool.py -f ' + BTNS[cst.PC][event]
+                    subprocess.run(command, shell=True, stdout=PIPE, stderr=PIPE, text=True)
+                else:
+                    is_end = _run(BTNS[cst.PC][event])
 
                 if is_end is None:
                     pass
@@ -80,6 +72,30 @@ def main():
                 else:
                     com.dialog('[' + event + ']が完了しました。', '正常終了')
 
+    # バッチの場合
+    elif 'Batch' == args.Function:
+        com.log('Batch')
+
+    # 機能単独起動の場合
+    elif 0 < len(args.Function):
+        com.log('Function開始:' + args.Function)
+        _run(args.Function)
+        com.log('Function終了:' + args.Function)
+
+
+def _run(fnction):
+    module_name = 'business.' + fnction
+    class_name = fnction.split('.')[len(fnction.split('.')) - 1]
+    class_name = "".join([name[0].upper() + name[1:] for name in class_name.split('_')])
+
+    instance = importlib.import_module(module_name)
+    module = getattr(instance, class_name)
+    return module().do()
+
 
 if __name__ == '__main__':
+    # 引数受け取り
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-f', '--Function')
+    args = parser.parse_args()
     main()

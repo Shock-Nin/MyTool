@@ -7,6 +7,7 @@ pf = platform.system()
 PC = 'Win' if 'Windows' == pf else 'Mac' if 'Darwin' == pf else ''
 
 MAIN_BGCOLOR = '#AAFFAA'
+SINGLE = ['英語']
 
 # Path
 from const import path
@@ -19,3 +20,4 @@ PRM_OUT_PATH = path.PRM_OUT_PATH
 
 # URL
 from const import url
+BLOG_URL = url.BLOG_URL

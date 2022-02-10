@@ -12,6 +12,6 @@ class BlogPochi:
 
     def do(self):
         com.log(__name__)
-        self.wd.get('https://shock-nin.info/')
+        self.wd.get(cst.BLOG_URL)
         com.sleep(5)
         return []

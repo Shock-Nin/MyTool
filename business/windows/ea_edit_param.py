@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import os
 
 from common import com
 from const import cst
 
+import os
 import pandas as pd
 
 PRM_PATHS = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATHS
@@ -238,12 +238,8 @@ def _edit_test_file():
                     vals = data.split('=')
                     col += vals[0] + ','
 
-                    try:
-                        val = vals[1]
-                        if 'Comments' == vals[0]:
-                            val = val.split('_')[1]
-                    except:
-                        val = ''
+                    try: val = vals[1]
+                    except: val = ''
 
                     prm += val + ','
 
@@ -254,7 +250,7 @@ def _edit_test_file():
 
     except Exception as e:
         com.log(str(e))
-        return ['以下のファイルでエラーが発生しました。' + file, '読み込みエラー', 'E']
+        return ['以下のファイルでエラーが発生しました。\n' + file, '読み込みエラー', 'E']
 
     return []
 
@@ -290,17 +286,32 @@ def _output_html():
         html += '<table cellspacing="0" cellpadding="0"><tr><td>'
 
         prms = pd.DataFrame.transpose(ea[1])
+        set_cur = ''
 
         for key in prms.index:
+            if 'Comments' == key:
+                val = read_set[key].item()
+                if val.split('_')[0] == ea_name:
+                    set_cur = val.split('_')[1]
 
             if 0 <= key.find('Logic') or key in ['Positions', 'Safety']:
                 continue
+            html += '<tr>'
 
-            html += '<tr><td class="col" align="left">' + key + '</td>'
+            if 0 < len(set_cur):
+                html += '<td class="prm" align="' + \
+                        ('center">' + set_cur if 'Comments' == key else
+                         'right">' + str(read_set[key].item())) + '</td>'
+
+            html += '<td class="col" align="left">' + key + '</td>'
 
             for i in range(0, len(prms)):
+                zero = ''
                 try:
-                    html += '<td class="prm" align="' + ('center' if 'Comments' == key else 'right') + \
+                    zero = (' zero' if 0 == float(prms[i][key]) else '')
+                except: pass
+                try:
+                    html += '<td class="prm' + zero + '" align="' + ('center' if 'Comments' == key else 'right') + \
                             '">' + str(prms[i][key]) + '</td>'
                 except: pass
 
@@ -308,9 +319,10 @@ def _output_html():
 
         # HTMLフッター
         html += '</table></td></tr></table></div><style type="text/css">'
-        html += '.eaName{padding: 10px; background: #FFCCFF;}'
-        html += '.col{border: 1px solid #DDDDDD; padding: 5px 15px; background: #CCFFFF;}'
-        html += '.prm{border: 1px solid #DDDDDD; padding: 5px;}'
+        html += '.eaName {padding: 10px; background: #FFCCFF;}'
+        html += '.col    {border: 1px solid #DDDDDD; padding: 5px 15px; background: #CCFFFF;}'
+        html += '.prm    {border: 1px solid #DDDDDD; padding: 5px 10px;}'
+        html += '.zero   {background: #DDDDDD; color: #AAAAAA;}'
 
         html += '</style></body></html>'
 
