@@ -12,4 +12,4 @@ class EaEditData:
 
     def do(self):
         com.log(__name__)
-        return True
+        return []

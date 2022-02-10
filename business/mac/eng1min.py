@@ -11,12 +11,12 @@ import PySimpleGUI as sg
 from time import sleep
 from PIL import ImageGrab
 
-
-TITLE = '英単語再生ループ'
+TITLE = '∞再生'
 IMG_PATH = 'item/match/eng1min/'
 WIN_X_MINUS = 150
-WIN_Y_MINUS = 100
-DP_BGCOLOR = '#FFFF77'
+WIN_Y_MINUS = 150
+BGCOLOR_ON = '#FFFF77'
+BGCOLOR_OFF = '#FF7777'
 
 
 class Eng1min:
@@ -24,6 +24,7 @@ class Eng1min:
     def __init__(self):
         self.win_x, self.win_y = pgui.size()
         self.turn = 0
+        self.bgcolor = BGCOLOR_ON
         com.log(TITLE + '　開始')
         sleep(2)
 
@@ -41,7 +42,7 @@ class Eng1min:
 
             if is_normal is None:
                 if window is None:
-                    return True
+                    return []
                 else:
                     if is_stop is not None:
                         continue
@@ -60,13 +61,13 @@ class Eng1min:
             x, y = com.match(shot, gray, IMG_PATH + 'replay.png', (255, 0, 255))
             if x is not None:
                 is_end = True
-                com.move_pos(x / 2 + 20, y / 2 + 20)
+                com.click_pos(x / 2 + 20, y / 2 + 20)
 
             # 終了画面とのマッチング
             x, y = com.match(shot, gray, IMG_PATH + 'end.png', (255, 0, 0))
             if x is not None:
                 is_end = True
-                com.move_pos(x / 2 - 50, y / 2 + 20)
+                com.click_pos(x / 2 - 50, y / 2 + 20)
 
                 self.turn += 1
                 com.log(TITLE + '　繰り返し(' + str(self.turn) + ')')
@@ -77,7 +78,7 @@ class Eng1min:
 
             if is_normal is None:
                 if window is None:
-                    return True
+                    return []
                 else:
                     if is_stop is not None:
                         continue
@@ -96,7 +97,7 @@ class Eng1min:
                     # アプリアイコンのマッチング
                     x, y = com.match(shot, gray, IMG_PATH + 'icon1min.png', (0, 0, 255))
                     if x is not None:
-                        com.move_pos(x / 2 + 5, y / 2 + 10)
+                        com.click_pos(x / 2 + 5, y / 2 + 10)
                         sleep(3)
                 else:
                     com.move_pos()
@@ -110,7 +111,7 @@ class Eng1min:
 
             if is_normal is None:
                 if window is None:
-                    return True
+                    return []
                 else:
                     if is_stop is not None:
                         continue
@@ -119,11 +120,11 @@ class Eng1min:
 
     def _window(self, stop_btn):
         return sg.Window(
-            TITLE, keep_on_top=True, modal=True, background_color=DP_BGCOLOR,
+            TITLE, keep_on_top=True, modal=True, background_color=self.bgcolor,
             location=(self.win_x - WIN_X_MINUS, self.win_y - WIN_Y_MINUS),
             layout=[[sg.Button(stop_btn, key='replay', font=('', 16), size=(8, 0))],
                     [sg.Text(' ' + str(self.turn) + '-' + com.str_time(False) + ' ',
-                             background_color=DP_BGCOLOR, text_color='#000000', key='turn', font=('', 16))]]
+                             background_color=self.bgcolor, text_color='#000000', key='turn', font=('', 16))]]
         )
 
     # イベントのアクション
@@ -138,11 +139,13 @@ class Eng1min:
             if '| |' == window['replay'].get_text():
                 window.close()
                 com.log(TITLE + '　一時停止')
+                self.bgcolor = BGCOLOR_OFF
                 return None, True, self._window('▶︎')
 
             elif '▶︎' == window['replay'].get_text():
                 window.close()
                 com.log(TITLE + '　再開')
+                self.bgcolor = BGCOLOR_ON
                 return None, False, self._window('| |')
 
         return True, is_stop, window

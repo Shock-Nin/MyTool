@@ -15,16 +15,28 @@ from common import com
 from const import cst
 
 
+# マウスを移動
 def move_pos(x=None, y=None):
+    pos_x, pos_y = pgui.position()
+    try:
+        if x is not None:
+            pgui.moveTo(x, y)
+        else:
+            pgui.moveTo(pos_x, pos_y)
+    except: pass
+
+
+# クリックしてマウスを元位置に戻す
+def click_pos(x=None, y=None):
     pos_x, pos_y = pgui.position()
     try:
         if x is not None:
             pgui.click(x, y, clicks=1, interval=0, button='left')
         pgui.moveTo(pos_x, pos_y)
-    except:
-        pass
+    except: pass
 
 
+# テンプレートマッチング
 def match(shot, gray, tmp_path, color):
 
     tmp = cv2.imread(tmp_path, 0)
@@ -38,6 +50,7 @@ def match(shot, gray, tmp_path, color):
         print(com.str_time() + ' ' + tmp_path.replace(cst.TEMP_PATH[cst.PC], '') + ' : Nothing')
         return None, None
 
+    # 出力ファイルに、マッチング場所をマーキング
     x = str(loc[1]).split(' ')[0].replace('[', '').replace(']', '')
     y = str(loc[0]).split(' ')[0].replace('[', '').replace(']', '')
     print(com.str_time() + ' ' + tmp_path.replace(cst.TEMP_PATH[cst.PC], '') + ' : ' + x + ' , ' + y)

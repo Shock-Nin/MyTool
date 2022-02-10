@@ -1,15 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from common import com
 from const import cst
+from common import times
 
-import os
-import inspect
 import logging
 import datetime
 
 
+# ログをレベルに応じて出力
 def log(msg, lv=''):
     logger = _format()
     if 'E' == lv:
@@ -20,17 +19,11 @@ def log(msg, lv=''):
         logger.info(msg)
 
 
-# 実行メソッドの取得
-def get_method(before=0):
-    stack = inspect.stack()[before + 3]
-    file = stack.filename.replace(os.getcwd(), '')
-    return file[1: file.rfind('.')] + '/' + stack.function
-
-
+# ログフォーマット
 def _format():
     logger = logging.getLogger(__name__)
     logging.basicConfig(
-        format='%(asctime)s %(levelname)s[' + get_method() + '] %(message)s', level=logging.INFO,
+        format='%(asctime)s %(levelname)s[' + times.get_method() + '] %(message)s', level=logging.INFO,
         handlers=[logging.StreamHandler(), logging.FileHandler(
             cst.TEMP_PATH[cst.PC] + 'Log/' +
             datetime.datetime.now().strftime('%Y-%m-%d').replace('-', '').split(' ')[0] + '.log')])
