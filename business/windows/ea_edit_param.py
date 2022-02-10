@@ -8,7 +8,7 @@ from const import cst
 import pandas as pd
 
 PRM_PATHS = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATHS
-MQ4_PATH = cst.MT4_DEV[cst.PC] + '/MQL/Experts'
+MQ4_PATH = cst.MT4_DEV[cst.PC] + '/MQL4/Experts'
 
 
 class EaEditParam:

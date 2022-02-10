@@ -4,7 +4,7 @@
 
 CURRENT_PATH = {
     'Mac': '/Users/dsk_nagaoka/',
-    'Win': 'C:/Users/Administrator/Documents/',
+    'Win': 'C:/Users/Administrator/',
 }
 GDRIVE_PATH = {
     'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
@@ -12,7 +12,7 @@ GDRIVE_PATH = {
 }
 TEMP_PATH = {
     'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
-    'Win': CURRENT_PATH['Win'] + 'MyToolTmp/',
+    'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/',
 }
 
 # EAパラメータのファイルパス(Googleドライブ)
@@ -21,7 +21,7 @@ PRM_PATHS = 'FX/Presets'
 # EAパラメータのファイルパス(Googleドライブ)
 MT4_DEV = {
     'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test',
-    'Win': 'C:/Users/AdministratorDocuments/MT4/MT4_DEV/OANDA/',
+    'Win': CURRENT_PATH['Win'] + 'Documents/MT4/MT4_DEV/OANDA/',
 }
 
 # パラメータのCSV・HTML格納フォルダ

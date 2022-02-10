@@ -8,8 +8,10 @@ from const import cst
 class BlogPochi:
 
     def __init__(self):
-        pass
+        self.wd = com.driver()
 
     def do(self):
         com.log(__name__)
+        self.wd.get('https://shock-nin.info/')
+        com.sleep(5)
         return []

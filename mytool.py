@@ -10,7 +10,7 @@ import importlib
 import pyautogui as pgui
 import PySimpleGUI as sg
 
-CHANGE_MENU = 1
+CHANGE_MENU = 0
 
 if 0 == CHANGE_MENU:
     menu1 = 'Win'
@@ -53,11 +53,11 @@ def main():
     else:
         com.log('Open')
         win_x, win_y = pgui.size()
-        layout = [[sg.Button(btn, key=btn, font=('', 16), size=(10, 1))] for btn in BTNS[cst.PC]]
+        layout = [[sg.Button(btn, key=btn, font=('', 16), size=(15, 1))] for btn in BTNS[cst.PC]]
 
         window = sg.Window(cst.PC, modal=True, background_color=cst.MAIN_BGCOLOR,
                            location=((win_x - WIN_X_MINUS, win_y - WIN_Y_MINUS)
-                                     if 'Mac' == menu2 else (None, None)), layout=layout)
+                                     if cst.PC == menu2 else (None, None)), layout=layout)
         while True:
             event, values = window.read()
 
