@@ -7,11 +7,16 @@ from const import cst
 
 class BlogPochi:
 
-    def __init__(self):
+    def __init__(self, job):
+        self.myjob = job
         self.wd = com.driver()
 
     def do(self):
         com.log(__name__)
         self.wd.get(cst.BLOG_URL)
-        com.sleep(5)
-        return []
+
+        is_end = []
+        if 0 < len(is_end):
+            return com.close(is_end)
+
+        return com.close(self.myjob)

@@ -11,21 +11,20 @@ import PySimpleGUI as sg
 from time import sleep
 from PIL import ImageGrab
 
-TITLE = '∞再生'
 IMG_PATH = 'item/match/eng1min/'
-WIN_X_MINUS = 150
-WIN_Y_MINUS = 150
+WIN_X_MINUS = 50
 BGCOLOR_ON = '#FFFF77'
 BGCOLOR_OFF = '#FF7777'
 
 
 class Eng1min:
 
-    def __init__(self):
-        self.win_x, self.win_y = pgui.size()
-        self.turn = 0
+    def __init__(self, job):
+        self.myjob = job
         self.bgcolor = BGCOLOR_ON
-        com.log(TITLE + '　開始')
+        self.turn = 0
+        self.win_x, self.win_y = pgui.size()
+        com.log(self.myjob + ': 開始')
         sleep(2)
 
     def do(self):
@@ -35,14 +34,13 @@ class Eng1min:
 
         # イベントループ
         while True:
-
-            # 監視
             event, values = window.read(timeout=0)
             is_normal, is_stop, window = self._is_evwnt(window, event, is_stop)
 
+            # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    return []
+                    return com.close(self.myjob)
                 else:
                     if is_stop is not None:
                         continue
@@ -70,15 +68,13 @@ class Eng1min:
                 com.click_pos(x / 2 - 50, y / 2 + 20)
 
                 self.turn += 1
-                com.log(TITLE + '　繰り返し(' + str(self.turn) + ')')
+                window['turn'].update(self.turn)
+                com.log(self.myjob + ': 繰り返し(' + str(self.turn) + ')')
 
-            # 監視
-            event, values = window.read(timeout=0)
-            is_normal, is_stop, window = self._is_evwnt(window, event, is_stop)
-
+            # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    return []
+                    return com.close(self.myjob)
                 else:
                     if is_stop is not None:
                         continue
@@ -105,13 +101,10 @@ class Eng1min:
             # マッチングのマーキングimg出力
             cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
 
-            # 監視
-            event, values = window.read(timeout=0)
-            is_normal, is_stop, window = self._is_evwnt(window, event, is_stop)
-
+            # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    return []
+                    return com.close(self.myjob)
                 else:
                     if is_stop is not None:
                         continue
@@ -119,33 +112,31 @@ class Eng1min:
                 sleep(3)
 
     def _window(self, stop_btn):
-        return sg.Window(
-            TITLE, keep_on_top=True, modal=True, background_color=self.bgcolor,
-            location=(self.win_x - WIN_X_MINUS, self.win_y - WIN_Y_MINUS),
-            layout=[[sg.Button(stop_btn, key='replay', font=('', 16), size=(8, 0))],
-                    [sg.Text(' ' + str(self.turn) + '-' + com.str_time(False) + ' ',
-                             background_color=self.bgcolor, text_color='#000000', key='turn', font=('', 16))]]
-        )
+        return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color=self.bgcolor,
+                         location=(self.win_x - 50, 0), margins=(5, 5), layout=
+                         [[sg.Button(stop_btn, key='replay', font=('', 12), pad=((0, 0), (0, 0))),
+                          sg.Text(str(self.turn), key='turn', size=(2, 0), pad=((0, 0), (0, 0)),
+                          background_color=self.bgcolor, text_color='#000000')]])
 
     # イベントのアクション
     def _is_evwnt(self, window, event, is_stop):
 
         if event == sg.WIN_CLOSED:
             window.close()
-            com.log(TITLE + '　終了')
+            com.log(self.myjob + ': 終了')
             return None, None, None
 
         elif 'replay' == event:
             if '| |' == window['replay'].get_text():
-                window.close()
-                com.log(TITLE + '　一時停止')
+                com.log(self.myjob + ': 一時停止')
                 self.bgcolor = BGCOLOR_OFF
+                window.close()
                 return None, True, self._window('▶︎')
 
             elif '▶︎' == window['replay'].get_text():
-                window.close()
-                com.log(TITLE + '　再開')
+                com.log(self.myjob + ': 再開')
                 self.bgcolor = BGCOLOR_ON
+                window.close()
                 return None, False, self._window('| |')
 
         return True, is_stop, window

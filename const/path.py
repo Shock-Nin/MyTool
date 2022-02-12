@@ -15,17 +15,32 @@ TEMP_PATH = {
     'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/',
 }
 
-# EAパラメータのファイルパス(Googleドライブ)
-PRM_PATHS = 'FX/Presets'
-
-# EAパラメータのファイルパス(Googleドライブ)
+# 開発MT4のパス
 MT4_DEV = {
-    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test',
+    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/',
     'Win': CURRENT_PATH['Win'] + 'Documents/MT4/MT4_DEV/OANDA/',
 }
 
-# パラメータのCSV・HTML格納フォルダ
-PRM_OUT_PATH = {
-    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/frame',
+# パラメータ・集計データのCSV・HTML格納フォルダ
+DATA_PATH = {
+    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/frame/',
     'Win': 'C:/inetpub/wwwroot/menu/frame/',
 }
+
+# EAの単独テスト
+TEST_UNIT = {
+    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/Test/',
+    'Win': CURRENT_PATH['Win'] + 'Documents/Test/',
+}
+
+# テスト集計データの出力先
+TEST_OUT_PATH = {
+    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
+    'Win': 'C:/inetpub/wwwroot/test/',
+}
+
+# EAパラメータのファイルパス(Googleドライブ)
+PRM_PATH = 'FX/Presets/'
+
+# 開発IP
+DEV_IP = '164.70.84.254'
