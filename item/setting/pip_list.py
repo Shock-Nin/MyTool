@@ -5,12 +5,14 @@
 # pip install --force-reinstall --upgrade pip
 # pip install webdriver-manager
 
-import it
 import cv2
 import PySimpleGUI
 import pyautogui
 import numpy
+import it
 import lxml
+import html5lib
+import beautifulsoup4
 import PIL
 import Pillow
 import pandas

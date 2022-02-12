@@ -170,7 +170,7 @@ def _edit_unit_list():
 
                 try:
                     # HTMLの時系列データを取得
-                    file = pd.read_html(tests[i][k], encoding='utf8', header=0, na_values=0)
+                    file = pd.read_html(tests[i][k], encoding='cp932', header=0, na_values=0)
                     ea_name = str(file[0])
                     ea_name = ea_name[ea_name.find('Comments'): ea_name.find('TradeMargin')]
                     ea_name = ea_name[ea_name.find('=') + 2: ea_name.find(';') - 1]

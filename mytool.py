@@ -13,7 +13,7 @@ import PySimpleGUI as sg
 import subprocess
 from subprocess import PIPE
 
-CHANGE_MENU = 1
+CHANGE_MENU = 0
 
 if 0 == CHANGE_MENU:
     menu1 = 'Win'
@@ -65,11 +65,14 @@ def main():
 
             # 画面で選択した場合
             else:
-                # 動的モジュールを、並列で実行
-                # _run(event)
-                thread1 = threading.Thread(name="thread1", target=_run, args=(event,))
-                thread1.start()
-                # thread1.join()
+                # 動的モジュールを実行
+                if 'Win' == cst.PC:
+                    _run(event)
+                # Macの場合は、並列で実行
+                else:
+                    thread1 = threading.Thread(name="thread1", target=_run, args=(event,))
+                    thread1.start()
+                    # thread1.join()
 
     # バッチの場合
     elif 'Batch' == args.Function:

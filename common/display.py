@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from const import cst
+
 import PySimpleGUI as sg
 
 
@@ -33,7 +35,7 @@ def question(msg, title, lv='', cancel=False):
 
     flg = 0
     while True:
-        event, values = window.read(timeout=0)
+        event, values = (window.read() if 'Win' == cst.PC else window.read(timeout=0))
         if event in [sg.WIN_CLOSED, '中断']:
             break
         elif 'はい' == event:
