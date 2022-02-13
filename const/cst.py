@@ -1,15 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# ネットワーク
-import platform
-pf = platform.system()
-PC = 'Win' if 'Windows' == pf else 'Mac' if 'Darwin' == pf else ''
+from const import path
+from const import url
 
-MAIN_BGCOLOR = '#FFAAFF' if 'Win' == PC else '#AAFFAA'
+# EA並び順
+EA_PATHS = {
+    'AnomalyShocknin': ['Main', 'Unit-'],
+    'AnomalyGoToBe': ['Other']
+}
+CURRNCYS_EA = ['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD', 'GOLD']
+CURRNCYS_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',
+                'ZAR', 'TRY', 'NOK', 'HKD', 'SEK', 'MXN', 'PLN']
+
+# メイン画面色
+MAIN_BGCOLOR = '#FFAAFF' if 'Win' == path.PC else '#AAFFAA'
 
 # Path
-from const import path
+PC = path.PC
 CURRENT_PATH = path.CURRENT_PATH
 GDRIVE_PATH = path.GDRIVE_PATH
 TEMP_PATH = path.TEMP_PATH
@@ -21,5 +29,4 @@ PRM_PATH = path.PRM_PATH
 DEV_IP = path.DEV_IP
 
 # URL
-from const import url
 BLOG_URL = url.BLOG_URL

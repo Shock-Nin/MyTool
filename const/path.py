@@ -44,3 +44,8 @@ PRM_PATH = 'FX/Presets/'
 
 # 開発IP
 DEV_IP = '164.70.84.254'
+
+# ネットワーク
+import platform
+pf = platform.system()
+PC = 'Win' if 'Windows' == pf else 'Mac' if 'Darwin' == pf else ''

@@ -8,7 +8,7 @@ import os
 import pandas as pd
 
 PRM_PATHS = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
-MQ4_PATH = cst.MT4_DEV[cst.PC] + 'MQL4/Experts'
+MQ4_PATH = cst.MT4_DEV[cst.PC] + 'MQL4/Experts/'
 
 
 class EaEditParam:
@@ -51,27 +51,34 @@ def _edit_setfiles():
     err_msg = ''
 
     paths = os.listdir(PRM_PATHS)
-    for path in paths:
+    for key1 in cst.EA_PATHS:
+        for path in paths:
 
-        # フォルダでなければパス
-        if not os.path.isdir(PRM_PATHS + path):
-            continue
+            # 並び順でなければパス
+            if path != cst.EA_PATHS[key1][0]:
+                continue
+            # フォルダでなければパス
+            if not os.path.isdir(PRM_PATHS + path):
+                continue
 
-        files = os.listdir(PRM_PATHS + path)
-        read_file = []
-        for file in files:
-            try:
-                # .setファイルでなければパス
-                if file.find('.set') < 0:
-                    continue
+            files = os.listdir(PRM_PATHS + path)
+            read_file = []
 
-                read_file.append(open(PRM_PATHS + path + '/' + file, 'r').read())
+            for key2 in cst.CURRNCYS_EA:
+                for file in files:
+                    try:
+                        # 並び順でなければパス
+                        if file.find(key2) < 0:
+                            continue
+                        # .setファイルでなければパス
+                        if 0 <= file.find('.set'):
+                            read_file.append(open(PRM_PATHS + path + '/' + file, 'r').read())
 
-            except Exception as e:
-                err_msg += '\n　' + path + '/' + file + '\n　　' + str(e)
-                com.log(str(e))
+                    except Exception as e:
+                        err_msg += '\n　' + path + file + '\n　　' + str(e)
+                        com.log(str(e))
 
-        read_files.append(read_file)
+            read_files.append(read_file)
 
     # エラーファイルが1つでもあれば中断
     if 0 < len(err_msg):
@@ -83,15 +90,14 @@ def _edit_setfiles():
 
     # 読み込んだ対象ファイルの整形
     for files in read_files:
-
-        is_col = False
         prms = []
+        is_col = False
 
         for file in files:
-
-            datas = file.split('\n')
             col = []
             prm = []
+
+            datas = file.split('\n')
             for data in datas:
 
                 if 0 <= data.find(',') or 0 <= data.find('_____'):

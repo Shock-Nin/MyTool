@@ -7,6 +7,8 @@ import os
 import logging
 import inspect
 import datetime
+
+# スリープ直接呼び出し
 from time import sleep
 
 # display
