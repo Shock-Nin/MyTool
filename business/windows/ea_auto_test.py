@@ -12,7 +12,6 @@ class EaAutotest:
 
     def do(self):
 
-        com.log(__name__)
         if com.question('開始しますか？', '開始確認') <= 0:
             return None
 

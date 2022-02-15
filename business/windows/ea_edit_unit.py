@@ -342,11 +342,12 @@ def _edit_unit_list():
 
     # HTML書き出し
     outpath = cst.DATA_PATH[cst.PC] + 'Unit.html'
-    with open(outpath, 'w') as outfile:
+    with open(outpath, 'w', encoding='utf8') as outfile:
 
         # HTMLヘッダー
-        html = '<html><head><title>EA個別成績</title></head><body>'
-        html += '<div align="center"><table cellspacing="0" cellpadding="0"><tr>'
+        html = '<html><head><title>EA個別成績</title>'
+        html += '<meta charset="utf-8"/></head><body><div align="center">'
+        html += '<table cellspacing="0" cellpadding="0"><tr>'
         html += '<td class="title col" align="center">EA個別成績</td></tr><tr><td>'
         html += '<table cellspacing="0" cellpadding="0"><tr align="center">'
         html += "".join(['<td class="col">' + col + '</td>' for col in LIST_HEADER]) + '</tr>'

@@ -24,16 +24,20 @@ else:
 BTNS = {
     menu1: {
         'Pochi': 'multiple.blog_pochi',
-        'EAテスト': 'windows.ea_autotest',
         'EAデータ編集': 'windows.ea_edits',
+        'EAテスト結合': 'windows.ea_merge_test',
+        'EAテスト': 'windows.ea_auto_test',
+        'ログイン': 'mac..web.login',
     },
     menu2: {
         'Pochi': 'multiple.blog_pochi',
+        '資産': 'mac.my_asset',
         '英単語': 'mac.eng1min',
+        'ログイン': 'multiple.web.login',
     },
 }
 WIN_X_MINUS = 150
-WIN_Y_MINUS = 170
+WIN_Y_MINUS = 220
 
 
 def main():

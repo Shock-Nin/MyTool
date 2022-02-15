@@ -270,11 +270,12 @@ def _edit_stat_status():
     for i in range(0, len(OUT_NAMES)):
 
         outpath = cst.DATA_PATH[cst.PC] + OUT_FILES[i] + '.html'
-        with open(outpath, 'w') as outfile:
+        with open(outpath, 'w', encoding='utf8') as outfile:
 
             # HTMLヘッダー
-            html = '<html><head><title>EA統合' + OUT_NAMES[i] + '</title></head><body>'
-            html += '<div align="center"><table cellspacing="0" cellpadding="0"><td>'
+            html = '<html><head><title>EA統合' + OUT_NAMES[i] + '</title>'
+            html += '<meta charset="utf-8"/></head><body><div align="center">'
+            html += '<table cellspacing="0" cellpadding="0"><td>'
             html += '<table cellspacing="0" cellpadding="0"><tr align="center">'
 
             html += html_datas[i]

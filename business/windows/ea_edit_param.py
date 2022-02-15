@@ -281,7 +281,7 @@ def _output_html():
 
         # HTMLヘッダー
         html = '<html><head><title>' + ea_name + '</title>'
-        html += '</head><body><div align="center">'
+        html += '<meta charset="utf-8"/></head><body><div align="center">'
         html += '<table><tr><td class="eaName" align="center">' + ea_name + '</td></tr><tr><td>'
         html += '<table cellspacing="0" cellpadding="0"><tr><td>'
 
@@ -355,7 +355,7 @@ def _output_html():
         html += '</style></body></html>'
 
         path = cst.DATA_PATH[cst.PC] + ea_name + '.html'
-        with open(path, 'w') as f:
+        with open(path, 'w', encoding='utf8') as f:
             f.write(html)
         com.log('ファイル作成: ' + path)
 
