@@ -28,7 +28,7 @@ class EaEditStat:
         if 0 < len(is_end):
             return com.close(is_end)
 
-        return []
+        return 0
 
 
 # 個別テストの集計リスト作成

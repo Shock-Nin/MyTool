@@ -37,7 +37,7 @@ class EaEditParam:
         if 0 < len(is_end):
             return com.close(is_end)
 
-        return []
+        return 0
 
 
 # .setファイルをCSV化

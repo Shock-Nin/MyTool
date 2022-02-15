@@ -78,11 +78,13 @@ def close(is_event):
 
     # 中断の場合、何もしない
     if is_event is None:
-        pass
+        return -1
     # エラーの場合、エラーダイアログ
     elif type(is_event) == list:
         dialog(is_event[0], is_event[1], is_event[2])
+        return 1
 
     # 正常終了の場合、完了ダイアログ
     else:
         dialog('[' + is_event + ']が完了しました。', '正常終了')
+        return 0

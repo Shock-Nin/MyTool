@@ -13,7 +13,7 @@ import PySimpleGUI as sg
 import subprocess
 from subprocess import PIPE
 
-CHANGE_MENU = 1
+CHANGE_MENU = 0
 
 if 0 == CHANGE_MENU:
     menu1 = 'Win'

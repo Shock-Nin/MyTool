@@ -23,20 +23,20 @@ class EaEdits:
 
         # EAパラメータ
         is_end = ea_edit_param.EaEditParam().do()
-        if 0 < len(is_end):
-            return com.close(is_end)
+        if 0 != is_end:
+            return
 
         # EA成績(個別)
         is_end = ea_edit_unit.EaEditUnit().do()
-        if 0 < len(is_end):
-            return com.close(is_end)
+        if 0 != is_end:
+            return
 
         # EA成績(統合)
         is_end = ea_edit_stat.EaEditStat().do()
-        if 0 < len(is_end):
-            return com.close(is_end)
+        if 0 != is_end:
+            return
 
-        return com.close(self.myjob)
+        com.close(self.myjob)
 
 
 # リアルパスを規則順ソートで格納

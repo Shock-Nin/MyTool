@@ -36,7 +36,7 @@ TEST_UNIT = {
 # テストリンク
 TEST_OUT_PATH = {
     'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
-    'Win': 'C:inetpub/wwwroot/164.70.84.254/test/',
+    'Win': 'C:/inetpub/wwwroot/test/',
 }
 # テスト集計データの出力先
 TEST_LINK = {

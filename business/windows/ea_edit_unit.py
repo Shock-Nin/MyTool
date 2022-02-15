@@ -29,7 +29,7 @@ class EaEditUnit:
         if 0 < len(is_end):
             return com.close(is_end)
 
-        return []
+        return 0
 
 
 # 個別テストのHTMLスリム化
