@@ -4,6 +4,8 @@
 from common import com
 from const import cst
 
+from business. windows import ea_edits as inheritance
+
 import os
 import pandas as pd
 
@@ -13,13 +15,7 @@ MQ4_PATH = cst.MT4_DEV[cst.PC] + 'MQL4/Experts/'
 
 class EaEditParam:
 
-    def __init__(self, job):
-        self.myjob = job
-
     def do(self):
-
-        if com.question('開始しますか？', '開始確認') <= 0:
-            return None
 
         # .setファイルをCSV化
         is_end = _edit_setfiles()
@@ -41,7 +37,7 @@ class EaEditParam:
         if 0 < len(is_end):
             return com.close(is_end)
 
-        return com.close(self.myjob)
+        return []
 
 
 # .setファイルをCSV化
@@ -51,6 +47,7 @@ def _edit_setfiles():
     err_msg = ''
 
     paths = os.listdir(PRM_PATHS)
+
     for key1 in cst.EA_PATHS:
         for path in paths:
 

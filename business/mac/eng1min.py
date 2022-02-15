@@ -23,7 +23,10 @@ class Eng1min:
         self.myjob = job
         self.bgcolor = BGCOLOR_ON
         self.turn = 0
+        self.move = 0
         self.win_x, self.win_y = pgui.size()
+        self.now_x, self.now_y = pgui.position()
+        self.last_x, self.last_y = pgui.position()
         com.log(self.myjob + ': 開始')
         sleep(2)
 
@@ -34,6 +37,7 @@ class Eng1min:
 
         # イベントループ
         while True:
+
             event, values = window.read(timeout=0)
             is_normal, is_stop, window = self._is_evwnt(window, event, is_stop)
 
@@ -46,6 +50,33 @@ class Eng1min:
                         continue
             elif is_stop:
                 sleep(3)
+                continue
+
+            # 不動時間のカウント
+            self.now_x, self.now_y = pgui.position()
+            if self.last_x == self.now_x and self.last_y == self.now_y:
+                sleep(3)
+                self.move += 1
+
+                # 画面のイベント監視
+                if is_normal is None:
+                    if window is None:
+                        return com.close(self.myjob)
+                    else:
+                        if is_stop is not None:
+                            continue
+                elif is_stop:
+                    sleep(3)
+                    continue
+            else:
+                self.move = 0
+                self.last_x, self.last_y = pgui.position()
+            window['turn'].update(str(self.turn) + '\n' + str(self.move))
+
+            # カウント未満なら動作なし
+            if self.move < 10:
+                if 2 < self.move:
+                    print('Move: ' + str(self.move))
                 continue
 
             # 全体画面の撮影
@@ -115,7 +146,7 @@ class Eng1min:
         return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color=self.bgcolor,
                          location=(self.win_x - 50, 0), margins=(5, 5), layout=
                          [[sg.Button(stop_btn, key='replay', font=('', 12), pad=((0, 0), (0, 0))),
-                          sg.Text(str(self.turn), key='turn', size=(2, 0), pad=((0, 0), (0, 0)),
+                          sg.Text(str(self.turn) + '\n' + str(self.move), key='turn', size=(2, 0), pad=((0, 0), (0, 0)),
                           background_color=self.bgcolor, text_color='#000000')]])
 
     # イベントのアクション

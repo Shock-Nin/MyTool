@@ -10,10 +10,14 @@ import PySimpleGUI as sg
 def dialog(msg, title, lv=''):
 
     color = '#FF7777' if 'E' == lv else 'FFFF77' if 'W' == lv else '#77CCFF'
+    txt = [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (10, 10)))]
+    if len(msg) < 100:
+        layout = txt
+    else:
+        layout = [sg.Column([txt], size=(500, 300), scrollable=True, background_color=color)]
+
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color, element_justification='c', layout=[
-        [sg.Column([[sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((0, 0), (0, 0)))]],
-                   size=(500, 300), scrollable=True, vertical_scroll_only=True, background_color=color)],
-        [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
+        layout, [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
 
     while True:
         event, values = window.read(timeout=0)

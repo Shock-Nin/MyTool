@@ -25,8 +25,7 @@ BTNS = {
     menu1: {
         'Pochi': 'multiple.blog_pochi',
         'EAテスト': 'windows.ea_autotest',
-        'EAパラメータ': 'windows.ea_edit_param',
-        'EA成績(個別)': 'windows.ea_edit_unit',
+        'EAデータ編集': 'windows.ea_edits',
     },
     menu2: {
         'Pochi': 'multiple.blog_pochi',

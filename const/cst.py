@@ -6,8 +6,8 @@ from const import url
 
 # EA並び順
 EA_PATHS = {
-    'AnomalyShocknin': ['Main', 'Unit-'],
-    'AnomalyGoToBe': ['Other']
+    'AnomalyGoToBe': ['Other'],
+    'AnomalyShocknin': ['Main', 'Unit-']
 }
 CURRNCYS_EA = ['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD', 'GOLD']
 CURRNCYS_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',
@@ -26,7 +26,7 @@ DATA_PATH = path.DATA_PATH
 TEST_UNIT = path.TEST_UNIT
 TEST_OUT_PATH = path.TEST_OUT_PATH
 PRM_PATH = path.PRM_PATH
-DEV_IP = path.DEV_IP
+TEST_LINK = path.TEST_LINK
 
 # URL
 BLOG_URL = url.BLOG_URL

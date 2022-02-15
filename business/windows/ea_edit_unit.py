@@ -4,11 +4,12 @@
 from common import com
 from const import cst
 
-import os
+from business. windows import ea_edits as inheritance
+
 import shutil
 import pandas as pd
 
-LIST_HEADER = ['総数', '勝率', '勝', '敗', 'PF', 'DD',
+LIST_HEADER = ['総数', '勝率', '勝', '敗', 'PF', 'DD', '月<br>頻度', '年勝率',
                '平均<br>年率', '最大<br>年率', '最低<br>年率', '名前',
                '平均<br>利益', '最大<br>利益', '期待値', '平均<br>損失', '最大<br>損失',
                '現行', '推奨', '勝率<br>50', 'DD<br>10', '損失<br>3']
@@ -16,13 +17,7 @@ LIST_HEADER = ['総数', '勝率', '勝', '敗', 'PF', 'DD',
 
 class EaEditUnit:
 
-    def __init__(self, job):
-        self.myjob = job
-
     def do(self):
-
-        if com.question('開始しますか？', '開始確認') <= 0:
-            return None
 
         # 個別テストのHTMLスリム化
         is_end = _slim_html()
@@ -34,13 +29,13 @@ class EaEditUnit:
         if 0 < len(is_end):
             return com.close(is_end)
 
-        return com.close(self.myjob)
+        return []
 
 
 # 個別テストのHTMLスリム化
 def _slim_html():
 
-    tests = _sort_paths(False)
+    tests = inheritance.sort_paths(False)
 
     # HTMLを整形して、公開パスに出力
     err_msg = ''
@@ -53,7 +48,7 @@ def _slim_html():
                 if 0 == i + k:
                     bar1 = targets[-2]
                     bar2 = targets[-1].split('.')[0]
-                    window = com.progress('1. HTML整形中', [bar1, len(tests)], [bar2, len(tests[i])])
+                    window = com.progress('2. HTML整形中', [bar1, len(tests)], [bar2, len(tests[i])])
                     window.read(timeout=0)
 
                 window[bar1].update(targets[-2] + '(' + str(i) + ' / ' + str(len(tests)) + ')')
@@ -108,7 +103,7 @@ def _slim_html():
 # 個別テストの集計リスト作成
 def _edit_unit_list():
 
-    tests = _sort_paths(True)
+    tests = inheritance.sort_paths(True)
 
     # HTMLの時系列データから集計
     html_data = ''
@@ -124,7 +119,7 @@ def _edit_unit_list():
                 if 0 == i + k:
                     bar1 = targets[-2]
                     bar2 = targets[-1].split('.')[0]
-                    window = com.progress('2. 集計データ作成中', [bar1, len(tests)], [bar2, len(tests[i])])
+                    window = com.progress('3. 集計データ作成中', [bar1, len(tests)], [bar2, len(tests[i])])
                     window.read(timeout=0)
 
                 window[bar1].update(targets[-2] + '(' + str(i) + ' / ' + str(len(tests)) + ')')
@@ -150,6 +145,16 @@ def _edit_unit_list():
                     dd_max = dd_max[dd_max.find('right'):]
                     dd_max = float(dd_max[dd_max.find('>') + 1: dd_max.find(' (')])
 
+                    # 連勝
+                    win_max = datas[datas.find('連勝'): datas.find('連勝(トレード数)')]
+                    win_max = win_max[win_max.find('right'):]
+                    win_max = win_max[win_max.find('>') + 1: win_max.find(' (')]
+
+                    # 連敗
+                    lose_max = datas[datas.find('連敗'): datas.find('連敗(トレード数)')]
+                    lose_max = lose_max[lose_max.find('right'):]
+                    lose_max = lose_max[lose_max.find('>') + 1: lose_max.find(' (')]
+
                     # Risk
                     if 0 <= tests[i][k].find('Unit'):
                         risk = datas[datas.find('Risk'): datas.find('Safety')]
@@ -160,7 +165,6 @@ def _edit_unit_list():
                                          header=0, na_values=0)[1]
 
                     lot = 0.0
-                    trade = 0
                     win = 0
                     lose = 0
 
@@ -170,27 +174,45 @@ def _edit_unit_list():
                     loss_total = 0.0
                     loss_max = 0.0
 
-                    last_year = ''
                     last_balance = 0.0
                     balance_max = 0.0
                     prf_annuals = []
 
-                    for n in range(0, len(datas)):
+                    year_count = 0
+                    year_win = 0
+                    year_lose = 0
 
-                        if str(datas.at[n, '取引種別']) in ['buy', 'sell']:
-                            trade += 1
-                        else:
+                    for n in range(0, len(datas)):
+                        if str(datas.at[n, '取引種別']) not in ['buy', 'sell']:
+
+                            start_year = datas.at[n, '時間'][:4]
+                            start_balance = datas.at[n, '残高']
+                            break
+
+                    for m in range(0, len(datas)):
+
+                        n = m
+                        if m == len(datas) - 1:
+                            while not 0 < datas.at[n, '残高']:
+                                n -= 1
+                            last_balance = datas.at[n, '残高']
+
+                        if str(datas.at[n, '取引種別']) not in ['buy', 'sell']:
                             lot = max(lot, datas.at[n, '数量'])
 
                             # 年率計算用
-                            if last_year != datas.at[n, '時間'][:4]:
-                                last_year = datas.at[n, '時間'][:4]
+                            if start_year != datas.at[n, '時間'][:4] or m == len(datas) - 1:
 
-                                if last_balance != datas.at[n, '残高']:
-                                    if 0 < last_balance:
-                                        prf_annuals.append(datas.at[n, '残高'] - last_balance)
+                                year_count += 1
+                                if 0 < last_balance - start_balance:
+                                    year_win += 1
+                                else:
+                                    year_lose += 1
 
-                                    last_balance = datas.at[n, '残高']
+                                prf_annuals.append(last_balance - start_balance)
+
+                                start_year = datas.at[n, '時間'][:4]
+                                start_balance = datas.at[n, '残高']
 
                             # 利益計算用
                             if 0 < datas.at[n, '損益']:
@@ -205,13 +227,15 @@ def _edit_unit_list():
                                 loss_total += -datas.at[n, '損益']
                                 loss_max = max(loss_max, -datas.at[n, '損益'])
 
+                            last_balance = datas.at[n, '残高']
+
                     # 名前と表示クラスの定義
                     ea_name = (ea_name if 1 == len(cst.EA_PATHS[ea_name.split('_')[0]]) else targets[-1].split('.')[0])
                     ea_class = ('ea_all' if 0 <= ea_name.find('Full') or 0 <= ea_name.find('Best') else 'prm')
 
                     # 推奨ロット計算と、必要なアイテムの計算
                     lot = lot / (balance_start / 10000)
-                    winrate = win / trade * 100
+                    winrate = win / (win + lose) * 100
                     ddown = dd_max / balance_start * 100
                     loss1 = loss_max / balance_start * 100
                     best, win50, dd10, loss3 = _calucu_lot(lot, winrate, ddown, loss1)
@@ -232,15 +256,18 @@ def _edit_unit_list():
                         loss3 = 0
 
                     html_row += '<tr>'
+                    base_tag = '<td class="' + ea_class + '" align="right">'
 
                     # 総数, 勝率
-                    html_row += '<td class="' + ea_class + '" align="right">' + str(trade) + '</td>'
+                    html_row += base_tag + str((win + lose)) + '</td>'
                     alert = (' warning' if winrate < 50 else ' good' if 60 < winrate else '')
-                    html_row += '<td class="' + ea_class + alert + '" align="right">' + str(format(winrate, '.2f')) + '%</td>'
+                    html_row += '<td class="' + ea_class + alert + '" align="right">' + str(format(winrate, '.1f')) + '%</td>'
 
                     # 勝, 敗
-                    html_row += '<td class="' + ea_class + ' good" align="right">' + str(win) + '</td>'
-                    html_row += '<td class="' + ea_class + ' warning" align="right">' + str(lose) + '</td>'
+                    html_row += '<td class="' + ea_class + ' good" align="right">' + str(win)
+                    html_row += '<font color="#000000">(' + str(win_max) + ')</font></td>'
+                    html_row += '<td class="' + ea_class + ' warning" align="right">' + str(lose)
+                    html_row += '<font color="#000000">(' + str(lose_max) + ')</font></td>'
 
                     # PF, DD
                     alert = (' warning' if prf_total / loss_total < 1.3 else ' good' if 1.7 < prf_total / loss_total else '')
@@ -248,26 +275,31 @@ def _edit_unit_list():
                     alert = (' alert' if 10 <= ddown and ea_name.find('Full') < 0 else '')
                     html_row += '<td class="dd ' + ea_class + alert + '" align="right">' + str(format(ddown, '.2f')) + '%</td>'
 
+                    # 月頻度, 年勝率
+                    html_row += base_tag + str(format((win + lose) / (year_count * 12), '.1f')) + '</td>'
+                    html_row += base_tag + str(int(year_win / year_count * 100)) + '%'
+                    html_row += ('' if 0 == year_lose else '<font color="#FF0000">,' + str(year_lose) + '</font>') + '</td>'
+
                     # 平均年率, 最大年率, 最低年率
-                    html_row += '<td class="' + ea_class + '" align="right">' + str(format((sum(prf_annuals) / len(prf_annuals)) / balance_start * 100, '.2f')) + '%</td>'
-                    html_row += '<td class="' + ea_class + '" align="right">' + str(format(max(prf_annuals)/ balance_start * 100, '.2f')) + '%</td>'
+                    html_row += base_tag + str(format((sum(prf_annuals) / len(prf_annuals)) / balance_start * 100, '.1f')) + '%</td>'
+                    html_row += base_tag + str(format(max(prf_annuals)/ balance_start * 100, '.1f')) + '%</td>'
                     alert = (' warning' if min(prf_annuals) <= 0 else '')
-                    html_row += '<td class="' + ea_class + alert + '" align="right">' + str(format(min(prf_annuals) / balance_start * 100, '.2f')) + '%</td>'
+                    html_row += '<td class="' + ea_class + alert + '" align="right">' + str(format(min(prf_annuals) / balance_start * 100, '.1f')) + '%</td>'
 
                     # 名前とリンクの作成
                     html_row += '<td class="' + ('ea_all' if 0 <= ea_name.find('Full') or 0 <= ea_name.find('Best') else 'ea_row')
-                    html_row += '" align="left"><a href="http://' + cst.DEV_IP + '/test/'
+                    html_row += '" align="left"><a href="' + cst.TEST_LINK[cst.PC]
                     html_row += targets[-2] + '/' + ea_name.lower() + '.htm" target="_blank">' + ea_name + '</a></td>'
 
                     # 平均利益, 最大利益
-                    html_row += '<td class="' + ea_class + '" align="right">' + str(format((prf_total / win) / balance_start * 100, '.2f')) + '%</td>'
-                    html_row += '<td class="' + ea_class + '" align="right">' + str(format(prf_max / balance_start * 100, '.2f')) + '%</td>'
+                    html_row += base_tag + str(format((prf_total / win) / balance_start * 100, '.2f')) + '%</td>'
+                    html_row += base_tag + str(format(prf_max / balance_start * 100, '.2f')) + '%</td>'
 
                     # 期待値
-                    alert = (' warning' if ((prf_total - loss_total) / trade) / balance_start * 100 < 0.1 else
-                             ' good' if 0.3 < ((prf_total - loss_total) / trade) / balance_start * 100 else '')
-                    html_row += '<td class="' + ea_class + alert + '" align="right">' + \
-                                str(format(((prf_total - loss_total) / trade) / balance_start * 100, '.2f')) + '%</td>'
+                    alert = (' warning' if ((prf_total - loss_total) / (win + lose)) / balance_start * 100 < 0.1 else
+                             ' good' if 0.3 < ((prf_total - loss_total) / (win + lose)) / balance_start * 100 else '')
+                    html_row += '<td class="' + ea_class + alert + '" align="right">'
+                    html_row += str(format(((prf_total - loss_total) / (win + lose)) / balance_start * 100, '.2f')) + '%</td>'
 
                     # 平均損失, 最大損失
                     html_row += '<td class="' + ea_class + ' warning" align="right">' + str(format((loss_total / lose) / balance_start * 100, '.2f')) + '%</td>'
@@ -283,18 +315,17 @@ def _edit_unit_list():
                     html_row += '<td class="' + ea_class + alert + '" align="right">'
                     html_row += str(format(lot, '.0f' if is_full else '.2f')) + '</td>'
                     if 0 <= ea_name.find('Full'):
-                        html_row += '<td class="' + ea_class + '"></td>'
+                        html_row += base_tag + '</td>'
                     else:
-                        html_row += '<td class="' + ea_class + '" align="right">'
-                        html_row += str(format(best, '.0f' if is_full else '.2f')) + '</td>'
+                        html_row += base_tag + str(format(best, '.0f' if is_full else '.2f')) + '</td>'
 
                     # 勝率50, DD10, 損失3
                     if is_full:
-                        html_row += "".join(['<td class="' + ea_class + '">' for _ in range(3)])
+                        html_row += "".join([base_tag for _ in range(3)])
                     else:
-                        html_row += '<td class="' + ea_class + '" align="right">' + str(format(win50, '.2f')) + '</td>'
-                        html_row += '<td class="' + ea_class + '" align="right">' + str(format(dd10, '.2f')) + '</td>'
-                        html_row += '<td class="' + ea_class + '" align="right">' + str(format(loss3, '.2f')) + '</td>'
+                        html_row += base_tag + '<font color="#AAAAAA">' + str(format(win50, '.2f')) + '</font></td>'
+                        html_row += base_tag + '<font color="#AAAAAA">' + str(format(dd10, '.2f')) + '</font></td>'
+                        html_row += base_tag + '<font color="#AAAAAA">' + str(format(loss3, '.2f')) + '</font></td>'
 
                 except Exception as e:
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
@@ -314,9 +345,9 @@ def _edit_unit_list():
     with open(outpath, 'w') as outfile:
 
         # HTMLヘッダー
-        html = '<html><head><title>EA個別成績</title>'
-        html += '</head><body><div align="center">'
-        html += '<table><tr><td class="title col" align="center">EA個別成績</td></tr><tr><td>'
+        html = '<html><head><title>EA個別成績</title></head><body>'
+        html += '<div align="center"><table cellspacing="0" cellpadding="0"><tr>'
+        html += '<td class="title col" align="center">EA個別成績</td></tr><tr><td>'
         html += '<table cellspacing="0" cellpadding="0"><tr align="center">'
         html += "".join(['<td class="col">' + col + '</td>' for col in LIST_HEADER]) + '</tr>'
 
@@ -351,38 +382,3 @@ def _calucu_lot(lot, winrate, ddown, loss1):
     best = min(win50, dd10, loss3)
 
     return best, win50, dd10, loss3
-
-
-# リアルパスを規則順ソートで格納
-def _sort_paths(is_out):
-
-    paths = []
-    get_paths = os.listdir(cst.TEST_UNIT[cst.PC])
-
-    for key1 in cst.CURRNCYS_EA:
-        for key2 in cst.EA_PATHS:
-
-            for get_path in get_paths:
-
-                if 1 == len(cst.EA_PATHS[key2]):
-                    is_key = (get_path == cst.EA_PATHS[key2][0])
-                    path = cst.TEST_UNIT[cst.PC] + cst.EA_PATHS[key2][0]
-                else:
-                    is_key = (get_path == cst.EA_PATHS[key2][1] + key1)
-                    path = cst.TEST_UNIT[cst.PC] + cst.EA_PATHS[key2][1] + key1
-
-                # 並び順でなければパス
-                if not is_key:
-                    continue
-
-                get_files = os.listdir(path)
-                get_files.sort()
-                files = []
-
-                for get_file in get_files:
-                    if 0 <= get_file.find(key1) and 0 <= get_file.find('.htm'):
-                        files.append(path.replace(cst.TEST_UNIT[cst.PC], cst.TEST_OUT_PATH[cst.PC]
-                                     if is_out else cst.TEST_UNIT[cst.PC]) + '/' + get_file)
-
-                paths.append(files)
-    return paths

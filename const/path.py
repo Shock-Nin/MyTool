@@ -33,17 +33,19 @@ TEST_UNIT = {
     'Win': CURRENT_PATH['Win'] + 'Documents/Test/',
 }
 
-# テスト集計データの出力先
+# テストリンク
 TEST_OUT_PATH = {
     'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
-    'Win': 'C:/inetpub/wwwroot/test/',
+    'Win': 'C:inetpub/wwwroot/164.70.84.254/test/',
+}
+# テスト集計データの出力先
+TEST_LINK = {
+    'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
+    'Win': 'http://164.70.84.254/test/',
 }
 
 # EAパラメータのファイルパス(Googleドライブ)
 PRM_PATH = 'FX/Presets/'
-
-# 開発IP
-DEV_IP = '164.70.84.254'
 
 # ネットワーク
 import platform
