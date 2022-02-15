@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 
+DEV_IP = '164.70.84.254'
+
 CURRENT_PATH = {
     'Mac': '/Users/dsk_nagaoka/',
     'Win': 'C:/Users/Administrator/',
@@ -33,15 +35,15 @@ TEST_UNIT = {
     'Win': CURRENT_PATH['Win'] + 'Documents/Test/',
 }
 
-# テストリンク
+# テスト集計データの出力先
 TEST_OUT_PATH = {
     'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
     'Win': 'C:/inetpub/wwwroot/test/',
 }
-# テスト集計データの出力先
+# テストリンク
 TEST_LINK = {
     'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
-    'Win': 'http://164.70.84.254/test/',
+    'Win': 'http://' + DEV_IP + '/test/',
 }
 
 # EAパラメータのファイルパス(Googleドライブ)

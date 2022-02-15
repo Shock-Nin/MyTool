@@ -21,15 +21,15 @@ class EaEdits:
         if com.question('開始しますか？', '開始確認') <= 0:
             return None
 
-        # EAパラメータ
-        is_end = ea_edit_param.EaEditParam().do()
-        if 0 != is_end:
-            return
-
-        # EA成績(個別)
-        is_end = ea_edit_unit.EaEditUnit().do()
-        if 0 != is_end:
-            return
+        # # EAパラメータ
+        # is_end = ea_edit_param.EaEditParam().do()
+        # if 0 != is_end:
+        #     return
+        #
+        # # EA成績(個別)
+        # is_end = ea_edit_unit.EaEditUnit().do()
+        # if 0 != is_end:
+        #     return
 
         # EA成績(統合)
         is_end = ea_edit_stat.EaEditStat().do()
@@ -78,8 +78,7 @@ def name_list(lists):
 
     names = []
     try:
-        datas = pd.read_html(lists, encoding=('cp932' if 'Win' == cst.PC else 'utf8'),
-                             header=0, na_values=0)[1]
+        datas = pd.read_html(lists, encoding='utf8', header=0, na_values=0)[1]
         for i in range(0, len(datas)):
 
             name = datas.at[i, '名前'].split('_')[0]
