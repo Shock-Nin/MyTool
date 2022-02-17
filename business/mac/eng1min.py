@@ -13,7 +13,7 @@ from PIL import ImageGrab
 
 IMG_PATH = 'item/match/eng1min/'
 WIN_X_MINUS = 50
-BGCOLOR_ON = '#FFFF77'
+BGCOLOR_ON = '#AAFFFF'
 BGCOLOR_OFF = '#FF7777'
 
 
@@ -73,8 +73,8 @@ class Eng1min:
                 self.last_x, self.last_y = pgui.position()
             window['turn'].update(str(self.turn) + '\n' + str(self.move))
 
-            # カウント未満なら動作なし
-            if self.move < 10:
+            # 監視待機回数未満なら動作なし
+            if self.move < cst.ENG1MIN_MONITOR:
                 if 2 < self.move:
                     print('Move: ' + str(self.move))
                 continue

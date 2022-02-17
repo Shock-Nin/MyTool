@@ -9,15 +9,179 @@ class WebLogin:
 
     def __init__(self, job):
         self.myjob = job
+        self.wd = com.driver()
 
-    def do(self):
+    def do(self, name, url):
 
-        com.log(__name__)
-        if com.question('開始しますか？', '開始確認') <= 0:
-            return None
+        pw_type = 'PwBank'
+        menu = cst.MENU_CSV[pw_type][(cst.MENU_CSV[pw_type]['SITE'] == name)]
+        if 0 == len(menu):
+            pw_type = 'PwWeb'
+            menu = cst.MENU_CSV[pw_type][(cst.MENU_CSV[pw_type]['SITE'] == name)]
 
-        is_end = []
-        if 0 < len(is_end):
-            return com.close(is_end)
+        # ログイン画面を開いて、クリック情報を取得
+        self.wd.get(url)
+        id1, id2, pw, btn = _get_info(name)
 
-        return com.close(self.myjob)
+        err_msg = ''
+        if 0 < len(id1):
+            com.sleep(1)
+            try:
+                # 事前画面あり
+                if name in ['GogoJungle', 'ガス']:
+                    url = ('https://www.gogojungle.co.jp/login' if 'GogoJungle' == name else
+                           url + '/login.html' if 'ガス' == name else '')
+                    self.wd.get(url)
+                    com.sleep(1)
+
+                # 特殊ログインパターン
+                if 'ViewCard' == name:
+
+                    for i in range(0, 5):
+                        try:
+                            com.find_element(self.wd, id1[1]).send_keys('')
+                            com.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                            com.find_element(self.wd, pw).send_keys('')
+                            com.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                            com.find_element(self.wd, btn).click()
+
+                            com.sleep(1)
+                            com.find_element(self.wd, 'ImgV0300_001Header').click()
+                            break
+                        except:
+                            com.sleep(1)
+                            self.wd.get(url)
+
+                    com.sleep(1)
+                    com.find_element(self.wd, 'LnkYotei').click()
+
+                else:
+                    if '三菱UFJ' == name:
+                        com.find_element(self.wd, 'tx-branch-number').send_keys('')
+                    elif '三井住友' == name:
+                        com.find_element(self.wd, 'tab-switchB02').click()
+
+                    com.find_element(self.wd, id1[1]).send_keys('')
+                    com.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+
+                    if name in ['三井住友', 'e-Staffing']:
+                        com.find_element(self.wd, id1[1]).send_keys('')
+                        com.find_element(self.wd, id2[1]).send_keys(menu[id2[0]].values[0])
+
+                    com.find_element(self.wd, pw).send_keys('')
+                    com.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+
+                    if '三菱UFJ' == name:
+                        if 'お知らせ - 三菱ＵＦＪ銀行' == self.wd.title:
+                            try:
+                                com.find_element(self.wd,
+                                                 '//*[@id="contents"]/div[2]/div[1]/table/tbody/tr/td[5]/form/input[4]').click()
+                                com.sleep(1)
+                                com.find_element(self.wd, '次の明細を表示').click()
+                            except:
+                                com.find_element(self.wd, 'top').click()
+
+                    elif '三井住友' == name:
+                        try:
+                            com.find_element(self.wd, btn + '[2]/a').click()
+                        except:
+                            com.find_element(self.wd, btn + '[3]/a').click()
+
+                        try:
+                            com.find_element(self.wd, 'pwChangeStopFlag').click()
+                            com.find_element(self.wd, '//*[@id="main-area"]/div/section/div[2]/a').click()
+                        except: pass
+                        com.sleep(7)
+                        try :
+                            com.find_element(self.wd, '//*[@id="TPALTOPtop"]/div[2]/div[3]/div/div[2]/div/div/i').click()
+                        except: pass
+
+                    elif 0 < len(btn):
+                        com.find_element(self.wd, btn).click()
+
+                # 事後画面あり
+                if name in ['楽天銀行', '楽天カード', '岡三総合', 'リクルート']:
+                    com.sleep(1)
+
+                    if '楽天銀行' == name:
+                        try:
+                            com.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_BRANCH_CODE"]').sendKeys('225')
+                            com.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_ACCOUNT_NUMBER"]').sendKeys('2152671')
+                            com.find_element(self.wd, '//*[@id="INPUT_FORM:SECRET_WORD"]').sendKeys('ああああ')
+                            com.find_element(self.wd, '//*[@id="INPUT_FORM:_idJsp83"]').click()
+                            com.sleep(1)
+                        except: pass
+                        try:
+                            com.find_element(self.wd, '//*[@id="INPUT_FORM_P:_idJsp176"]').click()
+                        except: pass
+
+                    elif name in ['楽天カード', 'リクルート']:
+                        url = ('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?l-id=enavi_all_glonavi_statement'
+                               if '楽天カード' == name else
+                               'https://www.r-staffing.co.jp/sol/op65/sd01/' if 'リクルート' == name else '')
+                        self.wd.get(url)
+
+                    else:
+                        url = ('buttonOK' if '岡三総合' == name else '')
+                        com.find_element(self.wd, url).click()
+
+            except Exception as e:
+                err_msg = str(e)
+
+        com.log('ログイン' + ('エラー' if 0 < len(err_msg) else '') + ': ' + name + ', ' + url)
+        if 0 < len(err_msg):
+            com.log(err_msg)
+            com.dialog(err_msg, 'ログインエラー', 'E')
+
+        com.sleep(1)
+        return self.wd
+
+
+def _get_info(name):
+    info = [], [], '', ''
+
+    # 資産
+    if 'ViewCard' == name:
+        info = ['ID1', 'id'], ['', ''], 'pass', '//input[@alt=\'ログイン\']'
+    elif '楽天カード' == name:
+        info = ['ID1', 'u'], ['', ''], 'p', 'loginButton'
+    elif '三井住友' == name:
+        info = ['ID1', 'userId1'], ['ID2', 'userId2'], 'password', '//*[@id="main-area"]/div/section/div'
+    elif '三菱UFJ' == name:
+        info = ['ID1', 'tx-contract-number'], ['', ''], 'tx-ib-password', 'button.gonext'
+    elif '楽天銀行' == name:
+        info = ['ID1', 'LOGIN:USER_ID'], ['', ''], 'LOGIN:LOGIN_PASSWORD', '//*[@id="LOGIN:_idJsp43"]'
+    # 生活
+    elif '水道' == name:
+        info = ['ID1', 'userName'], ['', ''], 'password', '//*[@id="loginForm"]/table/tbody/tr[4]/td/input'
+    elif 'ガス' == name:
+        info = ['ID1', 'loginId'], ['', ''], 'password', 'submit-btn'
+    # 投資
+    elif '岡三総合' == name:
+        info = ['ID1', 'loginTuskLoginId'], ['', ''], 'gnziLoginPswd', 'buttonLogin'
+    elif '岡三365' == name:
+        info = ['ID1', 'loginId'], ['', ''], 'password', '//*[@id="loginBtn"]/input'
+    elif 'FxPro' == name:
+        info = ['ID2', 'input-email'], ['', ''], 'login-input-password', 'login-signin-button'
+    elif 'MyFx' == name:
+        info = ['ID2', 'email'], ['', ''], 'tradingDeskPassword', '//*[@id="loginForm"]/div[2]/button'
+    elif 'GogoJungle' == name:
+        info = ['ID1', 'email'], ['', ''], 'password', \
+               '//*[@id="__layout"]/div/main/div[2]/div/div[1]/div[1]/button'
+    # 派遣
+    elif 'リクルート' == name:
+        info = ['ID1', 'user_id'], ['', ''], 'user_pass', \
+               '//*[@id="backgroundcolor"]/div[1]/div/div/div[1]/div/form/div[4]/div[2]/div/a/span/span'
+    elif 'パーソル' == name:
+        info = ['ID1', 'mprnUserId'], ['', ''], 'mprnPass', 'btnLogin'
+    elif 'パソナ' == name:
+        info = ['ID1', 'username'], ['', ''], 'password', 'kc-login'
+    elif 'e-Staffing' == name:
+        info = ['ID2', 'compid'], ['ID1', 'userid'], 'pwd', 'Image1'
+    # ASP
+    elif 'キャッシュバック' == name:
+        info = ['ID1', 'UserEmail'], ['', ''], 'UserPassword', '//*[@id="UserLoginForm"]/div[3]/div/button'
+    elif '口座開設' == name:
+        info = ['ID1', 'mail'], ['', ''], 'passwd', '//*[@id="inc_side_body"]/div[2]/dl/dd[1]/form/div/input'
+
+    return info

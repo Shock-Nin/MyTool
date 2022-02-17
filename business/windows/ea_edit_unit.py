@@ -10,7 +10,7 @@ import shutil
 import pandas as pd
 
 LIST_HEADER = ['総数', '勝率', '勝', '敗', 'PF', 'DD', '月<br>頻度', '年勝率',
-               '平均<br>年率', '最大<br>年率', '最低<br>年率', '名前',
+               '平均<br>年率', '最大<br>年率', '最低<br>年率', cst.EA_DATA_NAMES[0],
                '平均<br>利益', '最大<br>利益', '期待値', '平均<br>損失', '最大<br>損失',
                '現行', '推奨', '勝率<br>50', 'DD<br>10', '損失<br>3']
 
@@ -347,16 +347,13 @@ def _edit_unit_list():
         # HTMLヘッダー
         html = '<html><head><title>EA個別成績</title>'
         html += '<meta charset="utf-8"/></head><body><div align="center">'
-        html += '<table cellspacing="0" cellpadding="0"><tr>'
-        html += '<td class="title col" align="center">EA個別成績</td></tr><tr><td>'
         html += '<table cellspacing="0" cellpadding="0"><tr align="center">'
         html += "".join(['<td class="col">' + col + '</td>' for col in LIST_HEADER]) + '</tr>'
 
         html += html_data
 
         # HTMLフッター(スタイル)
-        html += '</table></td></tr></table></div><style type="text/css">'
-        html += '.title    {font-size: 24px;}'
+        html += '</table></div><style type="text/css">'
         html += '.col      {border: 1px solid #DDDDDD; padding: 5px 15px; background: #FFFFAA;}'
         html += '.ea_row   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #FFFFFF;}'
         html += '.ea_all   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #CCFFCC;}'

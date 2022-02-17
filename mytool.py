@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import pandas as pd
 
 from const import cst
 from common import com
+from business.multiple import web_login
 
 import os.path
 import argparse
@@ -27,47 +29,78 @@ BTNS = {
         'EAデータ編集': 'windows.ea_edits',
         'EAテスト結合': 'windows.ea_merge_test',
         'EAテスト': 'windows.ea_auto_test',
-        'ログイン': 'mac..web.login',
     },
     menu2: {
         'Pochi': 'multiple.blog_pochi',
         '資産': 'mac.my_asset',
         '英単語': 'mac.eng1min',
-        'ログイン': 'multiple.web.login',
     },
 }
-WIN_X_MINUS = 150
-WIN_Y_MINUS = 220
+WIN_X_MINUS = 130
+WIN_Y_MINUS = 160 + (int(len(BTNS['Mac']) + 2) * 22)
 
 
 def main():
 
-    # ログフォルダの作成
-    log_path = cst.TEMP_PATH[cst.PC] + 'Log'
-    if not os.path.exists(log_path):
-        os.mkdir(log_path)
+    wd = []
+
+    # メニュー系CSV読み込み
+    if not _get_menu():
+        exit()
 
     # 通常の場合、画面表示
     if args.Function is None:
         com.log('ツール起動: ' + cst.PC)
         win_x, win_y = pgui.size()
-        layout = [[sg.Button(btn, key=btn, font=('', 16), size=
-                  ((10, 1) if cst.PC == menu2 else (15, 1)))] for btn in BTNS[cst.PC]]
 
-        window = sg.Window(cst.PC, modal=True, background_color=cst.MAIN_BGCOLOR,
-                           location=((win_x - WIN_X_MINUS, win_y - WIN_Y_MINUS)
-                                     if cst.PC == menu2 else (None, None)), layout=layout)
+        fold = [cst.MENU_CSV['Fold'].at[i, 'Name']
+                for i in range(0, len((cst.MENU_CSV['Fold']))) if cst.MENU_CSV['Fold'].at[i, 'Type'] == cst.PC]
+        web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len((cst.MENU_CSV['Web'])))]
+
+        layout = [[sg.Text('', key='act', background_color=cst.MAIN_ACT_COLOR[0], text_color=cst.MAIN_ACT_COLOR[1],
+                           size=((11 if cst.PC == menu2 else 16), 1), font=('', 18),
+                           pad=((0, 0), (0, 5)))],
+                  [sg.Combo(fold, key='Fold', enable_events=True, readonly=True,
+                            font=('', 16), size=((10 if cst.PC == menu2 else 15), 1), pad=((0, 0), (0, 5)))],
+                  [sg.Combo(web, key='Web', enable_events=True, readonly=True,
+                            font=('', 16), size=((10 if cst.PC == menu2 else 15), 1), pad=((0, 0), (0, 5)))],
+                  [[sg.Button(btn, key=btn, font=('', 16), pad=((0, 0), (0, 5)),
+                              size=((10 if cst.PC == menu2 else 15), 1))] for btn in BTNS[cst.PC]]]
+
+        window = sg.Window(cst.PC, modal=True, element_justification='c', background_color=cst.MAIN_BGCOLOR,
+                           element_padding=((0, 0), (0, 0)), margins=(0, 0), location=
+                           ((win_x - WIN_X_MINUS, win_y - WIN_Y_MINUS)
+                            if cst.PC == menu2 else (None, None)), layout=layout)
         # 画面のイベント監視
         while True:
             event, values = window.read()
 
             # 画面の×ボタンで終了
-            if event == sg.WIN_CLOSED:
+            if sg.WIN_CLOSED == event:
                 com.log('ツール終了: ' + cst.PC)
                 exit()
 
-            # 画面で選択した場合
+            # セレクト選択した場合
+            if event in ['Fold', 'Web']:
+                menu = cst.MENU_CSV[event]
+
+                select = (menu[(menu['Type'] == cst.PC) & (menu['Name'] == values[event])]['Path'].values[0]
+                          if 'Fold' == event else
+                          menu[(menu['Name'] == values[event])])
+
+                window['act'].update(event[0] + ': ' + values[event])
+                window[event].update('')
+
+                # Foldセレクトで選択した場合
+                if 'Fold' == event:
+                    subprocess.Popen(['explorer' if 'Win' == cst.PC else 'open', select])
+                else:
+                    wd.append(web_login.WebLogin('ログイン').do(select['Name'].values[0], select['URL'].values[0]))
+
+            # ボタン選択した場合
             else:
+                window['act'].update(event)
+
                 # 動的モジュールを実行
                 if 'Win' == cst.PC:
                     _run(event)
@@ -103,6 +136,25 @@ def _run(event):
     instance = importlib.import_module(module_name)
     module = getattr(instance, class_name)
     return module(event).do()
+
+
+# メニュー系CSV読み込み
+def _get_menu():
+    path = cst.GDRIVE_PATH[cst.PC] + 'menu/'
+    err_msg = ''
+    try:
+        for file in cst.MENU_CSV:
+            cst.MENU_CSV[file] = pd.read_csv(path + file + '.csv', encoding='cp932')
+
+    except Exception as e:
+        com.log('読み込みエラー: ' + path + file + ' |' + str(e))
+        err_msg += '\n　' + path + file
+
+    if 0 < len(err_msg):
+        com.dialog('読み込みエラー\n' + err_msg, '読み込みエラー', 'E')
+        return False
+
+    return True
 
 
 if __name__ == '__main__':

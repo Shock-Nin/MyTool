@@ -11,6 +11,7 @@ from business. windows import ea_edit_stat
 import os
 import pandas as pd
 
+
 class EaEdits:
 
     def __init__(self, job):
@@ -78,10 +79,10 @@ def name_list(lists):
 
     names = []
     try:
-        datas = pd.read_html(lists, encoding='utf8', header=0, na_values=0)[1]
+        datas = pd.read_html(lists, encoding='utf8', header=0, na_values=0)[0]
         for i in range(0, len(datas)):
 
-            name = datas.at[i, '名前'].split('_')[0]
+            name = datas.at[i, cst.EA_DATA_NAMES[0]].split('_')[0]
             if name not in names:
                 names.append(name)
 

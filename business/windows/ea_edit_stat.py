@@ -173,7 +173,7 @@ def _edit_stat_status():
                 base_tag = '<td class="' + ea_class + '" align="right">'
 
                 if 0 == len(total_row):
-                    total_row += '<td class="col">EA統合成績</td>'
+                    total_row += '<td class="col">' + cst.EA_DATA_NAMES[1] + '</td>'
                     total_row += "".join(['<td class="col">' + col + '</td>' for col in OUT_HEADERS[0]]) + '</tr>'
 
                 # 名前とリンクの作成
@@ -220,7 +220,7 @@ def _edit_stat_status():
                 # 年率
                 if 0 == len(years_row):
                     # ヘッダー上段(年)
-                    years_row += '<td class="col" rowspan="2">EA統合年率</td>'
+                    years_row += '<td class="col" rowspan="2">' + cst.EA_DATA_NAMES[2] + '</td>'
                     for k in reversed(range(len(years_annuals) - 3, len(years_annuals))):
                         years_row += '<td class="col year" colspan="5">' + str(years_annuals[k]) + '</td>'
                     for k in reversed(range(0, len(years_annuals) - 3)):
@@ -275,14 +275,12 @@ def _edit_stat_status():
             # HTMLヘッダー
             html = '<html><head><title>EA統合' + OUT_NAMES[i] + '</title>'
             html += '<meta charset="utf-8"/></head><body><div align="center">'
-            html += '<table cellspacing="0" cellpadding="0"><td>'
             html += '<table cellspacing="0" cellpadding="0"><tr align="center">'
 
             html += html_datas[i]
 
             # HTMLフッター(スタイル)
-            html += '</table></td></tr></table></div><style type="text/css">'
-            html += '.title    {font-size: 24px;}'
+            html += '</table></div><style type="text/css">'
             html += '.col      {border: 1px solid #DDDDDD; padding: 5px 15px; background: #FFCCCC;}'
             html += '.ea_row   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #FFFFFF;}'
             html += '.ea_all   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #CCFFFF;}'

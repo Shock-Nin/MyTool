@@ -46,6 +46,9 @@ TEST_LINK = {
     'Win': 'http://' + DEV_IP + '/test/',
 }
 
+# メニュー系CSV
+MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None}
+
 # EAパラメータのファイルパス(Googleドライブ)
 PRM_PATH = 'FX/Presets/'
 

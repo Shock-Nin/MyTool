@@ -27,8 +27,7 @@ match = matching.match
 # web
 from common import web
 driver = web.driver
-get_tag = web.get_tag
-get_text = web.get_text
+find_element = web.find_element
 
 
 # 日時を文字型で取得
@@ -38,7 +37,7 @@ def str_time(ymd=True):
 
 # 実行メソッドの取得
 def get_method(before=0):
-    stack = inspect.stack()[before + 3]
+    stack = inspect.stack()[before + 2]
     file = stack.filename.replace(os.getcwd(), '')
     return file[1: file.rfind('.')] + '/' + stack.function
 
@@ -46,6 +45,7 @@ def get_method(before=0):
 # ログをレベルに応じて出力
 def log(msg, lv=''):
     logger = _format()
+    msg = '[' + get_method() + '] ' + msg
     if 'E' == lv:
         logger.error(msg)
     elif 'W' == lv:
@@ -58,8 +58,13 @@ def log(msg, lv=''):
 def _format():
     logger = logging.getLogger(__name__)
     logging.basicConfig(
-        format='%(asctime)s %(levelname)s[' + get_method() + '] %(message)s', level=logging.INFO,
+        format='%(asctime)s %(levelname)s%(message)s', level=logging.INFO,
         handlers=[logging.StreamHandler(), logging.FileHandler(
             cst.TEMP_PATH[cst.PC] + 'Log/' +
             datetime.datetime.now().strftime('%Y-%m-%d').replace('-', '').split(' ')[0] + '.log')])
     return logger
+
+
+# ログフォルダの作成
+if not os.path.exists(cst.TEMP_PATH[cst.PC]):
+    os.mkdir(cst.TEMP_PATH[cst.PC])
