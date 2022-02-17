@@ -93,7 +93,8 @@ def main():
 
                 # Foldセレクトで選択した場合
                 if 'Fold' == event:
-                    subprocess.Popen(['explorer' if 'Win' == cst.PC else 'open', select])
+                    subprocess.Popen(['explorer' if 'Win' == cst.PC else 'open',
+                                      select.replace('/', '\\') if 'Win' == cst.PC else select])
                 else:
                     wd.append(web_login.WebLogin('ログイン').do(select['Name'].values[0], select['URL'].values[0]))
 
