@@ -9,21 +9,21 @@ def driver():
     return webdriver.Chrome(ChromeDriverManager().install())
 
 
-def find_element(wd, name):
+def find_element(wd, element):
     try:
-        return wd.find_element_by_id(name)
+        return wd.find_element_by_id(element)
     except: pass
     try:
-        return wd.find_element_by_name(name)
+        return wd.find_element_by_name(element)
     except: pass
     try:
-        return wd.find_element_by_xpath(name)
+        return wd.find_element_by_xpath(element)
     except: pass
     try:
-        return wd.find_element_by_link_text(name)
+        return wd.find_element_by_link_text(element)
     except: pass
     try:
-        return wd.find_element_by_css_selector(name)
+        return wd.find_element_by_css_selector(element)
     except: pass
 
     return None

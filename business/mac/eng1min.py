@@ -71,11 +71,11 @@ class Eng1min:
             else:
                 self.move = 0
                 self.last_x, self.last_y = pgui.position()
-            window['turn'].update(str(self.turn) + '\n' + str(self.move))
+            window['turn'].update(' ' + str(self.turn) + '\n ' + str(int(self.move / 20)))
 
             # 監視待機回数未満なら動作なし
             if self.move < cst.ENG1MIN_MONITOR:
-                if 2 < self.move:
+                if 0 == self.move % 5:
                     print('Move: ' + str(self.move))
                 continue
 
@@ -144,9 +144,9 @@ class Eng1min:
 
     def _window(self, stop_btn):
         return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color=self.bgcolor,
-                         location=(self.win_x - 50, 0), margins=(5, 5), layout=
+                         location=(self.win_x - 50, 0), margins=(5, 5), icon=(os.getcwd() + cst.ICON_FILE), layout=
                          [[sg.Button(stop_btn, key='replay', font=('', 12), pad=((0, 0), (0, 0))),
-                          sg.Text(str(self.turn) + '\n' + str(self.move), key='turn', size=(2, 0), pad=((0, 0), (0, 0)),
+                          sg.Text(' ' + str(self.turn) + '\n ' + str(int(self.move / 20)), key='turn', size=(2, 0), pad=((0, 0), (0, 0)),
                           background_color=self.bgcolor, text_color='#000000')]])
 
     # イベントのアクション

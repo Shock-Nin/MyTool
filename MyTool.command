@@ -9,3 +9,6 @@ END
 cd MyTool
 source venv/bin/activate
 python mytool.py
+
+# osascript -e 'tell application "Terminal" to close first window'
+# killall Terminal

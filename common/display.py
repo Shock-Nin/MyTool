@@ -3,6 +3,7 @@
 
 from const import cst
 
+import os
 import PySimpleGUI as sg
 
 
@@ -16,8 +17,9 @@ def dialog(msg, title, lv=''):
     else:
         layout = [sg.Column([txt], size=(500, 300), scrollable=True, background_color=color)]
 
-    window = sg.Window(title, keep_on_top=True, modal=True, background_color=color, element_justification='c', layout=[
-        layout, [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
+    window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
+                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       layout=[layout, [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
 
     while True:
         event, values = window.read(timeout=0)
@@ -34,8 +36,9 @@ def question(msg, title, lv='', cancel=False):
            sg.Button('いいえ', key='いいえ', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
     if cancel:
         btn.append(sg.Button('中断', key='中断', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#555555'))
-    window = sg.Window(title, keep_on_top=True, modal=True, background_color=color, element_justification='c', layout=[
-        [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])
+    window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
+                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       layout=[[sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])
 
     flg = 0
     while True:
@@ -64,7 +67,8 @@ def progress(title, bar1, bar2=None, bar3=None):
         lists.append(bar3)
 
     window = sg.Window(
-        title, keep_on_top=True, no_titlebar=True, modal=True, element_justification='c', background_color=color,layout=[
+        title, keep_on_top=True, no_titlebar=True, modal=True, element_justification='c',
+        icon=(os.getcwd() + cst.ICON_FILE), background_color=color, layout=[
             [sg.Text(title, background_color=color, text_color='#000000', font=('', 16), pad=((10, 10), (20, 10)))],[[
                 [sg.Text(bar[0], key=bar[0], background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (5, 5)))],
                 [sg.ProgressBar(key=bar[0] + '_', max_value=bar[1], bar_color='#008000', size=(30, 20), pad=((15, 15), (5, 5)))]]

@@ -52,6 +52,9 @@ MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None}
 # EAパラメータのファイルパス(Googleドライブ)
 PRM_PATH = 'FX/Presets/'
 
+# アイコン
+ICON_FILE = '/item/img/logo.ico'
+
 # ネットワーク
 import platform
 pf = platform.system()

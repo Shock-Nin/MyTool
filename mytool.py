@@ -42,7 +42,7 @@ WIN_Y_MINUS = 160 + (int(len(BTNS['Mac']) + 2) * 22)
 
 def main():
 
-    wd = []
+    processes = []
 
     # メニュー系CSV読み込み
     if not _get_menu():
@@ -63,12 +63,13 @@ def main():
                   [sg.Combo(fold, key='Fold', enable_events=True, readonly=True,
                             font=('', 16), size=((10 if cst.PC == menu2 else 15), 1), pad=((0, 0), (0, 5)))],
                   [sg.Combo(web, key='Web', enable_events=True, readonly=True,
-                            font=('', 16), size=((10 if cst.PC == menu2 else 15), 1), pad=((0, 0), (0, 5)))],
+                            font=('', 16), size=((10 if cst.PC == menu2 else 15), 1), pad=((0, 0), (0, 15)))],
                   [[sg.Button(btn, key=btn, font=('', 16), pad=((0, 0), (0, 5)),
                               size=((10 if cst.PC == menu2 else 15), 1))] for btn in BTNS[cst.PC]]]
 
         window = sg.Window(cst.PC, modal=True, element_justification='c', background_color=cst.MAIN_BGCOLOR,
-                           element_padding=((0, 0), (0, 0)), margins=(0, 0), location=
+                           element_padding=((0, 0), (0, 0)), margins=(0, 0),
+                           icon=(os.getcwd() + cst.ICON_FILE), location=
                            ((win_x - WIN_X_MINUS, win_y - WIN_Y_MINUS)
                             if cst.PC == menu2 else (None, None)), layout=layout)
         # 画面のイベント監視
@@ -95,12 +96,13 @@ def main():
                 if 'Fold' == event:
                     subprocess.Popen(['explorer' if 'Win' == cst.PC else 'open',
                                       select.replace('/', '\\') if 'Win' == cst.PC else select])
+                    com.log('フォルダ: ' + select)
                 else:
-                    wd.append(web_login.WebLogin('ログイン').do(select['Name'].values[0], select['URL'].values[0]))
+                    processes.append(web_login.WebLogin('ログイン').do(select['Name'].values[0], select['URL'].values[0]))
 
             # ボタン選択した場合
             else:
-                window['act'].update(event)
+                window['act'].update('  ' + event)
 
                 # 動的モジュールを実行
                 if 'Win' == cst.PC:
@@ -113,7 +115,9 @@ def main():
 
     # バッチの場合
     elif 'Batch' == args.Function:
-        com.log(args.Function)
+        com.log('Batch開始:' + args.Function)
+        _run(args.Function)
+        com.log('Batch終了:' + args.Function)
 
     # 機能単独起動の場合
     elif 0 < len(args.Function):
