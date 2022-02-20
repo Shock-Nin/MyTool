@@ -20,8 +20,7 @@ a = Analysis(['mytool.py'],
 
 a.datas += [('item/img/logo.ico', '.\\item\\/img\\logo.ico', 'Data')]
 
-pyz = PYZ(a.pure, a.zipped_data,
-             cipher=block_cipher)
+pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(pyz,
           a.scripts,

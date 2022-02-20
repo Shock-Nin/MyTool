@@ -5,7 +5,7 @@ import pandas as pd
 from const import cst
 from common import com
 from business.multiple import web_login
-from business.Batch.batch import Batch
+from batch import Batch
 
 import os.path
 import argparse
@@ -14,7 +14,6 @@ import threading
 import pyautogui as pgui
 import PySimpleGUI as sg
 import subprocess
-from subprocess import PIPE
 
 CHANGE_MENU = 0
 MULTI_PROCESS = ['英単語']

@@ -4,8 +4,10 @@
 Windowsタスクスケジューラ
 　プログラム
 　　C:/Users/Administrator/Documents/MyTool/venv/Scripts/python.exe
+　　C:/Users/Administrator/Documents/MyTool/mytool.exe
 　引数
 　　mytool.py -f Batch
+　　-f Batch
 　開始
 　　C:/Users/Administrator/Documents/MyTool
 """
