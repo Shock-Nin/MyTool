@@ -45,7 +45,6 @@ class Eng1min:
             # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    com.close(self.myjob)
                     return
                 else:
                     if is_stop is not None:
@@ -63,7 +62,6 @@ class Eng1min:
                 # 画面のイベント監視
                 if is_normal is None:
                     if window is None:
-                        com.close(self.myjob)
                         return
                     else:
                         if is_stop is not None:
@@ -108,7 +106,6 @@ class Eng1min:
             # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    com.close(self.myjob)
                     return
                 else:
                     if is_stop is not None:
@@ -139,7 +136,6 @@ class Eng1min:
             # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    com.close(self.myjob)
                     return
                 else:
                     if is_stop is not None:
