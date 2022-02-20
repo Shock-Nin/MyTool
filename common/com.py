@@ -61,8 +61,15 @@ def _format():
     return logger
 
 
-# ログフォルダの作成
+# ログフォルダ作成
 if not os.path.exists(cst.TEMP_PATH[cst.PC]):
     os.mkdir(cst.TEMP_PATH[cst.PC])
 if not os.path.exists(cst.TEMP_PATH[cst.PC] + 'Log'):
     os.mkdir(cst.TEMP_PATH[cst.PC] + 'Log')
+
+# ログファイル削除
+files = os.listdir(cst.TEMP_PATH[cst.PC] + 'Log')
+files.sort()
+for i in range(0, len(files) - cst.KEEP_LOG):
+    os.remove(cst.TEMP_PATH[cst.PC] + 'Log/' + files[i])
+    log('ログ削除: ' + files[i])

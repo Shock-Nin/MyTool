@@ -42,7 +42,7 @@ WIN_Y_MINUS = 160 + (int(len(BTNS['Mac']) + 2) * 22)
 
 
 def main():
-
+    import requests
     processes = []
 
     # メニュー系CSV読み込み
@@ -51,7 +51,7 @@ def main():
 
     # 通常の場合、画面表示
     if args.Function is None:
-        com.log('ツール起動: ' + cst.PC)
+        com.log('ツール起動: ' + cst.IP + ' | ' + cst.PC)
         win_x, win_y = pgui.size()
 
         fold = [cst.MENU_CSV['Fold'].at[i, 'Name']
@@ -129,7 +129,7 @@ def main():
         if 0 < len(msg):
             com.log('Batch終了: ' + msg)
         else:
-            com.log('Batch: 稼働なし')
+            com.log('Batch稼働なし: ' + cst.IP)
 
     # 機能単独起動の場合
     elif 0 < len(args.Function):

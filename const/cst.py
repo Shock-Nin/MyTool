@@ -4,6 +4,9 @@
 from const import path
 from const import url
 
+# ログファイル保存数
+KEEP_LOG = 20
+
 # 英単語再生、監視待機回数(3秒単位)
 ENG1MIN_MONITOR = 20
 
@@ -22,7 +25,12 @@ MAIN_BGCOLOR = '#FFCCFF' if 'Win' == path.PC else '#AAFFAA'
 MAIN_ACT_COLOR = ['#FFFF77', '#000000']
 
 # Path
+IP = path.IP
 PC = path.PC
+WEB_IP = path.WEB_IP
+MY_IP = path.MY_IP
+DEV_IP = path.DEV_IP
+MAC_IP = path.MAC_IP
 CURRENT_PATH = path.CURRENT_PATH
 GDRIVE_PATH = path.GDRIVE_PATH
 TEMP_PATH = path.TEMP_PATH

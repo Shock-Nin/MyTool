@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import requests
+IP = requests.get('https://ifconfig.me').text
 
+WEB_IP = '164.70.84.131'
+MY_IP = '164.70.84.169'
 DEV_IP = '164.70.84.254'
+
+MAC_IP = '133.32.224.211'
 
 CURRENT_PATH = {
     'Mac': '/Users/dsk_nagaoka/',
@@ -45,6 +51,15 @@ TEST_LINK = {
     'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
     'Win': 'http://' + DEV_IP + '/test/',
 }
+
+RM_EXE = GDRIVE_PATH['Win'] + 'app/ReportManager'
+
+TICK_HISTORY = [
+    'C:/Program Files (x86)/Tickstory/Tickstory.exe',
+    CURRENT_PATH['Win'] + 'Documents/MT4/history'
+]
+
+
 
 # メニュー系CSV
 MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None, 'Sql': None}
