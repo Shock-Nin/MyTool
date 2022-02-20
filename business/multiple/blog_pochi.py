@@ -23,7 +23,7 @@ class BlogPochi:
         com.log('ブログクリック開始')
         menu = cst.MENU_CSV['PwWeb']
         ok_cnt = 0
-        max_cnt = (4 if self.is_batch else 5)
+        max_cnt = (4 if self.is_batch or 'Mac' != cst.PC else 5)
 
         try:
             self.wd.get(cst.BLOG_URL)
@@ -52,7 +52,11 @@ class BlogPochi:
                     com.sleep(1)
                 except: pass
 
-                web_driver.find_element(self.wd, blog_title).click()
+                if 'Mac' == cst.PC:
+                    web_driver.find_element(self.wd, blog_title).click()
+                else:
+                    self.wd.get('https://blog.with2.net/out.php?id=1487139&url=https%3A%2F%2F' +
+                                cst.BLOG_URL.replace('https://', ''))
                 ok_cnt += 1
 
                 com.log('ランキング: OUT ' + str(ok_cnt) + '/' + str(max_cnt))

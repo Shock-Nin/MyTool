@@ -5,6 +5,7 @@ import pandas as pd
 from const import cst
 from common import com
 from business.multiple import web_login
+from business.Batch.batch import Batch
 
 import os.path
 import argparse
@@ -125,15 +126,17 @@ def main():
 
     # バッチ起動の場合
     elif 'Batch' == args.Function:
-        com.log('Batch開始:' + args.Function)
-        _run(args.Function)
-        com.log('Batch終了:' + args.Function)
+        msg = Batch.do(args.Function)
+        if 0 < len(msg):
+            com.log('Batch終了: ' + msg)
+        else:
+            com.log('Batch: 稼働なし')
 
     # 機能単独起動の場合
     elif 0 < len(args.Function):
-        com.log('Function開始:' + args.Function)
+        com.log('Function開始: ' + args.Function)
         _run(args.Function)
-        com.log('Function終了:' + args.Function)
+        com.log('Function終了: ' + args.Function)
 
 
 # 動的モジュールの実行

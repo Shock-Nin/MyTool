@@ -22,7 +22,10 @@ def dialog(msg, title, lv=''):
                        layout=[layout, [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
 
     while True:
-        event, values = window.read(timeout=0)
+        if 'Mac' == cst.PC:
+            event, values = window.read(timeout=0)
+        else:
+            event, values = window.read()
         if event in [sg.WIN_CLOSED, 'OK']:
             break
     window.close()
@@ -42,7 +45,10 @@ def question(msg, title, lv='', cancel=False):
 
     flg = 0
     while True:
-        event, values = (window.read() if 'Win' == cst.PC else window.read(timeout=0))
+        if 'Mac' == cst.PC:
+            event, values = window.read(timeout=0)
+        else:
+            event, values = window.read()
         if event in [sg.WIN_CLOSED, '中断']:
             break
         elif 'はい' == event:
@@ -70,7 +76,10 @@ def dialog_cols(msg, cols, aligns, title, lv=''):
                                [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
 
     while True:
-        event, values = window.read(timeout=0)
+        if 'Mac' == cst.PC:
+            event, values = window.read(timeout=0)
+        else:
+            event, values = window.read()
         if event in [sg.WIN_CLOSED, 'OK']:
             break
     window.close()
