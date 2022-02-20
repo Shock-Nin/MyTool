@@ -5,7 +5,10 @@ from common import com
 from const import cst
 
 import subprocess
-from subprocess import PIPE
+
+from business. windows import ea_edits as inheritance
+
+EA_EXE = cst.MT4_DEV[cst.PC] + '/terminal.exe /portable'
 
 
 class EaAutoTest:
@@ -15,14 +18,29 @@ class EaAutoTest:
 
     def do(self):
 
+        prm_lists = inheritance.prm_list()
+        print(prm_lists)
+
         if com.question('開始しますか？', '開始確認') <= 0:
             return None
 
-        process = subprocess.run(cst.RM_EXE + '/reportmanager.exe', shell=True, stdout=PIPE, stderr=PIPE, text=True)
+        process = subprocess.Popen(EA_EXE)
 
-        is_end = []
-        if 0 < len(is_end):
-            return com.close(is_end)
+        # while True:
+        #     try:
+        #         process.universal_newlines
+        #         break
+        #     except: pass
+
+        print(str(process.universal_newlines))
+
+
+        com.sleep(10)
+
+        print(str(process.universal_newlines))
+
+
+        process.kill()
 
         com.close(self.myjob)
         return

@@ -4,6 +4,8 @@
 from common import com
 from const import cst
 
+import subprocess
+
 
 class EaMergeTest:
 
@@ -16,8 +18,15 @@ class EaMergeTest:
         if com.question('開始しますか？', '開始確認') <= 0:
             return None
 
-        is_end = []
-        if 0 < len(is_end):
-            return com.close(is_end)
+        process = subprocess.Popen(cst.RM_EXE + '/reportmanager.exe')
 
-        return com.close(self.myjob)
+
+
+        com.sleep(10)
+
+
+
+        process.kill()
+
+        com.close(self.myjob)
+        return

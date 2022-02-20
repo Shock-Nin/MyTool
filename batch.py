@@ -33,19 +33,19 @@ class Batch:
             if 0 < len(job):
                 jobs.append(job)
 
-            # Web端末
+            # Web端末(5・35分)
             if cst.WEB_IP == cst.IP:
                 job = self._windows_web()
                 if 0 < len(job):
                     jobs.append(job)
 
-            # My端末
+            # My端末(15・45分)
             if cst.MY_IP == cst.IP:
                 job = self._windows_my()
                 if 0 < len(job):
                     jobs.append(job)
 
-            # DEV端末
+            # DEV端末(20・50分)
             if cst.DEV_IP == cst.IP:
                 job = self._windows_dev()
                 if 0 < len(job):
@@ -58,7 +58,7 @@ class Batch:
         jobs = []
 
         # 30分未満の場合にのみ実行
-        if self.now.hour < 30:
+        if self.now.minute < 30:
             pass
 
         # 30分以上の場合にのみ実行
@@ -73,12 +73,18 @@ class Batch:
 
         return ", ".join([job for job in jobs])
 
-    # WindpwsServer Webバッチ
+    # WindpwsServer Webバッチ(5・35分)
     def _windows_web(self):
         jobs = []
 
+        # 土曜日12時～月曜4字まで休止
+        if ((5 == self.now.weekday and 12 < self.now.hour)
+                or 6 == self.now.weekday
+                or (5 == self.now.weekday and self.now.hour < 4)):
+            return jobs
+
         # 30分未満の場合にのみ実行
-        if self.now.hour < 30:
+        if self.now.minute < 30:
             pass
 
         # 30分以上の場合にのみ実行
@@ -87,12 +93,12 @@ class Batch:
 
         return ", ".join([job for job in jobs])
 
-    # WindpwsServer Myバッチ
+    # WindpwsServer Myバッチ(15・45分)
     def _windows_my(self):
         jobs = []
 
         # 30分未満の場合にのみ実行
-        if self.now.hour < 30:
+        if self.now.minute < 30:
             pass
 
         # 30分以上の場合にのみ実行
@@ -101,12 +107,12 @@ class Batch:
 
         return ", ".join([job for job in jobs])
 
-    # WindpwsServer DEVバッチ
+    # WindpwsServer DEVバッチ(20・50分)
     def _windows_dev(self):
         jobs = []
 
         # 30分未満の場合にのみ実行
-        if self.now.hour < 30:
+        if self.now.minute < 30:
             pass
 
         # 30分以上の場合にのみ実行

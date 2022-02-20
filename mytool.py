@@ -27,9 +27,9 @@ else:
 BTNS = {
     menu1: {
         'Pochi': 'multiple.blog_pochi',
-        'EAデータ編集': 'windows.ea_edits',
-        'EAテスト結合': 'windows.ea_merge_test',
         'EAテスト': 'windows.ea_auto_test',
+        'EAテスト結合': 'windows.ea_merge_test',
+        'EAデータ編集': 'windows.ea_edits',
     },
     menu2: {
         'Pochi': 'multiple.blog_pochi',
@@ -47,7 +47,7 @@ def main():
 
     # メニュー系CSV読み込み
     if not _get_menu():
-        exit()
+        return
 
     # 通常の場合、画面表示
     if args.Function is None:
@@ -80,7 +80,7 @@ def main():
             # 画面の×ボタンで終了
             if sg.WIN_CLOSED == event:
                 com.log('ツール終了: ' + cst.PC)
-                exit()
+                return
             com.sleep(1)
 
             # セレクト選択した場合、ターミナルコマンドを実行
@@ -140,9 +140,6 @@ def main():
 
 # 動的モジュールの実行
 def _run(event):
-
-    # subprocess.run(os.getcwd() + '/venv/bin python' + '.py', shell=True, stdout=PIPE, stderr=PIPE, text=True)
-    # subprocess.run(os.getcwd() + '/venv/Scripts/python.exe' + '.py', shell=True, stdout=subprocess.PIPE, encoding="shift-jis")
 
     fnction = BTNS[cst.PC][event]
     module_name = 'business.' + fnction

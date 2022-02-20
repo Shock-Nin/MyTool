@@ -86,7 +86,7 @@ def dialog_cols(msg, cols, aligns, title, lv=''):
 
 
 # 進捗表示
-def progress(title, bar1, bar2=None, bar3=None):
+def progress(title, bar1, bar2=None, bar3=None, interrupt=False):
 
     color = '#FFCCCC'
     lists = [bar1]
@@ -95,13 +95,20 @@ def progress(title, bar1, bar2=None, bar3=None):
     if bar3 is not None:
         lists.append(bar3)
 
+    layout = [
+        [sg.Text(title, background_color=color, text_color='#000000', font=('', 16), pad=((10, 10), (20, 10)))], [[
+            [sg.Text(bar[0], key=bar[0], background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (5, 5)))],
+            [sg.ProgressBar(key=bar[0] + '_', max_value=bar[1], bar_color='#008000', size=(30, 20), pad=((15, 15), (5, 5)))]]
+            for bar in lists], [sg.Text('', background_color=color)]
+    ]
+    # 中断ボタン interrupt = (event in [sg.WIN_CLOSED, 'interrupt'])
+    if interrupt:
+        layout.append([sg.Button('中断', key='interrupt', font=('', 16),
+                                 pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')])
+
     window = sg.Window(
         title, keep_on_top=True, no_titlebar=True, modal=True, element_justification='c',
-        icon=(os.getcwd() + cst.ICON_FILE), background_color=color, layout=[
-            [sg.Text(title, background_color=color, text_color='#000000', font=('', 16), pad=((10, 10), (20, 10)))],[[
-                [sg.Text(bar[0], key=bar[0], background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (5, 5)))],
-                [sg.ProgressBar(key=bar[0] + '_', max_value=bar[1], bar_color='#008000', size=(30, 20), pad=((15, 15), (5, 5)))]]
-                for bar in lists], [sg.Text('', background_color=color)]])
+        icon=(os.getcwd() + cst.ICON_FILE), background_color=color, layout=layout)
 
     return window
 

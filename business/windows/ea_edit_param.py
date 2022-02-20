@@ -9,7 +9,7 @@ from business. windows import ea_edits as inheritance
 import os
 import pandas as pd
 
-PRM_PATHS = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
+PRM_PATH = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
 MQ4_PATH = cst.MT4_DEV[cst.PC] + 'MQL4/Experts/'
 
 
@@ -43,39 +43,25 @@ class EaEditParam:
 # .setファイルをCSV化
 def _edit_setfiles():
 
+    # .setファイル名のリストを取得
+    prm_lists = inheritance.prm_list()
     read_files = []
     err_msg = ''
 
-    paths = os.listdir(PRM_PATHS)
+    # リストからファイルの読み込み
+    for path in prm_lists:
+        files = os.listdir(PRM_PATH + path[0])
+        read_file = []
 
-    for key1 in cst.EA_PATHS:
-        for path in paths:
+        for file in files:
+            try:
+                read_file.append(open(PRM_PATH + path[0] + '/' + file, 'r').read())
 
-            # 並び順でなければパス
-            if path != cst.EA_PATHS[key1][0]:
-                continue
-            # フォルダでなければパス
-            if not os.path.isdir(PRM_PATHS + path):
-                continue
+            except Exception as e:
+                err_msg += '\n　' + path[0] + file + '\n　　' + str(e)
+                com.log(str(e))
 
-            files = os.listdir(PRM_PATHS + path)
-            read_file = []
-
-            for key2 in cst.CURRNCYS_EA:
-                for file in files:
-                    try:
-                        # 並び順でなければパス
-                        if file.find(key2) < 0:
-                            continue
-                        # .setファイルでなければパス
-                        if 0 <= file.find('.set'):
-                            read_file.append(open(PRM_PATHS + path + '/' + file, 'r').read())
-
-                    except Exception as e:
-                        err_msg += '\n　' + path + file + '\n　　' + str(e)
-                        com.log(str(e))
-
-            read_files.append(read_file)
+        read_files.append(read_file)
 
     # エラーファイルが1つでもあれば中断
     if 0 < len(err_msg):
@@ -224,7 +210,7 @@ def _edit_mqlfiles():
 # 照合用test.setファイルをCSV化
 def _edit_test_file():
 
-    file = PRM_PATHS + 'test.set'
+    file = PRM_PATH + 'test.set'
     try:
         with open(file, 'r') as infile:
             datas = infile.read().split('\n')

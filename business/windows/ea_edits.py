@@ -11,6 +11,8 @@ from business. windows import ea_edit_stat
 import os
 import pandas as pd
 
+PRM_PATH = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
+
 
 class EaEdits:
 
@@ -38,6 +40,37 @@ class EaEdits:
             return
 
         com.close(self.myjob)
+
+
+# .setファイル名のリストを取得
+def prm_list():
+
+    paths = os.listdir(PRM_PATH)
+    set_files = []
+    for key1 in cst.EA_PATHS:
+        for path in paths:
+
+            # 並び順でなければパス
+            if path != cst.EA_PATHS[key1][0]:
+                continue
+            # フォルダでなければパス
+            if not os.path.isdir(PRM_PATH + path):
+                continue
+
+            files = os.listdir(PRM_PATH + path)
+            set_file = []
+
+            for key2 in cst.CURRNCYS_EA:
+                for file in files:
+                    # 並び順でなければパス
+                    if file.find(key2) < 0:
+                        continue
+                    # .setファイルでなければパス
+                    if 0 <= file.find('.set'):
+                        set_file.append(file)
+
+            set_files.append([path, set_file])
+    return set_files
 
 
 # リアルパスを規則順ソートで格納
