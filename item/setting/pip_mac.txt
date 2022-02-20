@@ -1,6 +1,6 @@
 ########## pyenvインストール ##########
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-arch -arm64 brew install brew install pyenv
+arch -arm64 brew install pyenv
 
 vi ~/.bash_profile
 export PYENV_ROOT="$HOME/.pyenv"
@@ -24,3 +24,12 @@ source .zprofile
 ########## tkinterエラー対策 ##########
 arch -arm64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 arch -arm64 /usr/local/bin/brew install tcl-tk
+
+########## pyinstaller ##########
+arch -arm64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+arch -arm64 /usr/local/bin/brew install apt-get
+arch -arm64 /usr/local/bin/brew install python3-dev
+arch -arm64 /usr/local/bin/brew install python-dev
+arch -arm64 /usr/local/bin/brew install python-yq
+
+pyinstaller mytool.spec --onefile

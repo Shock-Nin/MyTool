@@ -11,11 +11,12 @@ import pyautogui
 import numpy
 import it
 import lxml
-import html5lib
-import beautifulsoup4
 import PIL
 import Pillow
 import pandas
 import selenium
 import mysql.connector
+
+import html5lib
+import beautifulsoup4
 import pyinstaller
