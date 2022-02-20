@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import pandas as pd
 
 from const import cst
 from common import com
 from business.multiple import web_login
 from batch import Batch
 
-import os.path
+import os
 import argparse
 import importlib
 import threading
@@ -46,7 +45,7 @@ def main():
     processes = []
 
     # メニュー系CSV読み込み
-    if not _get_menu():
+    if not com.get_menu():
         return
 
     # 通常の場合、画面表示
@@ -111,17 +110,24 @@ def main():
                 window['act'].update('  ' + event)
 
                 # 動的モジュールを実行
-                if 'Win' == cst.PC:
-                    processes.append(_run(event))
+                processes.append(subprocess.Popen(
+                    ['python', os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
 
-                # Macの場合は、並列で実行
-                else:
-                    if event in MULTI_PROCESS:
-                        thread1 = threading.Thread(name="thread1", target=_run, args=(event,))
-                        processes.append(thread1.start())
-                        # thread1.join()
-                    else:
-                        processes.append(_run(event))
+                # # 動的モジュールを実行
+                # if 'Win' == cst.PC:
+                #     processes.append(_run(event))
+                #
+                # # Macの場合は、並列で実行
+                # else:
+                #     processes.append(subprocess.Popen(
+                #         ['python', os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
+                #
+                #     # if event in MULTI_PROCESS:
+                #     #     thread1 = threading.Thread(name="thread1", target=_run, args=(event,))
+                #     #     processes.append(thread1.start())
+                #     #     # thread1.join()
+                #     # else:
+                #     #     processes.append(_run(event))
 
     # バッチ起動の場合
     elif 'Batch' == args.Function:
@@ -150,25 +156,6 @@ def _run(event):
     instance = importlib.import_module(module_name)
     module = getattr(instance, class_name)
     return module(event).do()
-
-
-# メニュー系CSV読み込み
-def _get_menu():
-    path = cst.GDRIVE_PATH[cst.PC] + 'menu/'
-    err_msg = ''
-    try:
-        for file in cst.MENU_CSV:
-            cst.MENU_CSV[file] = pd.read_csv(path + file + '.csv', encoding='cp932')
-
-    except Exception as e:
-        com.log('読み込みエラー: ' + path + file + ' |' + str(e))
-        err_msg += '\n　' + path + file
-
-    if 0 < len(err_msg):
-        com.dialog('読み込みエラー\n' + err_msg, '読み込みエラー', 'E')
-        return False
-
-    return True
 
 
 if __name__ == '__main__':

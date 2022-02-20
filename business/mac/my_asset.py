@@ -322,4 +322,3 @@ class MyAsset:
             values.append(af_rbank)
 
         return is_change, layout, columns, [values]
-

@@ -8,6 +8,7 @@ import logging
 import inspect
 import datetime
 import smtplib
+import pandas as pd
 from email.mime.text import MIMEText
 
 # スリープ直接呼び出し
@@ -104,3 +105,22 @@ def send_mail(subject, body, to, account=cst.BLOG_MAIL, password=cst.BLOG_MAIL_P
     server.quit()
 
     log('メール送信: [' + to + '] ' + subject + ' : ' + body)
+
+
+# メニュー系CSV読み込み
+def get_menu():
+    path = cst.GDRIVE_PATH[cst.PC] + 'menu/'
+    err_msg = ''
+    try:
+        for file in cst.MENU_CSV:
+            cst.MENU_CSV[file] = pd.read_csv(path + file + '.csv', encoding='cp932')
+
+    except Exception as e:
+        log('読み込みエラー: ' + path + file + ' |' + str(e))
+        err_msg += '\n　' + path + file
+
+    if 0 < len(err_msg):
+        dialog('読み込みエラー\n' + err_msg, '読み込みエラー', 'E')
+        return False
+
+    return True
