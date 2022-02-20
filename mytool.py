@@ -42,7 +42,7 @@ WIN_Y_MINUS = 160 + (int(len(BTNS['Mac']) + 2) * 22)
 
 
 def main():
-    import requests
+
     processes = []
 
     # メニュー系CSV読み込み
@@ -125,7 +125,7 @@ def main():
 
     # バッチ起動の場合
     elif 'Batch' == args.Function:
-        msg = Batch.do(args.Function)
+        msg = Batch(args.Function).do()
         if 0 < len(msg):
             com.log('Batch終了: ' + msg)
         else:

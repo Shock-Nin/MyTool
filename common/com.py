@@ -7,6 +7,8 @@ import os
 import logging
 import inspect
 import datetime
+import smtplib
+from email.mime.text import MIMEText
 
 # スリープ直接呼び出し
 from time import sleep
@@ -42,8 +44,14 @@ def get_method(before=0):
 def log(msg, lv=''):
     logger = _format()
     msg = ' ' + get_method() + ' | ' + msg
+
     if 'E' == lv:
         logger.error(msg)
+
+        # エラー時は専用メールで送受信
+        send_mail('エラー発生[ ' + cst.IPS[cst.IP] + ' | ' + cst.IP + ' ]', msg,
+                  cst.ERROR_MAIL, cst.ERROR_MAIL, cst.ERROR_MAIL_PW)
+
     elif 'W' == lv:
         logger.warning(msg)
     else:
@@ -73,3 +81,26 @@ files.sort()
 for i in range(0, len(files) - cst.KEEP_LOG):
     os.remove(cst.TEMP_PATH[cst.PC] + 'Log/' + files[i])
     log('ログ削除: ' + files[i])
+
+
+# メール送信(デフォルトアカウントはブログ)
+def send_mail(subject, body, to, account=cst.BLOG_MAIL, password=cst.BLOG_MAIL_PW):
+
+    # MIMETextを作成
+    msg = MIMEText(body, 'html')
+    msg['Subject'] = subject
+    msg['To'] = to
+    msg['From'] = account
+
+    # サーバを指定する
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.starttls()
+    server.login(account, password)
+
+    # メールを送信する
+    server.send_message(msg)
+
+    # 閉じる
+    server.quit()
+
+    log('メール送信: [' + to + '] ' + subject + ' : ' + body)

@@ -51,7 +51,7 @@ class Batch:
                 if 0 < len(job):
                     jobs.append(job)
 
-        return "".join([job for job in jobs])
+        return ", ".join([job for job in jobs])
 
     # WindpwsServer 共通バッチ
     def _windows(self):

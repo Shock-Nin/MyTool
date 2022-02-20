@@ -7,8 +7,13 @@ IP = requests.get('https://ifconfig.me').text
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'
 DEV_IP = '164.70.84.254'
-
 MAC_IP = '133.32.224.211'
+IPS = {
+    WEB_IP: 'Web',
+    MY_IP: 'My',
+    DEV_IP: 'DEV',
+    MAC_IP: 'Mac',
+}
 
 CURRENT_PATH = {
     'Mac': '/Users/dsk_nagaoka/',
@@ -52,14 +57,14 @@ TEST_LINK = {
     'Win': 'http://' + DEV_IP + '/test/',
 }
 
+# ReportManagerのパス
 RM_EXE = GDRIVE_PATH['Win'] + 'app/ReportManager'
 
+# TickStoryのExeと作成先フォルダ
 TICK_HISTORY = [
     'C:/Program Files (x86)/Tickstory/Tickstory.exe',
     CURRENT_PATH['Win'] + 'Documents/MT4/history'
 ]
-
-
 
 # メニュー系CSV
 MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None, 'Sql': None}
