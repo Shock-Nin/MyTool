@@ -17,3 +17,4 @@ import PIL
 import Pillow
 import pandas
 import selenium
+import mysql.connector

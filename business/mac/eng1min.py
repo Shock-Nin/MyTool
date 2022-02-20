@@ -4,6 +4,7 @@
 from common import com
 from const import cst
 
+import os
 import cv2
 import pyautogui as pgui
 import PySimpleGUI as sg
@@ -44,7 +45,8 @@ class Eng1min:
             # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    return com.close(self.myjob)
+                    com.close(self.myjob)
+                    return
                 else:
                     if is_stop is not None:
                         continue
@@ -61,7 +63,8 @@ class Eng1min:
                 # 画面のイベント監視
                 if is_normal is None:
                     if window is None:
-                        return com.close(self.myjob)
+                        com.close(self.myjob)
+                        return
                     else:
                         if is_stop is not None:
                             continue
@@ -105,7 +108,8 @@ class Eng1min:
             # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    return com.close(self.myjob)
+                    com.close(self.myjob)
+                    return
                 else:
                     if is_stop is not None:
                         continue
@@ -135,7 +139,8 @@ class Eng1min:
             # 画面のイベント監視
             if is_normal is None:
                 if window is None:
-                    return com.close(self.myjob)
+                    com.close(self.myjob)
+                    return
                 else:
                     if is_stop is not None:
                         continue

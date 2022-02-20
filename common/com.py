@@ -15,6 +15,7 @@ from time import sleep
 from common import display
 dialog = display.dialog
 question = display.question
+dialog_cols = display.dialog_cols
 progress = display.progress
 close = display.close
 
@@ -23,11 +24,6 @@ from common import matching
 move_pos = matching.move_pos
 click_pos = matching.click_pos
 match = matching.match
-
-# web
-from common import web
-driver = web.driver
-find_element = web.find_element
 
 
 # 日時を文字型で取得

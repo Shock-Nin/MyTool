@@ -3,15 +3,21 @@
 
 from common import com
 from const import cst
+from common import web_driver
 
 
 class WebLogin:
 
     def __init__(self, job):
         self.myjob = job
-        self.wd = com.driver()
+        self.wd = web_driver.driver()
 
     def do(self, name, url):
+
+        if self.wd is None:
+            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+            return
+        self.wd.get(url)
 
         pw_type = 'PwBank'
         menu = cst.MENU_CSV[pw_type][(cst.MENU_CSV[pw_type]['SITE'] == name)]
@@ -19,11 +25,11 @@ class WebLogin:
             pw_type = 'PwWeb'
             menu = cst.MENU_CSV[pw_type][(cst.MENU_CSV[pw_type]['SITE'] == name)]
 
-        # ログイン画面を開いて、クリック情報を取得
-        self.wd.get(url)
+        # クリック情報を取得
         id1, id2, pw, btn = _get_info(name)
-
         err_msg = ''
+        
+        # ログイン画面を開いて、
         if 0 < len(id1):
             com.sleep(1)
             try:
@@ -39,65 +45,65 @@ class WebLogin:
 
                     for i in range(0, 5):
                         try:
-                            com.find_element(self.wd, id1[1]).send_keys('')
-                            com.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
-                            com.find_element(self.wd, pw).send_keys('')
-                            com.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
-                            com.find_element(self.wd, btn).click()
+                            web_driver.find_element(self.wd, id1[1]).send_keys('')
+                            web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                            web_driver.find_element(self.wd, pw).send_keys('')
+                            web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                            web_driver.find_element(self.wd, btn).click()
 
                             com.sleep(1)
-                            com.find_element(self.wd, 'ImgV0300_001Header').click()
+                            web_driver.find_element(self.wd, 'ImgV0300_001Header').click()
                             break
                         except:
                             com.sleep(1)
                             self.wd.get(url)
 
                     com.sleep(1)
-                    com.find_element(self.wd, 'LnkYotei').click()
+                    web_driver.find_element(self.wd, 'LnkYotei').click()
 
                 else:
                     if '三菱UFJ' == name:
-                        com.find_element(self.wd, 'tx-branch-number').send_keys('')
+                        web_driver.find_element(self.wd, 'tx-branch-number').send_keys('')
                     elif '三井住友' == name:
-                        com.find_element(self.wd, 'tab-switchB02').click()
+                        web_driver.find_element(self.wd, 'tab-switchB02').click()
 
-                    com.find_element(self.wd, id1[1]).send_keys('')
-                    com.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                    web_driver.find_element(self.wd, id1[1]).send_keys('')
+                    web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
 
                     if name in ['三井住友', 'e-Staffing']:
-                        com.find_element(self.wd, id1[1]).send_keys('')
-                        com.find_element(self.wd, id2[1]).send_keys(menu[id2[0]].values[0])
+                        web_driver.find_element(self.wd, id1[1]).send_keys('')
+                        web_driver.find_element(self.wd, id2[1]).send_keys(menu[id2[0]].values[0])
 
-                    com.find_element(self.wd, pw).send_keys('')
-                    com.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                    web_driver.find_element(self.wd, pw).send_keys('')
+                    web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+
+                    if '三井住友' == name:
+                        try:
+                            web_driver.find_element(self.wd, btn + '[2]/a').click()
+                        except:
+                            web_driver.find_element(self.wd, btn + '[3]/a').click()
+
+                        try:
+                            web_driver.find_element(self.wd, 'pwChangeStopFlag').click()
+                            web_driver.find_element(self.wd, '//*[@id="main-area"]/div/section/div[2]/a').click()
+                        except: pass
+                        com.sleep(7)
+                        try:
+                            web_driver.find_element(self.wd, '//*[@id="TPALTOPtop"]/div[2]/div[3]/div/div[2]/div/div/i').click()
+                        except: pass
+
+                    elif 0 < len(btn):
+                        web_driver.find_element(self.wd, btn).click()
 
                     if '三菱UFJ' == name:
                         if 'お知らせ - 三菱ＵＦＪ銀行' == self.wd.title:
                             try:
-                                com.find_element(self.wd,
-                                                 '//*[@id="contents"]/div[2]/div[1]/table/tbody/tr/td[5]/form/input[4]').click()
+                                web_driver.find_element(
+                                    self.wd, '//*[@id="contents"]/div[2]/div[1]/table/tbody/tr/td[5]/form/input[4]').click()
                                 com.sleep(1)
-                                com.find_element(self.wd, '次の明細を表示').click()
+                                web_driver.find_element(self.wd, '次の明細を表示').click()
                             except:
-                                com.find_element(self.wd, 'top').click()
-
-                    elif '三井住友' == name:
-                        try:
-                            com.find_element(self.wd, btn + '[2]/a').click()
-                        except:
-                            com.find_element(self.wd, btn + '[3]/a').click()
-
-                        try:
-                            com.find_element(self.wd, 'pwChangeStopFlag').click()
-                            com.find_element(self.wd, '//*[@id="main-area"]/div/section/div[2]/a').click()
-                        except: pass
-                        com.sleep(7)
-                        try :
-                            com.find_element(self.wd, '//*[@id="TPALTOPtop"]/div[2]/div[3]/div/div[2]/div/div/i').click()
-                        except: pass
-
-                    elif 0 < len(btn):
-                        com.find_element(self.wd, btn).click()
+                                web_driver.find_element(self.wd, 'top').click()
 
                 # 事後画面あり
                 if name in ['楽天銀行', '楽天カード', '岡三総合', 'リクルート']:
@@ -105,25 +111,25 @@ class WebLogin:
 
                     if '楽天銀行' == name:
                         try:
-                            com.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_BRANCH_CODE"]').sendKeys('225')
-                            com.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_ACCOUNT_NUMBER"]').sendKeys('2152671')
-                            com.find_element(self.wd, '//*[@id="INPUT_FORM:SECRET_WORD"]').sendKeys('ああああ')
-                            com.find_element(self.wd, '//*[@id="INPUT_FORM:_idJsp83"]').click()
+                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_BRANCH_CODE"]').sendKeys('225')
+                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_ACCOUNT_NUMBER"]').sendKeys('2152671')
+                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:SECRET_WORD"]').sendKeys('ああああ')
+                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:_idJsp83"]').click()
                             com.sleep(1)
                         except: pass
                         try:
-                            com.find_element(self.wd, '//*[@id="INPUT_FORM_P:_idJsp176"]').click()
+                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM_P:_idJsp176"]').click()
                         except: pass
 
                     elif name in ['楽天カード', 'リクルート']:
-                        url = ('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?l-id=enavi_all_glonavi_statement'
-                               if '楽天カード' == name else
+                        url = ('https://www.rakuten-card.co.jp/e-navi/members/statement/' +
+                               'index.xhtml?l-id=enavi_all_glonavi_statement' if '楽天カード' == name else
                                'https://www.r-staffing.co.jp/sol/op65/sd01/' if 'リクルート' == name else '')
                         self.wd.get(url)
 
                     else:
                         url = ('buttonOK' if '岡三総合' == name else '')
-                        com.find_element(self.wd, url).click()
+                        web_driver.find_element(self.wd, url).click()
 
             except Exception as e:
                 err_msg = str(e)

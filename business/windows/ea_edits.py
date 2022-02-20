@@ -20,22 +20,22 @@ class EaEdits:
     def do(self):
 
         if com.question('開始しますか？', '開始確認') <= 0:
-            return None
+            return
 
         # EAパラメータ
         is_end = ea_edit_param.EaEditParam().do()
         if 0 != is_end:
-            return 0
+            return
 
         # EA成績(個別)
         is_end = ea_edit_unit.EaEditUnit().do()
         if 0 != is_end:
-            return 0
+            return
 
         # EA成績(統合)
         is_end = ea_edit_stat.EaEditStat().do()
         if 0 != is_end:
-            return 0
+            return
 
         com.close(self.myjob)
 

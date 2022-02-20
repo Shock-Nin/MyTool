@@ -16,6 +16,7 @@ import subprocess
 from subprocess import PIPE
 
 CHANGE_MENU = 0
+MULTI_PROCESS = ['英単語']
 
 if 0 == CHANGE_MENU:
     menu1 = 'Win'
@@ -60,9 +61,9 @@ def main():
         layout = [[sg.Text('', key='act', background_color=cst.MAIN_ACT_COLOR[0], text_color=cst.MAIN_ACT_COLOR[1],
                            size=((11 if cst.PC == menu2 else 16), 1), font=('', 18),
                            pad=((0, 0), (0, 5)))],
-                  [sg.Combo(fold, key='Fold', enable_events=True, readonly=True,
+                  [sg.Combo(fold, default_value='　Fold', key='Fold', enable_events=True, readonly=True,
                             font=('', 16), size=((10 if cst.PC == menu2 else 15), 1), pad=((0, 0), (0, 5)))],
-                  [sg.Combo(web, key='Web', enable_events=True, readonly=True,
+                  [sg.Combo(web, default_value='　Web', key='Web', enable_events=True, readonly=True,
                             font=('', 16), size=((10 if cst.PC == menu2 else 15), 1), pad=((0, 0), (0, 15)))],
                   [[sg.Button(btn, key=btn, font=('', 16), pad=((0, 0), (0, 5)),
                               size=((10 if cst.PC == menu2 else 15), 1))] for btn in BTNS[cst.PC]]]
@@ -80,8 +81,9 @@ def main():
             if sg.WIN_CLOSED == event:
                 com.log('ツール終了: ' + cst.PC)
                 exit()
+            com.sleep(1)
 
-            # セレクト選択した場合
+            # セレクト選択した場合、ターミナルコマンドを実行
             if event in ['Fold', 'Web']:
                 menu = cst.MENU_CSV[event]
 
@@ -90,15 +92,19 @@ def main():
                           menu[(menu['Name'] == values[event])])
 
                 window['act'].update(event[0] + ': ' + values[event])
-                window[event].update('')
+                window[event].update('　' + event[0].upper() + event[1:])
 
                 # Foldセレクトで選択した場合
                 if 'Fold' == event:
-                    subprocess.Popen(['explorer' if 'Win' == cst.PC else 'open',
-                                      select.replace('/', '\\') if 'Win' == cst.PC else select])
+                    processes.append(
+                        subprocess.Popen(['explorer' if 'Win' == cst.PC else 'open',
+                                          select.replace('/', '\\') if 'Win' == cst.PC else select]))
                     com.log('フォルダ: ' + select)
+
+                # Webセレクトで選択した場合
                 else:
-                    processes.append(web_login.WebLogin('ログイン').do(select['Name'].values[0], select['URL'].values[0]))
+                    processes.append(
+                        web_login.WebLogin('ログイン').do(select['Name'].values[0], select['URL'].values[0]))
 
             # ボタン選択した場合
             else:
@@ -106,14 +112,18 @@ def main():
 
                 # 動的モジュールを実行
                 if 'Win' == cst.PC:
-                    _run(event)
+                    processes.append(_run(event))
+
                 # Macの場合は、並列で実行
                 else:
-                    thread1 = threading.Thread(name="thread1", target=_run, args=(event,))
-                    thread1.start()
-                    # thread1.join()
+                    if event in MULTI_PROCESS:
+                        thread1 = threading.Thread(name="thread1", target=_run, args=(event,))
+                        processes.append(thread1.start())
+                        # thread1.join()
+                    else:
+                        processes.append(_run(event))
 
-    # バッチの場合
+    # バッチ起動の場合
     elif 'Batch' == args.Function:
         com.log('Batch開始:' + args.Function)
         _run(args.Function)

@@ -47,7 +47,7 @@ TEST_LINK = {
 }
 
 # メニュー系CSV
-MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None}
+MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None, 'Sql': None}
 
 # EAパラメータのファイルパス(Googleドライブ)
 PRM_PATH = 'FX/Presets/'

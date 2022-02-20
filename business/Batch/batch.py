@@ -14,8 +14,8 @@ class Batch:
 
         com.log(__name__)
 
-        is_end = []
-        if 0 < len(is_end):
-            return 0
+        is_end = ()
+        if 0 != is_end:
+            return
 
-        return 0
+        com.close(self.myjob)

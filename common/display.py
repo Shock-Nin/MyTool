@@ -10,7 +10,7 @@ import PySimpleGUI as sg
 # 標準ダイアログをレベルに応じて表示
 def dialog(msg, title, lv=''):
 
-    color = '#FF7777' if 'E' == lv else 'FFFF77' if 'W' == lv else '#77CCFF'
+    color = '#FF7777' if 'E' == lv else '#FFFF77' if 'W' == lv else '#77CCFF'
     txt = [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (10, 10)))]
     if len(msg) < 100:
         layout = txt
@@ -31,7 +31,7 @@ def dialog(msg, title, lv=''):
 # 確認ダイヤログ
 def question(msg, title, lv='', cancel=False):
 
-    color = '#FF7777' if 'E' == lv else 'FFFF77' if 'W' == lv else '#77CCFF'
+    color = '#FF7777' if 'E' == lv else '#FFFF77' if 'W' == lv else '#77CCFF'
     btn = [sg.Button('はい', key='はい', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777'),
            sg.Button('いいえ', key='いいえ', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
     if cancel:
@@ -54,6 +54,26 @@ def question(msg, title, lv='', cancel=False):
 
     window.close()
     return flg
+
+
+# 表形式向けダイヤログ
+def dialog_cols(msg, cols, aligns, title, lv=''):
+
+    color = '#FF7777' if 'E' == lv else '#FFFF77' if 'W' == lv else '#77CCFF'
+    window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
+                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       layout=[[sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (10, 10)))],
+                               [[sg.Column([[sg.Text(
+                                   row, background_color=color, text_color='#000000',
+                                   pad=((0, 0), (0, 0)), font=('', 16))] for row in cols[i]],
+                                   element_justification=aligns[i], background_color=color) for i in range(0, len(cols))]],
+                               [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
+
+    while True:
+        event, values = window.read(timeout=0)
+        if event in [sg.WIN_CLOSED, 'OK']:
+            break
+    window.close()
 
 
 # 進捗表示
