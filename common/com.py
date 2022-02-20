@@ -64,3 +64,5 @@ def _format():
 # ログフォルダの作成
 if not os.path.exists(cst.TEMP_PATH[cst.PC]):
     os.mkdir(cst.TEMP_PATH[cst.PC])
+if not os.path.exists(cst.TEMP_PATH[cst.PC] + 'Log'):
+    os.mkdir(cst.TEMP_PATH[cst.PC] + 'Log')

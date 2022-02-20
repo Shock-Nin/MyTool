@@ -18,7 +18,7 @@ a = Analysis(['mytool.py'],
              cipher=block_cipher,
              noarchive=False)
 
-a.datas += [('item/img/logo.ico', '.\\ite\\/img\\logo.ico', 'Data')]
+a.datas += [('item/img/logo.ico', '.\\item\\/img\\logo.ico', 'Data')]
 
 pyz = PYZ(a.pure, a.zipped_data,
              cipher=block_cipher)
@@ -40,5 +40,4 @@ exe = EXE(pyz,
           disable_windowed_traceback=False,
           target_arch=None,
           codesign_identity=None,
-          entitlements_file=None,
-          icon='bar.ico　)
+          entitlements_file=None )
