@@ -63,17 +63,30 @@ def question(msg, title, lv='', cancel=False):
 
 
 # 表形式向けダイヤログ
-def dialog_cols(msg, cols, aligns, title, lv=''):
+def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
 
     color = '#FF7777' if 'E' == lv else '#FFFF77' if 'W' == lv else '#77CCFF'
+
+    if 'check' == obj:
+        layout = [
+            sg.Column([[
+                sg.Checkbox(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
+                for row in cols[i]], element_justification=aligns[i], background_color=color)
+            for i in range(0, len(cols))]
+    else:
+        layout = [
+            sg.Column([[
+                sg.Text(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
+                for row in cols[i]], element_justification=aligns[i], background_color=color)
+            for i in range(0, len(cols))]
+
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
                        icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
-                       layout=[[sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (10, 10)))],
-                               [[sg.Column([[sg.Text(
-                                   row, background_color=color, text_color='#000000',
-                                   pad=((0, 0), (0, 0)), font=('', 16))] for row in cols[i]],
-                                   element_justification=aligns[i], background_color=color) for i in range(0, len(cols))]],
-                               [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
+                       layout=[
+                           [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16),
+                                    pad=((20, 20), (10, 10)))], layout,
+                           [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)),
+                                      size=(10, 1), button_color='#777777')]])
 
     while True:
         if 'Mac' == cst.PC:

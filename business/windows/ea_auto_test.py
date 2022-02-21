@@ -5,6 +5,7 @@ from common import com
 from const import cst
 
 import subprocess
+import PySimpleGUI as sg
 
 from business. windows import ea_edits as inheritance
 
@@ -18,13 +19,17 @@ class EaAutoTest:
 
     def do(self):
 
+
         prm_lists = inheritance.prm_list()
+        prm_lists.reverse()
         print(prm_lists)
+        check = com.dialog_cols('選択してください', prm_lists[0], ['l' for _ in range(0, len(prm_lists[0]))], '', obj='check')
 
         if com.question('開始しますか？', '開始確認') <= 0:
             return None
 
         process = subprocess.Popen(EA_EXE)
+
 
         # while True:
         #     try:
@@ -44,3 +49,5 @@ class EaAutoTest:
 
         com.close(self.myjob)
         return
+
+
