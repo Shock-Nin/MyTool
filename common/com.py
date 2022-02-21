@@ -7,6 +7,7 @@ import os
 import logging
 import inspect
 import datetime
+import requests
 import smtplib
 import pandas as pd
 from email.mime.text import MIMEText
@@ -48,10 +49,12 @@ def log(msg, lv=''):
 
     if 'E' == lv:
         logger.error(msg)
+        my_ip = requests.get('https://ifconfig.me').text
 
-        # エラー時は専用メールで送受信
-        send_mail('エラー発生[ ' + cst.IPS[cst.IP] + ' | ' + cst.IP + ' ]', msg,
-                  cst.ERROR_MAIL, cst.ERROR_MAIL, cst.ERROR_MAIL_PW)
+        # エラー時は専用メールで送受信(Mac以外)
+        if 'Mac' != cst.PC:
+            send_mail('エラー発生[ ' + cst.IPS[my_ip] + ' | ' + my_ip + ' ]', msg,
+                      cst.ERROR_MAIL, cst.ERROR_MAIL, cst.ERROR_MAIL_PW)
 
     elif 'W' == lv:
         logger.warning(msg)
