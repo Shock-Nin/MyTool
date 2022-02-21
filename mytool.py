@@ -114,22 +114,6 @@ def main():
                     [os.getcwd() + ('/venv/Scripts/python.exe' if 'Win' == cst.PC else '/venv/bin/python'),
                      os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
 
-                # # 動的モジュールを実行
-                # if 'Win' == cst.PC:
-                #     processes.append(_run(event))
-                #
-                # # Macの場合は、並列で実行
-                # else:
-                #     processes.append(subprocess.Popen(
-                #         ['python', os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
-                #
-                #     # if event in MULTI_PROCESS:
-                #     #     thread1 = threading.Thread(name="thread1", target=_run, args=(event,))
-                #     #     processes.append(thread1.start())
-                #     #     # thread1.join()
-                #     # else:
-                #     #     processes.append(_run(event))
-
     # バッチ起動の場合
     elif 'Batch' == args.Function:
         msg = Batch(args.Function).do()
@@ -148,10 +132,10 @@ def main():
 # 動的モジュールの実行
 def _run(event):
 
-    fnction = BTNS[cst.PC][event]
-    module_name = 'business.' + fnction
+    function = BTNS[cst.PC][event]
+    module_name = 'business.' + function
 
-    class_name = fnction.split('.')[len(fnction.split('.')) - 1]
+    class_name = function.split('.')[len(function.split('.')) - 1]
     class_name = "".join([name[0].upper() + name[1:] for name in class_name.split('_')])
 
     instance = importlib.import_module(module_name)
