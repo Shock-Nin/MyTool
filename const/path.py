@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import requests
-# IP = requests.get('https://ifconfig.me').text
+IP = requests.get('https://ifconfig.me').text
 
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'

@@ -25,7 +25,7 @@ MAIN_BGCOLOR = '#FFCCFF' if 'Win' == path.PC else '#AAFFAA'
 MAIN_ACT_COLOR = ['#FFFF77', '#000000']
 
 # Path
-# IP = path.IP
+IP = path.IP
 PC = path.PC
 IPS = path.IPS
 WEB_IP = path.WEB_IP

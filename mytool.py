@@ -7,7 +7,6 @@ from business.multiple import web_login
 from batch import Batch
 
 import os
-import requests
 import argparse
 import importlib
 import threading
@@ -49,11 +48,9 @@ def main():
     if not com.get_menu():
         return
 
-    my_ip = requests.get('https://ifconfig.me').text
-
     # 通常の場合、画面表示
     if args.Function is None:
-        com.log('ツール起動: ' + my_ip + ' | ' + cst.PC)
+        com.log('ツール起動: ' + cst.IP + ' | ' + cst.PC)
         win_x, win_y = pgui.size()
 
         fold = [cst.MENU_CSV['Fold'].at[i, 'Name']
@@ -114,7 +111,8 @@ def main():
 
                 # 動的モジュールを実行
                 processes.append(subprocess.Popen(
-                    ['python', os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
+                    [os.getcwd() + ('/venv/Scripts/python.exe' if 'Win' == cst.PC else '/venv/bin/python'),
+                     os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
 
                 # # 動的モジュールを実行
                 # if 'Win' == cst.PC:
@@ -138,7 +136,7 @@ def main():
         if 0 < len(msg):
             com.log('Batch終了: ' + msg)
         else:
-            com.log('Batch稼働なし: ' + my_ip)
+            com.log('Batch稼働なし: ' + cst.IP)
 
     # 機能単独起動の場合
     elif 0 < len(args.Function):
