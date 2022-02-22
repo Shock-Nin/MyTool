@@ -19,6 +19,10 @@ class MyAsset:
         self.cnx = None
 
     def do(self):
+
+        start_time = com.time_start()
+        total_time = 0
+
         com.log('資産チェック開始')
 
         # 取得サイト情報をセット
@@ -88,6 +92,11 @@ class MyAsset:
             else:
                 banks.append(result)
 
+            run_time = com.time_end(start_time)
+            total_time += run_time
+            start_time = com.time_start()
+            com.log('資産情報取得完了(' + com.conv_time_str(run_time) + '): ')
+
             # 取得データと前回データの差分計算
             is_change, layout, columns, values = self._edit_data(before, vcard, rcard, banks)
 
@@ -99,13 +108,17 @@ class MyAsset:
                 com.dialog('SQLのINSERTに失敗しました。', 'SQLエラー', 'E')
                 return
 
+            run_time = com.time_end(start_time)
+            total_time += run_time
+            com.log('SQLのINSERT完了(' + com.conv_time_str(run_time) + '): ')
+
         # 最後はDBを閉じる
         finally:
             try: self.cnx.close()
             except: pass
 
         com.dialog_cols(com.str_time()[:10] + '(前回 ' + datetime.datetime.strftime(before[1][0], '%Y-%m-%d') +
-                        ')\n完了しました。', layout, ['l', 'r', 'c', 'r'], '正常終了')
+                        ')\n完了しました。(' + com.conv_time_str(total_time) + ')', layout, ['l', 'r', 'c', 'r'], self.myjob)
 
     # Viewカード
     def _get_view_card(self, target):

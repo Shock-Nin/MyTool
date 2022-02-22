@@ -20,7 +20,10 @@ class BlogPochi:
                 com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
             return
 
+        start_time = com.time_start()
         com.log('ブログクリック開始')
+        err_msg = []
+
         menu = cst.MENU_CSV['PwWeb']
         ok_cnt = 0
         max_cnt = (4 if self.is_batch or 'Mac' != cst.PC else 5)
@@ -35,7 +38,7 @@ class BlogPochi:
             web_driver.find_element(self.wd, 'brank').click()
             ok_cnt += 1
 
-            com.log('ランキング: IN ' + str(ok_cnt) + '/' + str(max_cnt))
+            com.log('ランキング: IN (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
             com.sleep(2)
 
             brank = self.wd.window_handles[len(self.wd.window_handles) - 1]
@@ -59,7 +62,7 @@ class BlogPochi:
                                 cst.BLOG_URL.replace('https://', ''))
                 ok_cnt += 1
 
-                com.log('ランキング: OUT ' + str(ok_cnt) + '/' + str(max_cnt))
+                com.log('ランキング: OUT (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
                 com.sleep(1)
 
                 self.wd.switch_to.window(self.wd.window_handles[len(self.wd.window_handles) - 1])
@@ -68,7 +71,8 @@ class BlogPochi:
 
             except:
                 is_err = True
-                com.log('ランキング: OUT失敗', 'W')
+                err_msg.append('ランキング: OUT')
+                com.log('ランキング: OUT失敗(' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
 
             if not self.is_batch and 'Mac' == cst.PC:
 
@@ -87,9 +91,10 @@ class BlogPochi:
                     web_driver.find_element(self.wd, 'roulette-img').click()
                     ok_cnt += 1
 
-                    com.log('ルーレット: ' + str(ok_cnt) + '/' + str(max_cnt))
+                    com.log('ランキング: ルーレット (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
                 except:
-                    com.log('ルーレット: 失敗', 'W')
+                    err_msg.append('ランキング: ルーレット')
+                    com.log('ランキング: ルーレット失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
             try:
                 self.wd.switch_to.window(home)
                 com.sleep(1)
@@ -98,23 +103,25 @@ class BlogPochi:
                 web_driver.find_element(self.wd, 'bmura').click()
                 ok_cnt += 1
 
-                com.log('ブログ村: IN ' + str(ok_cnt) + '/' + str(max_cnt))
+                com.log('ブログ村: IN (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
                 com.sleep(1)
 
                 bmura = self.wd.window_handles[len(self.wd.window_handles) - 1]
                 self.wd.switch_to.window(bmura)
 
             except:
-                com.log('ブログ村: IN失敗', 'W')
+                err_msg.append('ブログ村: IN')
+                com.log('ブログ村: IN失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
             try:
                 web_driver.find_element(self.wd, '/html/body/div[5]/div[1]/div/div/a').click()
                 ok_cnt += 1
 
-                com.log('ブログ村: OUT ' + str(ok_cnt) + '/' + str(max_cnt))
+                com.log('ブログ村: OUT (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
                 com.sleep(1)
 
             except:
-                com.log('ブログ村: OUT失敗', 'W')
+                err_msg.append('ブログ村: OUT')
+                com.log('ブログ村: OUT失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
 
             if 'Mac' == cst.PC:
 
@@ -144,10 +151,18 @@ class BlogPochi:
                     self.wd.quit()
                 except: pass
 
-        com.log(('正常終了' if ok_cnt == max_cnt else '異常あり') + ': ' + str(ok_cnt) + '/' + str(max_cnt),
+        run_time = com.time_end(start_time)
+
+        com.log(self.myjob + ': ' + ('正常終了' if ok_cnt == max_cnt else '異常あり') +
+                '(' + com.conv_time_str(run_time) + ') [' + str(ok_cnt) + '/' + str(max_cnt) + ']',
                 ('' if ok_cnt == max_cnt else 'W'))
 
-        if not self.is_batch and ok_cnt != max_cnt:
-            com.dialog('途中でエラーがありました。(' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'エラー発生', 'W')
+        if not self.is_batch:
+            if ok_cnt == max_cnt:
+                com.dialog(self.myjob + '\n正常終了しました。(' + com.conv_time_str(run_time) + ') [' +
+                           str(max_cnt) + ']', '正常終了')
+            else:
+                com.dialog(self.myjob + '\n途中でエラーがありました\n(' + com.conv_time_str(run_time) + ') [' +
+                           str(ok_cnt) + '/' + str(max_cnt) + '\n\n' + "\n".join(err_msg), 'エラー発生', 'W')
 
         return self.wd

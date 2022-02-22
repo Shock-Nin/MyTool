@@ -9,7 +9,6 @@ from batch import Batch
 import os
 import argparse
 import importlib
-import threading
 import pyautogui as pgui
 import PySimpleGUI as sg
 import subprocess
@@ -26,7 +25,7 @@ else:
 BTNS = {
     menu1: {
         'Pochi': 'multiple.blog_pochi',
-        'EAテスト': 'windows.ea_auto_test',
+        'EA連続テスト': 'windows.ea_auto_test',
         'EAテスト結合': 'windows.ea_merge_test',
         'EAデータ編集': 'windows.ea_edits',
     },

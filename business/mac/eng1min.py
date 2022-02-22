@@ -12,7 +12,6 @@ import PySimpleGUI as sg
 from time import sleep
 from PIL import ImageGrab
 
-IMG_PATH = 'item/match/eng1min/'
 WIN_X_MINUS = 50
 BGCOLOR_ON = '#AAFFFF'
 BGCOLOR_OFF = '#FF7777'
@@ -88,13 +87,13 @@ class Eng1min:
             is_end = False
 
             # もう一度再生とのマッチング
-            x, y = com.match(shot, gray, IMG_PATH + 'replay.png', (255, 0, 255))
+            x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/replay.png', (255, 0, 255))
             if x is not None:
                 is_end = True
                 com.click_pos(x / 2 + 20, y / 2 + 20)
 
             # 終了画面とのマッチング
-            x, y = com.match(shot, gray, IMG_PATH + 'end.png', (255, 0, 0))
+            x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/end.png', (255, 0, 0))
             if x is not None:
                 is_end = True
                 com.click_pos(x / 2 - 50, y / 2 + 20)
@@ -118,12 +117,12 @@ class Eng1min:
             if not is_end:
 
                 # アプリ全面表示用のマッチング
-                x, y = com.match(shot, gray, IMG_PATH + 'back.png', (0, 255, 255))
+                x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/back.png', (0, 255, 255))
                 if x is None:
                     sleep(2)
 
                     # アプリアイコンのマッチング
-                    x, y = com.match(shot, gray, IMG_PATH + 'icon1min.png', (0, 0, 255))
+                    x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/icon1min.png', (0, 0, 255))
                     if x is not None:
                         com.click_pos(x / 2 + 5, y / 2 + 10)
                         sleep(3)

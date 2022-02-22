@@ -68,34 +68,57 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
     color = '#FF7777' if 'E' == lv else '#FFFF77' if 'W' == lv else '#77CCFF'
 
     if 'check' == obj:
-        layout = [
+        center = [
             sg.Column([[
-                sg.Checkbox(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
-                for row in cols[i]], element_justification=aligns[i], background_color=color)
+                sg.Checkbox(row, True, key=row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
+                for row in cols[i]], element_justification=aligns[i], background_color=color, vertical_alignment='bottom')
             for i in range(0, len(cols))]
+        btn = [sg.Button('全て外す', key='check_out', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777'),
+               sg.Button('開始', key='Start', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777'),
+               sg.Button('キャンセル', key='Cancel', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]
     else:
-        layout = [
+        center = [
             sg.Column([[
                 sg.Text(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
                 for row in cols[i]], element_justification=aligns[i], background_color=color)
             for i in range(0, len(cols))]
+        btn = [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
                        icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
                        layout=[
                            [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16),
-                                    pad=((20, 20), (10, 10)))], layout,
-                           [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)),
-                                      size=(10, 1), button_color='#777777')]])
+                                    pad=((20, 20), (10, 10)))], center, btn])
 
     while True:
         if 'Mac' == cst.PC:
             event, values = window.read(timeout=0)
         else:
             event, values = window.read()
-        if event in [sg.WIN_CLOSED, 'OK']:
+
+        # 全チェック外し
+        if 'check_out' == event:
+            [[window[row].update(False) for row in cols[i]] for i in range(0, len(cols))]
+
+        elif 'Start' == event:
+
+            # チェックなしでは進めない
+            is_check = False
+            for i in range(0, len(cols)):
+                for k in range(0, len(cols[i])):
+                    if values[cols[i][k]]:
+                        is_check = True
+            if not is_check:
+                continue
+
+            window.close()
+            return [[row for row in cols[i] if values[row]] for i in range(0, len(cols))]
+
+        if event in [sg.WIN_CLOSED, 'OK', 'Cancel']:
             break
+
     window.close()
+    return ''
 
 
 # 進捗表示

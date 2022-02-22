@@ -23,23 +23,36 @@ class EaEdits:
 
         if com.question('開始しますか？', '開始確認') <= 0:
             return
+        start_time = com.time_start()
+        total_time = 0
 
         # EAパラメータ
         is_end = ea_edit_param.EaEditParam().do()
         if 0 != is_end:
             return
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log('パラメータ: 作成完了(' + com.conv_time_str(run_time) + ')')
 
         # EA成績(個別)
         is_end = ea_edit_unit.EaEditUnit().do()
         if 0 != is_end:
             return
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        start_time = com.time_start()
+        com.log('EA成績(個別)作成完了(' + com.conv_time_str(run_time) + '): ')
 
         # EA成績(統合)
         is_end = ea_edit_stat.EaEditStat().do()
         if 0 != is_end:
             return
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log('EA成績(統合): 作成完了(' + com.conv_time_str(run_time) + ')')
 
-        com.close(self.myjob)
+        com.log(self.myjob + ': 全終了(' + com.conv_time_str(total_time) + ')')
+        com.dialog('完了しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
 
 
 # .setファイル名のリストを取得
@@ -60,7 +73,7 @@ def prm_list():
             files = os.listdir(PRM_PATH + path)
             set_file = []
 
-            for key2 in cst.CURRNCYS_EA:
+            for key2 in cst.CURRNCYS_EA[0]:
                 for file in files:
                     # 並び順でなければパス
                     if file.find(key2) < 0:
@@ -79,7 +92,7 @@ def sort_paths(is_out):
     paths = []
     get_paths = os.listdir(cst.TEST_UNIT[cst.PC])
 
-    for key1 in cst.CURRNCYS_EA:
+    for key1 in cst.CURRNCYS_EA[0]:
         for key2 in cst.EA_PATHS:
 
             for get_path in get_paths:

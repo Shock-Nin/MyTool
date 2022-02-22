@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import time
 
 from const import cst
 
@@ -31,8 +32,23 @@ match = matching.match
 
 
 # 日時を文字型で取得
-def str_time(ymd=True):
-    return datetime.datetime.now().strftime(('%Y-%m-%d ' if ymd else '') + '%H:%M:%S')
+def str_time():
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+# 時間計測開始
+def time_start():
+    return time.time()
+
+
+# 時間計測終了
+def time_end(start_time):
+    return time.time() - start_time
+
+
+# 時間の文字列変換
+def conv_time_str(time):
+    return datetime.datetime.fromtimestamp(float(time) + (3600 * 15)).strftime('%H:%M:%S')
 
 
 # 実行メソッドの取得
