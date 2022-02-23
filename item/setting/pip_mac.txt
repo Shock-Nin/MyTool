@@ -23,7 +23,8 @@ source .zprofile
 
 ########## tkinterエラー対策 ##########
 arch -arm64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-arch -arm64 /usr/local/bin/brew install tcl-tk
+arch -arm64 brew install tcl-tk
+arch -arm64 pyenv install 3.9.6
 
 ########## pyinstaller ##########
 arch -arm64 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"

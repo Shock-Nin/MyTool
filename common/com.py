@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import time
 
 from const import cst
 
 import os
+import time
 import logging
 import inspect
 import datetime
@@ -47,8 +47,8 @@ def time_end(start_time):
 
 
 # 時間の文字列変換
-def conv_time_str(time):
-    return datetime.datetime.fromtimestamp(float(time) + (3600 * 15)).strftime('%H:%M:%S')
+def conv_time_str(num):
+    return datetime.datetime.fromtimestamp(float(num) + (3600 * 15)).strftime('%H:%M:%S')
 
 
 # 実行メソッドの取得

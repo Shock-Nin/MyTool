@@ -42,20 +42,55 @@ WIN_Y_MINUS = 160 + (int(len(BTNS['Mac']) + 2) * 22)
 def main():
 
     processes = []
-
     # メニュー系CSV読み込み
     if not com.get_menu():
         return
 
     # 通常の場合、画面表示
     if args.Function is None:
+
         com.log('ツール起動: ' + cst.IP + ' | ' + cst.PC)
         win_x, win_y = pgui.size()
+        event_time = 0
 
+        # パスワード入力
+        login = sg.Window('パスワード入力', keep_on_top=True, modal=True, element_justification='c',
+                          background_color=cst.MAIN_BGCOLOR, margins=(20, 20),
+                          icon=(os.getcwd() + cst.ICON_FILE), layout=
+                          [[sg.Input('', key='pw', password_char='*', size=(16, 3), font=('', 30))],
+                           [sg.Button('ログイン', key='login', font=('', 16), pad=((0, 0), (20, 0)),
+                                      size=(16, 1))]])
+        while True:
+            event, values = login.read()
+
+            # 画面の×ボタンで終了
+            if sg.WIN_CLOSED == event:
+                com.log('ツール終了: ' + cst.PC)
+                return
+
+            if 'login' == event:
+                account = cst.MENU_CSV['PwBank'][('楽天カード' == cst.MENU_CSV['PwBank']['SITE'])]
+                # 正常ログイン
+                if account['PASS'].values[0] == values['pw']:
+                    com.log('ツール正常ログイン')
+                    login.close()
+                    break
+
+                # パスワード不整合の場合は、アラートメール送信
+                elif 0 < len(values['pw']):
+                    login['pw'].update('')
+                    com.log('ツール不正ログイン: ' + values['pw'])
+                    com.dialog('パスワードが不一致です。', 'ログイン不正', 'E')
+                    com.send_mail('不正ログイン', cst.IPS[cst.IP] + '[' + cst.IP + ']<br>' +
+                                  'にて不正ログイン発生(' + values['pw'] + ')', account['ID1'].values[0],
+                                  account=cst.ERROR_MAIL, password=cst.ERROR_MAIL_PW)
+
+        # コンボボックスのメニュー作成
         fold = [cst.MENU_CSV['Fold'].at[i, 'Name']
                 for i in range(0, len((cst.MENU_CSV['Fold']))) if cst.MENU_CSV['Fold'].at[i, 'Type'] == cst.PC]
         web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len((cst.MENU_CSV['Web'])))]
 
+        # メイン画面レイアウト
         layout = [[sg.Text('', key='act', background_color=cst.MAIN_ACT_COLOR[0], text_color=cst.MAIN_ACT_COLOR[1],
                            size=((11 if cst.PC == menu2 else 16), 1), font=('', 18),
                            pad=((0, 0), (0, 5)))],
@@ -79,7 +114,6 @@ def main():
             if sg.WIN_CLOSED == event:
                 com.log('ツール終了: ' + cst.PC)
                 return
-            com.sleep(1)
 
             # セレクト選択した場合、ターミナルコマンドを実行
             if event in ['Fold', 'Web']:
@@ -106,12 +140,21 @@ def main():
 
             # ボタン選択した場合
             else:
+
+                # 二度押し対策、10秒以内同一ボタン無効
+                is_run = True
+                if '  ' + event == window['act'].get():
+                    is_run = int(com.conv_time_str(com.time_start() - event_time).replace(':', '')) < 10
+
                 window['act'].update('  ' + event)
 
                 # 動的モジュールを実行
-                processes.append(subprocess.Popen(
-                    [os.getcwd() + ('/venv/Scripts/python.exe' if 'Win' == cst.PC else '/venv/bin/python'),
-                     os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
+                if is_run:
+                    processes.append(subprocess.Popen(
+                        [os.getcwd() + ('/venv/Scripts/python.exe' if 'Win' == cst.PC else '/venv/bin/python'),
+                         os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
+
+            event_time = com.time_start()
 
     # バッチ起動の場合
     elif 'Batch' == args.Function:

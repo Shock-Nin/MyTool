@@ -57,13 +57,13 @@ class MyAsset:
             # ViewCard取得
             target = targets[('ViewCard' == targets['Name'])]
             vcard, wd1 = self._get_view_card(target)
-            if vcard is None:
+            if 0 == len(vcard):
                 return
 
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
             rcard, wd2 = self._get_rakuten_card(target)
-            if rcard is None:
+            if 0 == len(rcard):
                 return
 
             banks = []
