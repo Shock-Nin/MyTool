@@ -1,18 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import datetime
+from common import com
+from const import cst
 
-import datetime
 import cv2
 import numpy as np
 import pyautogui as pgui
-
-from time import sleep
-from PIL import ImageGrab
-
-from common import com
-from const import cst
 
 
 # マウスを移動

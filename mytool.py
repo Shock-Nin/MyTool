@@ -3,8 +3,8 @@
 
 from const import cst
 from common import com
-from business.multiple import web_login
 from batch import Batch
+from business.multiple import web_login
 
 import os
 import argparse
@@ -151,7 +151,8 @@ def main():
                 # 動的モジュールを実行
                 if is_run:
                     processes.append(subprocess.Popen(
-                        [os.getcwd() + ('/venv/Scripts/python.exe' if 'Win' == cst.PC else '/venv/bin/python'),
+                        [('C:/ProgramData/Anaconda3/envs/MyTool/python.exe' if 'Win' == cst.PC else
+                          cst.CURRENT_PATH[cst.PC] + '/.conda/envs/MyTool/bin/python'),
                          os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
 
             event_time = com.time_start()

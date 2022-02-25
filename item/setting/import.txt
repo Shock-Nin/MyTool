@@ -1,0 +1,22 @@
+########## WinDows ##########
+CreateExe.bat
+
+conda install -c conda-forge qrcode pysimplegui
+conda install -c conda-forge qrcode opencv
+python -m pip install pyautogui
+python -m pip install selenium
+python -m pip install webdriver_manager
+python -m pip install pandas
+python -m pip install Pillow
+
+
+########## Mac ##########
+python setup.py py2app
+
+conda install -c conda-forge qrcode pysimplegui
+conda install -c conda-forge qrcode opencv
+python3 -m pip install pyautogui
+python3 -m pip install selenium
+python3 -m pip install webdriver_manager
+python3 -m pip install pandas
+python3 -m pip install Pillow
