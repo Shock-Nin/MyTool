@@ -18,7 +18,7 @@ def dialog(msg, title, lv=''):
         layout = [sg.Column([txt], size=(500, 300), scrollable=True, background_color=color)]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       icon=(cst.ICON_FILE), element_justification='c',
                        layout=[layout, [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
 
     while True:
@@ -40,7 +40,7 @@ def question(msg, title, lv='', cancel=False):
     if cancel:
         btn.append(sg.Button('中断', key='中断', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#555555'))
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       icon=(cst.ICON_FILE), element_justification='c',
                        layout=[[sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])
 
     flg = 0
@@ -85,7 +85,7 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
         btn = [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       icon=(cst.ICON_FILE), element_justification='c',
                        layout=[
                            [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16),
                                     pad=((20, 20), (10, 10)))], center, btn])
@@ -144,7 +144,7 @@ def progress(title, bar1, bar2=None, bar3=None, interrupt=False):
 
     window = sg.Window(
         title, keep_on_top=True, no_titlebar=True, modal=True, element_justification='c',
-        icon=(os.getcwd() + cst.ICON_FILE), background_color=color, layout=layout)
+        icon=(cst.ICON_FILE), background_color=color, layout=layout)
 
     return window
 
