@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+"""
+Windowsアプリ化コマンド
+  pyinstaller mytool.spec --onefile
 
+Macアプリ化コマンド
+  python setup.py py2app
+"""
 from const import cst
 from common import com
 from batch import Batch
