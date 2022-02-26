@@ -1,5 +1,8 @@
-# -*- mode: python ; coding: utf-8 -*-
-
+# -*- mode: python ;coding: utf-8 -*-
+"""
+Windowsアプリ化コマンド
+  pyinstaller mytool.spec --onefile
+"""
 block_cipher = None
 a = Analysis(['mytool.py'],
              pathex=[],

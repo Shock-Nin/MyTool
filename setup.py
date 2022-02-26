@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-python setup.py py2app
+Macアプリ化コマンド
+  python setup.py py2app
 """
 import os
 from const import cst
@@ -11,10 +12,10 @@ APP = ['mytool.py']
 DATA_FILES = [os.getcwd() + cst.ICON_FILE]
 
 OPTIONS = {'argv_emulation': True,
-           'iconfile': os.getcwd() + cst.ICON_FILE,
+           'iconfile': DATA_FILES[0],
            'plist': {
-            'CFBundleName': 'MyTool',
-            'CFBundleDisplayName': 'MyTool',
+            'CFBundleName': 'mytool',
+            'CFBundleDisplayName': 'mytool',
             'PyRuntimeLocations': [
                 '@executable_path/../Frameworks/libpython3.9.dylib',
                 '/opt/anaconda3/lib/libpython3.9.dylib'
