@@ -12,7 +12,7 @@ class MySql:
     def __init__(self, host, dbname, user, pw):
         cnx = None
         try:
-            cnx = db.connect(host=host, user=user, password=pw)
+            cnx = db.connect(host=host, user=user, password=pw, auth_plugin='mysql_native_password')
             com.log('MySQL: 接続 [' + host + '(' + dbname + ')]')
 
             cursor = cnx.cursor()
