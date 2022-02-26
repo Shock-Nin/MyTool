@@ -8,10 +8,10 @@ from const import cst
 from setuptools import setup
 
 APP = ['mytool.py']
-DATA_FILES = [cst.ICON_FILE]
+DATA_FILES = [os.getcwd() + cst.ICON_FILE]
 
 OPTIONS = {'argv_emulation': True,
-           'iconfile': cst.ICON_FILE,
+           'iconfile': os.getcwd() + cst.ICON_FILE,
            'plist': {
             'CFBundleName': 'MyTool',
             'CFBundleDisplayName': 'MyTool',

@@ -8,6 +8,7 @@ from business.multiple import web_login
 
 import os
 import argparse
+import importlib
 import pyautogui as pgui
 import PySimpleGUI as sg
 import subprocess
@@ -55,7 +56,7 @@ def main():
         # パスワード入力
         login = sg.Window('パスワード入力', keep_on_top=True, modal=True, element_justification='c',
                           background_color=cst.MAIN_BGCOLOR, margins=(20, 20),
-                          icon=(cst.ICON_FILE), layout=
+                          icon=(os.getcwd() + cst.ICON_FILE), layout=
                           [[sg.Input('', key='pw', password_char='*', size=(16, 3), font=('', 30))],
                            [sg.Button('ログイン', key='login', font=('', 16), pad=((0, 0), (20, 0)),
                                       size=(16, 1))]])
@@ -102,7 +103,7 @@ def main():
 
         window = sg.Window(cst.PC, modal=True, element_justification='c', background_color=cst.MAIN_BGCOLOR,
                            element_padding=((0, 0), (0, 0)), margins=(0, 0),
-                           icon=(cst.ICON_FILE), location=
+                           icon=(os.getcwd() + cst.ICON_FILE), location=
                            ((win_x - WIN_X_MINUS, win_y - WIN_Y_MINUS)
                             if cst.PC == menu2 else (None, None)), layout=layout)
         # 画面のイベント監視
@@ -150,8 +151,8 @@ def main():
                 # 動的モジュールを実行
                 if is_run:
                     processes.append(subprocess.Popen(
-                        [('C:/ProgramData/Anaconda3/envs/MyTool/python.exe' if 'Win' == cst.PC else
-                          cst.CURRENT_PATH[cst.PC] + '/.conda/envs/MyTool/bin/python'),
+                        [('C:/ProgramData/Anaconda3/envs/py39/python.exe' if 'Win' == cst.PC else
+                          cst.CURRENT_PATH[cst.PC] + '/.conda/envs/py39/bin/python'),
                          os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
 
             event_time = com.time_start()
@@ -180,6 +181,9 @@ def _run(event):
     class_name = function.split('.')[len(function.split('.')) - 1]
     class_name = "".join([name[0].upper() + name[1:] for name in class_name.split('_')])
 
+    instance = importlib.import_module(module_name)
+    module = getattr(instance, class_name)
+    return module(event).do()
 
 
 if __name__ == '__main__':

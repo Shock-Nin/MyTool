@@ -58,5 +58,5 @@ MATCH_PATH = 'item/match/'
 MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None, 'Sql': None}
 
 # アイコン
-ICON_FILE = 'menu/logo.ico'
+ICON_FILE = '/item/img/logo.ico'
 
