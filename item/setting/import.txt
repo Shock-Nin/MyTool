@@ -1,6 +1,8 @@
-########## WinDows ##########
-CreateExe.bat
+conda install python=3.9.7
+conda create -n py39 python=3.9.7 anaconda
+conda activate py39
 
+########## WinDows ##########
 conda install -c conda-forge qrcode pysimplegui
 conda install -c conda-forge qrcode opencv
 python -m pip install pyautogui
@@ -8,11 +10,13 @@ python -m pip install selenium
 python -m pip install webdriver_manager
 python -m pip install pandas
 python -m pip install Pillow
+python -m pip install mysql
+python -m pip install mysql-connector
 
+python -m pip install pyinstaller
+pip install setuptools -U
 
 ########## Mac ##########
-python setup.py py2app
-
 conda install -c conda-forge qrcode pysimplegui
 conda install -c conda-forge qrcode opencv
 python3 -m pip install pyautogui
@@ -20,4 +24,5 @@ python3 -m pip install selenium
 python3 -m pip install webdriver_manager
 python3 -m pip install pandas
 python3 -m pip install Pillow
+python3 -m pip install mysql
 python3 -m pip install mysql-connector

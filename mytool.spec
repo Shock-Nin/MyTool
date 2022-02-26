@@ -15,7 +15,7 @@ a = Analysis(['mytool.py'],
              cipher=block_cipher,
              noarchive=False)
 
-a.datas += [('item/img/logo.ico', '.\\item\\/img\\logo.ico', 'Data')]
+a.datas += [('item/img/logo.ico', '.\\item\\img\\logo.ico', 'Data')]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 

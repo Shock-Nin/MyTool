@@ -1,2 +1,2 @@
 del /q dist\\mytool.exe
-%~dp0/venv/Scripts/pyinstaller.exe mytool.spec --onefile
+C:/ProgramData/Anaconda3/envs/MyTool/python.exe pyinstaller mytool.spec --onefile
