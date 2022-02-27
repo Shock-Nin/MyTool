@@ -2,10 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Windowsアプリ化コマンド
-  pyinstaller mytool_exe.spec --onefile
+  pyinstaller mytool_exe.spec --clean --icon=item/img/logo.ico
 
 Macアプリ化コマンド
   python3 -m mytool_app.py py2app
+  pyinstaller mytool_exe.spec --clean --icon=item/img/logo.ico --noconsole
 """
 from const import cst
 from common import com
@@ -62,7 +63,7 @@ def main():
         # パスワード入力
         login = sg.Window('パスワード入力', keep_on_top=True, modal=True, element_justification='c',
                           background_color=cst.MAIN_BGCOLOR, margins=(20, 20),
-                          icon=(os.getcwd() + cst.ICON_FILE), layout=
+                          icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, layout=
                           [[sg.Input('', key='pw', password_char='*', size=(16, 3), font=('', 30))],
                            [sg.Button('ログイン', key='login', font=('', 16), pad=((0, 0), (20, 0)),
                                       size=(16, 1))]])
@@ -74,7 +75,7 @@ def main():
                 com.log('ツール終了: ' + cst.PC)
                 return
 
-            if 'login' == event:
+            if event in ['login', '\r']:
                 account = cst.MENU_CSV['PwBank'][('楽天カード' == cst.MENU_CSV['PwBank']['SITE'])]
                 # 正常ログイン
                 if account['PASS'].values[0] == values['pw']:

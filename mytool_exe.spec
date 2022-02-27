@@ -1,7 +1,7 @@
 # -*- mode: python ;coding: utf-8 -*-
 """
 Windowsアプリ化コマンド
-  pyinstaller mytool_exe.spec --onefile
+  pyinstaller mytool_exe.spec --clean --icon=item/img/logo.ico
 """
 block_cipher = None
 a = Analysis(['mytool.py'],
@@ -21,7 +21,6 @@ a = Analysis(['mytool.py'],
 a.datas += [('item/img/logo.ico', '.\\item\\img\\logo.ico', 'Data')]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
-
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
@@ -33,10 +32,5 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          upx_exclude=[],
           runtime_tmpdir=None,
-          console=False,
-          disable_windowed_traceback=False,
-          target_arch=None,
-          codesign_identity=None,
-          entitlements_file=None )
+          console=False )

@@ -18,7 +18,7 @@ def dialog(msg, title, lv=''):
         layout = [sg.Column([txt], size=(500, 300), scrollable=True, background_color=color)]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[layout, [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]])
 
     while True:
@@ -26,7 +26,7 @@ def dialog(msg, title, lv=''):
             event, values = window.read(timeout=0)
         else:
             event, values = window.read()
-        if event in [sg.WIN_CLOSED, 'OK']:
+        if event in [sg.WIN_CLOSED, 'OK', '\r']:
             break
     window.close()
 
@@ -40,7 +40,7 @@ def question(msg, title, lv='', cancel=False):
     if cancel:
         btn.append(sg.Button('中断', key='中断', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#555555'))
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[[sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])
 
     flg = 0
@@ -51,7 +51,7 @@ def question(msg, title, lv='', cancel=False):
             event, values = window.read()
         if event in [sg.WIN_CLOSED, '中断']:
             break
-        elif 'はい' == event:
+        elif event in ['はい', '\r']:
             flg = 1
             break
         elif 'いいえ' == event:
@@ -85,7 +85,7 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
         btn = [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), element_justification='c',
+                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[
                            [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16),
                                     pad=((20, 20), (10, 10)))], center, btn])
@@ -100,7 +100,7 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
         if 'check_out' == event:
             [[window[row].update(False) for row in cols[i]] for i in range(0, len(cols))]
 
-        elif 'Start' == event:
+        elif event in ['Start']:
 
             # チェックなしでは進めない
             is_check = False
