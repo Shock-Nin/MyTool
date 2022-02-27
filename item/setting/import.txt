@@ -1,17 +1,15 @@
-conda install anaconda-clean -y
-sudo rm -r ~/.anaconda_backup
-sudo rm -r /opt/anaconda3
-
 conda update --force conda -y
 conda update --all -y
 conda update anaconda -y
 
 conda create -n py39 python=3.9.6 -y
-conda activate py39
+conda activate py39　
 
 ########## WinDows ##########
-conda install -c conda-forge qrcode pysimplegui
-conda install -c conda-forge qrcode opencv
+conda install -c conda-forge qrcode setuptools -y
+conda install -c conda-forge qrcode pysimplegui -y
+conda install -c conda-forge qrcode opencv -y
+
 python -m pip install --upgrade pip
 python -m pip install pyautogui
 python -m pip install selenium
@@ -23,6 +21,10 @@ python -m pip install mysql-connector
 python -m pip install pyinstaller
 
 ########## Mac ##########
+conda install anaconda-clean -y
+sudo rm -r ~/.anaconda_backup
+sudo rm -r /opt/anaconda3
+
 conda install -c conda-forge qrcode setuptools -y
 conda install -c conda-forge qrcode pysimplegui -y
 conda install -c conda-forge qrcode opencv -y
