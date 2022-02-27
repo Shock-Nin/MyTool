@@ -5,6 +5,7 @@ conda activate py39
 ########## WinDows ##########
 conda install -c conda-forge qrcode pysimplegui
 conda install -c conda-forge qrcode opencv
+python -m pip install --upgrade pip
 python -m pip install pyautogui
 python -m pip install selenium
 python -m pip install webdriver_manager
@@ -12,13 +13,17 @@ python -m pip install pandas
 python -m pip install Pillow
 python -m pip install mysql
 python -m pip install mysql-connector
-
 python -m pip install pyinstaller
-pip install setuptools -U
 
 ########## Mac ##########
-conda install -c conda-forge qrcode pysimplegui
-conda install -c conda-forge qrcode opencv
+conda update --force conda -y
+conda update --all -y
+conda update anaconda -y
+conda install -c conda-forge qrcode setuptools -y
+conda install -c conda-forge qrcode pysimplegui -y
+conda install -c conda-forge qrcode opencv -y
+
+python3 -m pip install --upgrade pip
 python3 -m pip install pyautogui
 python3 -m pip install selenium
 python3 -m pip install webdriver_manager
@@ -26,3 +31,12 @@ python3 -m pip install pandas
 python3 -m pip install Pillow
 python3 -m pip install mysql
 python3 -m pip install mysql-connector
+python3 -m pip install py2app
+
+
+mkdir /opt/anaconda3/envs/py39/lib/python3.9/site-packages/rtree/lib
+mkdir /opt/anaconda3/envs/py39/lib/python3.9/site-packages/zmq/.dylibs
+
+
+rm -r /opt/anaconda3/envs/py39/lib/python3.9/site-packages/rtree/lib
+rm -r /opt/anaconda3/envs/py39/lib/python3.9/site-packages/zmq/.dylibs

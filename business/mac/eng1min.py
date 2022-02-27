@@ -68,6 +68,8 @@ class Eng1min:
                 elif is_stop:
                     sleep(3)
                     continue
+
+            # 動きがあればリセット
             else:
                 self.move = 0
                 self.last_x, self.last_y = pgui.position()
@@ -116,18 +118,28 @@ class Eng1min:
             # 終了系とのマッチングがなかった場合
             if not is_end:
 
-                # アプリ全面表示用のマッチング
-                x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/back.png', (0, 255, 255))
-                if x is None:
-                    sleep(2)
+                # 不動の場合に実施
+                self.now_x, self.now_y = pgui.position()
+                if self.last_x == self.now_x and self.last_y == self.now_y:
 
-                    # アプリアイコンのマッチング
-                    x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/icon1min.png', (0, 0, 255))
-                    if x is not None:
-                        com.click_pos(x / 2 + 5, y / 2 + 10)
-                        sleep(3)
+                    # アプリ全面表示用のマッチング
+                    x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/back.png', (0, 255, 255))
+                    if x is None:
+                        sleep(2)
+
+                        # アプリアイコンのマッチング
+                        x, y = com.match(shot, gray, cst.MATCH_PATH + 'eng1min/icon1min.png', (0, 0, 255))
+                        if x is not None:
+                            com.click_pos(x / 2 + 5, y / 2 + 10)
+                            sleep(3)
+                    else:
+                        com.move_pos()
+
+                # 動きがあればリセット
                 else:
-                    com.move_pos()
+                    self.move = 0
+                    self.last_x, self.last_y = pgui.position()
+                window['turn'].update(' ' + str(self.turn) + '\n ' + str(int(self.move / 20)))
 
             # マッチングのマーキングimg出力
             cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)

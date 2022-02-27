@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Macアプリ化コマンド
-  python setup.py py2app
+  python3 -m mytool_app.py py2app
 """
 import os
 from const import cst
-from setuptools import setup
+from setuptools import setup, find_packages
 
 APP = ['mytool.py']
 DATA_FILES = [os.getcwd() + cst.ICON_FILE]
@@ -25,6 +25,7 @@ OPTIONS = {'argv_emulation': True,
 setup(
     app=APP,
     data_files=DATA_FILES,
+    packages=find_packages(),
     options={'py2app': OPTIONS},
     setup_requires=['py2app']
 )

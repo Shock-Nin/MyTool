@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """
 Windowsアプリ化コマンド
-  pyinstaller mytool.spec --onefile
+  pyinstaller mytool_exe.spec --onefile
 
 Macアプリ化コマンド
-  python setup.py py2app
+  python3 -m mytool_app.py py2app
 """
 from const import cst
 from common import com
@@ -157,9 +157,7 @@ def main():
                 # 動的モジュールを実行
                 if is_run:
                     processes.append(subprocess.Popen(
-                        [('C:/ProgramData/Anaconda3/envs/py39/python.exe' if 'Win' == cst.PC else
-                          cst.CURRENT_PATH[cst.PC] + '/.conda/envs/py39/bin/python'),
-                         os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
+                        [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py', '-m', BTNS[cst.PC][event], '-e', event]))
 
             event_time = com.time_start()
 

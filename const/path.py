@@ -27,6 +27,8 @@ GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
                'Win': CURRENT_PATH['Win'] + 'Google ドライブ/'}
 TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
              'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/'}
+RUN_PATH = {'Mac': '/opt/anaconda3/envs/py39/bin/python',
+            'Win': 'C:/ProgramData/Anaconda3/envs/py39/python.exe'}
 # 開発MT4のパス
 MT4_DEV = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/',
            'Win': CURRENT_PATH['Win'] + 'Documents/MT4/MT4_DEV/OANDA/'}

@@ -1,7 +1,7 @@
 # -*- mode: python ;coding: utf-8 -*-
 """
 Windowsアプリ化コマンド
-  pyinstaller mytool.spec --onefile
+  pyinstaller mytool_exe.spec --onefile
 """
 block_cipher = None
 a = Analysis(['mytool.py'],
