@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Macアプリ化コマンド
-  python3 -m mytool_app.py py2app
+  python mytool_app.py py2app
 """
 import os
 from const import cst

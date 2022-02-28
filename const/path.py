@@ -7,7 +7,7 @@ pf = platform.system()
 PC = 'Win' if 'Windows' == pf else 'Mac' if 'Darwin' == pf else ''
 
 import requests
-IP = requests.get('https://ifconfig.me').text
+IP = requests.get('http://ifconfig.me').text
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'
 DEV_IP = '164.70.84.254'

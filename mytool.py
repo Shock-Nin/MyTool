@@ -5,8 +5,7 @@ Windowsアプリ化コマンド
   pyinstaller mytool_exe.spec --clean --icon=item/img/logo.ico
 
 Macアプリ化コマンド
-  python3 -m mytool_app.py py2app
-  pyinstaller mytool_exe.spec --clean --icon=item/img/logo.ico --noconsole
+  python mytool_app.py py2app
 """
 from const import cst
 from common import com
@@ -75,7 +74,7 @@ def main():
                 com.log('ツール終了: ' + cst.PC)
                 return
 
-            if event in ['login', '\r']:
+            if event in ['login', '\r', 'Return:603979789']:
                 account = cst.MENU_CSV['PwBank'][('楽天カード' == cst.MENU_CSV['PwBank']['SITE'])]
                 # 正常ログイン
                 if account['PASS'].values[0] == values['pw']:

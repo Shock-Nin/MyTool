@@ -5,7 +5,7 @@ conda update anaconda -y
 conda create -n py39 python=3.9.6 -y
 conda activate py39　
 conda info -e
-########## WinDows ##########
+########## Windows ##########
 conda install -c conda-forge pyinstaller -y
 
 python -m pip install setuptools
@@ -27,6 +27,7 @@ conda install anaconda-clean -y
 sudo rm -r ~/.anaconda_backup
 sudo rm -r /opt/anaconda3
 
+conda install -c conda-forge pyinstaller -y
 conda install -c conda-forge qrcode setuptools -y
 conda install -c conda-forge qrcode pysimplegui -y
 conda install -c conda-forge qrcode opencv -y
