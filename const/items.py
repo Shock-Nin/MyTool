@@ -9,21 +9,21 @@ MT4_WAIT = [3, 10]
 
 # MT4テンプレートマッチング
 MATCH_IMG_MT4 = {
-    '通貨': 'img_currency.png',
-    '終了日': 'img_endday.png',
-    '開始日': 'img_strday.png',
-    '最適化ON': 'img_optchk.png',
-    '最適化OFF': 'img_opt.png',
-    'スプレッド': 'img_spread.png',
-    'エキスパート': 'img_experts.png',
-    'スタート': 'img_start.png',
-    'ストップ': 'img_stop.png',
-    'テスター': 'img_tester.png',
-    'パラメータ': 'img_prm.png',
-    '値': 'img_value.png',
-    'Logics': 'img_logics.png',
-    'Risk': 'img_risk.png',
-    '読み込み': 'img_read.png',
+    '通貨': 'currency.png',
+    '終了日': 'endday.png',
+    '開始日': 'startday.png',
+    '最適化ON': 'optchk.png',
+    '最適化OFF': 'opt.png',
+    'スプレッド': 'spread.png',
+    'エキスパート': 'experts.png',
+    'レポート': 'report.png',
+    'スタート': 'start.png',
+    'ストップ': 'stop.png',
+    'パラメータ': 'prm.png',
+    '値': 'value.png',
+    'Logics': 'logics.png',
+    'Risk': 'risk.png',
+    '読み込み': 'read.png',
 }
 
 # EA並び順

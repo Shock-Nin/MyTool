@@ -66,23 +66,25 @@ def question(msg, title, lv='', cancel=False):
 def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
 
     color = '#FF7777' if 'E' == lv else '#FFFF77' if 'W' == lv else '#77CCFF'
+    prms = [('', 16), ((10, 10), (10, 20)), (10, 1), '#777777']
 
     if 'check' == obj:
         center = [
             sg.Column([[
-                sg.Checkbox(row, True, key=row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
-                for row in cols[i]], element_justification=aligns[i], background_color=color, vertical_alignment='bottom')
+                sg.Checkbox(row, True, key=row, checkbox_color='#FFFFFF', background_color=color,
+                            text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))] for row in cols[i]],
+                      element_justification=aligns[i], background_color=color, vertical_alignment='bottom')
             for i in range(0, len(cols))]
-        btn = [sg.Button('全て外す', key='check_out', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777'),
-               sg.Button('開始', key='Start', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777'),
-               sg.Button('キャンセル', key='Cancel', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]
+        btn = [sg.Button('全て外す', key='check_out', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3]),
+               sg.Button('開始', key='Start', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3]),
+               sg.Button('キャンセル', key='Cancel', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3])]
     else:
         center = [
             sg.Column([[
                 sg.Text(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
                 for row in cols[i]], element_justification=aligns[i], background_color=color)
             for i in range(0, len(cols))]
-        btn = [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(10, 1), button_color='#777777')]
+        btn = [sg.Button('OK', key='OK', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3])]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
                        icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
@@ -135,7 +137,7 @@ def progress(title, bar1, bar2=None, bar3=None, interrupt=False):
         [sg.Text(title, background_color=color, text_color='#000000', font=('', 16), pad=((10, 10), (20, 10)))], [[
             [sg.Text(bar[0], key=bar[0], background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (5, 5)))],
             [sg.ProgressBar(key=bar[0] + '_', max_value=bar[1], bar_color='#008000', size=(30, 20), pad=((15, 15), (5, 5)))]]
-            for bar in lists], [sg.Text('', background_color=color)]
+            for bar in lists]
     ]
     # 中断ボタン interrupt = (event in [sg.WIN_CLOSED, 'interrupt'])
     if interrupt:

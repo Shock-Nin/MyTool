@@ -21,11 +21,11 @@ def move_pos(x=None, y=None):
 
 
 # クリックしてマウスを元位置に戻す
-def click_pos(x=None, y=None):
+def click_pos(x=None, y=None, dbl=False):
     pos_x, pos_y = pgui.position()
     try:
         if x is not None:
-            pgui.click(x, y, clicks=1, interval=0, button='left')
+            pgui.click(x, y, clicks=(2 if dbl else 1), interval=0, button='left')
         pgui.moveTo(pos_x, pos_y)
     except: pass
 

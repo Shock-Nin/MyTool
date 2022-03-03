@@ -163,6 +163,6 @@ class BlogPochi:
                            str(max_cnt) + ']', '正常終了')
             else:
                 com.dialog(self.myjob + '\n途中でエラーがありました\n(' + com.conv_time_str(run_time) + ') [' +
-                           str(ok_cnt) + '/' + str(max_cnt) + '\n\n' + "\n".join(err_msg) + ']', 'エラー発生', 'W')
+                           str(ok_cnt) + '/' + str(max_cnt) + ']\n\n' + "\n".join(err_msg), 'エラー発生', 'W')
 
         return self.wd

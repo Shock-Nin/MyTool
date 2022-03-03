@@ -18,7 +18,7 @@ class EaMergeTest:
         if com.question('開始しますか？', '開始確認') <= 0:
             return None
 
-        process = subprocess.Popen(cst.RM_EXE + '/reportmanager.exe')
+        process = subprocess.Popen(cst.RM_PATH + '/reportmanager.exe')
 
 
 

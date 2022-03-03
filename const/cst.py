@@ -13,6 +13,7 @@ MAIN_ACT_COLOR = ['#FFFF77', '#000000']
 
 # Path
 PC = path.PC
+PC_NAME = path.PC_NAME
 IP = path.IP
 WEB_IP = path.WEB_IP
 MY_IP = path.MY_IP

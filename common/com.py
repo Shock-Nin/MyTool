@@ -10,7 +10,9 @@ import inspect
 import datetime
 import requests
 import smtplib
+import pyperclip
 import pandas as pd
+import pyautogui as pgui
 from email.mime.text import MIMEText
 
 # スリープ直接呼び出し
@@ -51,11 +53,19 @@ def conv_time_str(num):
     return datetime.datetime.fromtimestamp(float(num) + (3600 * 15)).strftime('%H:%M:%S')
 
 
-# 実行メソッドの取得
+# 実行機能の取得
 def get_method(before=0):
     stack = inspect.stack()[before + 2]
     file = stack.filename.replace(os.getcwd(), '')
-    return file[1: file.rfind('.')] + '/' + stack.function
+    return file[1: file.rfind('.')].replace('\\', '/') + '/' + stack.function
+
+
+# クリップボードコピペ
+def clip_copy(string, enter=None):
+    pyperclip.copy(string)
+    pgui.hotkey('ctrl', 'v')
+    if enter:
+        pgui.hotkey('enter')
 
 
 # ログをレベルに応じて出力
