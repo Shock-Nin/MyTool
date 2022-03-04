@@ -374,9 +374,9 @@ def _edit_unit_list():
 # 推奨ロットの計算
 def _calucu_lot(lot, winrate, ddown, loss1):
 
-    win50 = lot * ((100 - (50 - winrate)) if winrate < 50 else (100 + (winrate - 50))) / 100
     dd10 = 0.1 / (ddown / 100) * lot
     loss3 = 0.03 / (loss1 / 100) * lot
+    win50 = min(dd10, loss3) * ((100 - (50 - winrate)) if winrate < 50 else (100 + (winrate - 50))) / 100
     best = min(win50, dd10, loss3)
 
     return best, win50, dd10, loss3

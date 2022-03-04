@@ -284,8 +284,8 @@ class EaAutoTest:
             try: process.kill()
             except: pass
 
-        com.log(self.myjob + ': ' + ('全終了' if is_interrupt else '中断') + '(' + com.conv_time_str(total_time) + ')')
-        com.dialog(('完了' if is_interrupt else '中断') + 'しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
+        com.log(self.myjob + ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')')
+        com.dialog(('中断' if is_interrupt else '完了') + 'しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
         return
 
     # テンプレートマッチング

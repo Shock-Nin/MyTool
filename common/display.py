@@ -26,6 +26,7 @@ def dialog(msg, title, lv=''):
             event, values = window.read(timeout=0)
         else:
             event, values = window.read()
+
         if event in [sg.WIN_CLOSED, 'OK', '\r', 'Return:603979789']:
             break
     window.close()
@@ -49,6 +50,7 @@ def question(msg, title, lv='', cancel=False):
             event, values = window.read(timeout=0)
         else:
             event, values = window.read()
+
         if event in [sg.WIN_CLOSED, '中断']:
             break
         elif event in ['はい', '\r', 'Return:603979789']:

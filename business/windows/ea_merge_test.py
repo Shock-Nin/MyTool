@@ -13,7 +13,7 @@ from PIL import ImageGrab
 
 from business. windows import ea_edits as inheritance
 
-IN_PATH = cst.TEST_OUT_PATH[cst.PC] + 'Merge/'
+TEST_PATH = cst.TEST_OUT_PATH[cst.PC]
 NAME_FILE = cst.DATA_PATH[cst.PC] + 'Unit.html'
 
 
@@ -70,6 +70,7 @@ class EaMergeTest:
                     html.append(file)
             targets.append(html)
 
+        # All(数字ロジックの個別の全結合)を追加
         alls = []
         for target in targets:
             for file in target:
@@ -78,15 +79,16 @@ class EaMergeTest:
 
         targets.append(alls)
         name_list.append('All')
-        targets.append(alls)
-        name_list.append('Complete')
-        print(targets)
+
         if com.question('開始しますか？\n\n　' + "\n　".join([name for name in name_list]), '開始確認') <= 0:
             return None
 
         # 進捗と中断の監視
         is_interrupt = False
+        total_time = 0
         try:
+            start_time = com.time_start()
+
             if 'Win' == cst.PC:
                 process = subprocess.Popen(cst.RM_PATH + '/reportmanager.exe')
                 com.sleep(2)
@@ -95,19 +97,48 @@ class EaMergeTest:
                 process = subprocess.Popen(cst.RM_PATH + '/reportmanager.exe')
                 com.sleep(5)
 
-            window = com.progress(self.myjob, ['', len(targets)], interrupt=True)
-
             while True:
-                event, values = window.read(timeout=0)
-                window[''].update()
+                count = 0
+
+                for key in cst.EA_PATHS:
+                    ea_fold = cst.EA_PATHS[key][-1]
+
+                    for i in range(count, len(targets)):
+                        bar2 = targets[0][0].split('_')[0]
+                        window = com.progress(self.myjob, ['ea', len(cst.EA_PATHS)], [bar2, len(targets[i])],
+                                              interrupt=True)
+                        event, values = window.read(timeout=0)
+
+                        window['ea'].update(key)
+                        window['ea_'].update(count)
+                        window[bar2].update(targets[i][0].split('_')[0])
+                        window[bar2 + '_'].update(i)
+
+                        target_ea = targets[count][0].split('_')[0]
+
+                        # 中断イベント
+                        if _is_interrupt(window, event):
+                            is_interrupt = True
+                            return
+
+                        if key.lower() == target_ea \
+                                or (key.lower() != target_ea and i == len(targets) - 1):
+
+                            self._call_report(ea_fold, targets[i], key.lower() == target_ea, True)
+                            if key.lower() == target_ea:
+                                break
+                        else:
+                            self._call_report(ea_fold, targets[i], ea_fold.find('-') < 0, False)
+
+                    # 中断送り
+                    if is_interrupt:
+                        break
+                    count += 1
+
+                run_time = com.time_end(start_time)
+                total_time += run_time
 
                 break
-
-            # 中断イベント
-            if _is_interrupt(window, event):
-                is_interrupt = True
-                return
-
 
         finally:
             try: process.kill()
@@ -118,6 +149,26 @@ class EaMergeTest:
         com.log(self.myjob + ': ' + ('全終了' if is_interrupt else '中断') + '(' + com.conv_time_str(total_time) + ')')
         com.dialog(('完了' if is_interrupt else '中断') + 'しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
         return
+
+    def _call_report(self, ea_fold, target, is_other, is_all):
+
+        if is_all:
+            if is_other:
+                print(TEST_PATH + ea_fold + ' ' + str(target))
+            else:
+                for cur in cst.CURRNCYS_EA[0]:
+                    print(TEST_PATH + ea_fold + cur + '/' + cur + ' ALL')
+        else:
+            if is_other:
+                return
+
+            for cur in cst.CURRNCYS_EA[0]:
+                print(TEST_PATH + ea_fold + cur + '/' + "".join([file for file in target if 0 <= file.find(cur.lower())]))
+
+        print(TEST_PATH + 'merge/' + ('all' if is_all and not is_other else target[0].split('_')[0]) + '.htm')
+
+        print('-------------------')
+
 
 # 中断イベント
 def _is_interrupt(window, event):
