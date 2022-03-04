@@ -20,7 +20,7 @@ import PySimpleGUI as sg
 import subprocess
 
 PW_INPUT = False
-CHANGE_MENU = -1
+CHANGE_MENU = 0
 
 MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
 BTNS = {cst.DEV_IP: {
@@ -39,7 +39,7 @@ BTNS = {cst.DEV_IP: {
     }, }
 BTN = BTNS[cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]]
 DP_XY_WIDTH = {'Win': [220, 100 + (int(len(BTN) + 2) * 40), 16],
-               'Mac': [130, 160 + (int(len(BTN) + 2) * 22), 10]}
+               'Mac': [130, 80 + (int(len(BTN) + 2) * 40), 10]}
 
 
 def main():

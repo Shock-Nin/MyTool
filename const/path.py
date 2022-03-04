@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 
 # ネットワーク
+import socket
 import platform
+import requests
+
 pf = platform.system()
 PC = 'Win' if 'Windows' == pf else 'Mac' if 'Darwin' == pf else ''
-
-import socket
 PC_NAME = socket.gethostname()
-IP = socket.gethostbyname(PC_NAME)
+IP = requests.get('http://ipconfig.me').text
+
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'
 DEV_IP = '164.70.84.254'

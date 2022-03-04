@@ -21,8 +21,10 @@ class EaEdits:
 
     def do(self):
 
-        if com.question('開始しますか？', '開始確認') <= 0:
+        yesno = com.question('開始しますか？\n「いいえ」でパラメータのみ更新します。', '開始確認', cancel=True)
+        if 0 == yesno:
             return
+
         start_time = com.time_start()
         total_time = 0
 
@@ -33,6 +35,10 @@ class EaEdits:
         run_time = com.time_end(start_time)
         total_time += run_time
         com.log('パラメータ: 作成完了(' + com.conv_time_str(run_time) + ')')
+
+        if yesno < 0:
+            com.dialog('パラメータのみ、更新しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
+            return
 
         # EA成績(個別)
         is_end = ea_edit_unit.EaEditUnit().do()

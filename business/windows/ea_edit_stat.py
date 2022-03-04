@@ -35,7 +35,6 @@ class EaEditStat:
 def _edit_stat_status():
 
     name_list = inheritance.name_list(NAME_FILE)
-
     if name_list is None:
         return ['以下のファイルでエラーが発生しました。\n　' + NAME_FILE, '読み込みエラー', 'E']
 
