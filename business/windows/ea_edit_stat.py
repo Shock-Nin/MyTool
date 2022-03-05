@@ -56,7 +56,7 @@ def _edit_stat_status():
                 window.read(timeout=0)
 
             window[bar1].update(name_list[i] + '(' + str(i) + ' / ' + str(len(name_list)) + ')')
-            window[bar1 + '_'].Update(i)
+            window[bar1 + '_'].update(i)
 
             try:
                 # HTMLのヘッダー部から取得

@@ -54,7 +54,7 @@ def _slim_html():
 
                 window[bar1].update(targets[-2] + '(' + str(i) + ' / ' + str(len(tests)) + ')')
                 window[bar2].update(targets[-1].split('.')[0] + '(' + str(k) + ' / ' + str(len(tests[i])) + ')')
-                window[bar1 + '_'].Update(i)
+                window[bar1 + '_'].update(i)
                 window[bar2 + '_'].update(k)
 
                 try:
@@ -125,8 +125,8 @@ def _edit_unit_list():
 
                 window[bar1].update(targets[-2] + '(' + str(i) + ' / ' + str(len(tests)) + ')')
                 window[bar2].update(targets[-1].split('.')[0] + '(' + str(k) + ' / ' + str(len(tests[i])) + ')')
-                window[bar1 + '_'].Update(i)
-                window[bar2 + '_'].Update(k)
+                window[bar1 + '_'].update(i)
+                window[bar2 + '_'].update(k)
 
                 try:
                     # HTMLのヘッダー部から取得
@@ -332,6 +332,7 @@ def _edit_unit_list():
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
                     com.log(str(e))
 
+                window.close()
             html_data += html_row + '</tr>'
     finally:
         try: window.close()
@@ -375,9 +376,10 @@ def _edit_unit_list():
 # 推奨ロットの計算
 def _calucu_lot(lot, winrate, ddown, loss1):
 
-    dd10 = math.floor(0.1 / (ddown / 100) * lot * 10) / 10
-    loss3 = math.floor(0.03 / (loss1 / 100) * lot * 10) / 10
-    win50 = math.floor(min(dd10, loss3) * ((100 - (50 - winrate)) if winrate < 50 else (100 + (winrate - 50))) / 100 * 10) / 10
+    dd10 = math.floor(0.1 / (ddown / 100) * lot * 100) / 100
+    loss3 = math.floor(0.03 / (loss1 / 100) * lot * 100) / 100
+    win50 = math.floor(min(dd10, loss3) * ((100 - (50 - winrate))
+                                           if winrate < 50 else (100 + (winrate - 50))) / 100 * 100) / 100
     best = min(win50, dd10, loss3)
 
     return best, win50, dd10, loss3
