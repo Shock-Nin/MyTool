@@ -112,17 +112,17 @@ def _edit_unit_list():
     try:
         for i in range(0, len(tests)):
             html_row = ''
-            if 0 == i:
-                bar1 = tests[i][0].split('/')[-2]
-                bar2 = tests[i][0].split('/')[-1].split('.')[0]
+
+            # 進捗表示
+            bar1 = tests[i][0].split('/')[-2]
+            bar2 = tests[i][0].split('/')[-1].split('.')[0]
+            window = com.progress('3. 集計データ作成中', [bar1, len(tests)], [bar2, len(tests[i])])
+            window.read(timeout=0)
 
             for k in range(0, len(tests[i])):
                 targets = tests[i][k].split('/')
 
                 # 進捗表示
-                window = com.progress('3. 集計データ作成中', [bar1, len(tests)], [bar2, len(tests[i])])
-                window.read(timeout=0)
-
                 window[bar1].update(targets[-2] + '(' + str(i) + ' / ' + str(len(tests)) + ')')
                 window[bar2].update(targets[-1].split('.')[0] + '(' + str(k) + ' / ' + str(len(tests[i])) + ')')
                 window[bar1 + '_'].update(i)
@@ -332,8 +332,8 @@ def _edit_unit_list():
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
                     com.log(str(e))
 
-                window.close()
             html_data += html_row + '</tr>'
+            window.close()
     finally:
         try: window.close()
         except: pass
