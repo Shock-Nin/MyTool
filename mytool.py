@@ -20,8 +20,8 @@ import PySimpleGUI as sg
 import subprocess
 
 PW_INPUT = False
-# CHANGE_MENU = -1
-CHANGE_MENU = 0
+CHANGE_MENU = -1
+# CHANGE_MENU = 0
 
 MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
 BTNS = {cst.DEV_IP: {

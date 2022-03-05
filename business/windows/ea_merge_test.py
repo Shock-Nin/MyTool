@@ -233,13 +233,6 @@ class EaMergeTest:
 
                 # 全結合の場合は、リスト全投入
                 if is_all:
-                    # pgui.hotkey('shift', 'tab')
-                    # com.sleep(1)
-                    # pgui.hotkey('ctrl', 'a')
-                    # com.sleep(1)
-                    # [pgui.hotkey('tab') for _ in range(3)]
-                    # com.sleep(1)
-
                     is_cur = False
                     for cur in cst.CURRNCYS_EA[0]:
                         if 0 <= path.find(cur):
@@ -247,7 +240,7 @@ class EaMergeTest:
                             break
 
                     com.clip_copy(" ".join(['"' + file + '"' for file in files
-                                            if not is_cur or (is_cur and 0 <= file.find(cur))]), True)
+                                            if not is_cur or (is_cur and 0 <= file.find(cur.lower()))]), True)
 
                 # 個別の場合は、ファイル指定
                 else:
@@ -263,6 +256,9 @@ class EaMergeTest:
 
     # マージデータの保存
     def _save_report(self, file):
+
+
+
         try:
             if cst.IP == cst.DEV_IP:
 
@@ -295,12 +291,14 @@ class EaMergeTest:
                 cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
                 com.sleep(2)
 
+                path = (cst.TEST_OUT_PATH[cst.PC] + 'merge').replace('/', '\\')
+
                 # ダイヤログを開く
                 com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
                 com.sleep(2)
 
                 # フォルダ選択
-                com.clip_copy((cst.TEST_OUT_PATH[cst.PC] + 'merge').replace('/', '\\'), True)
+                com.clip_copy(path , True)
                 com.sleep(2)
 
                 # ファイル選択
@@ -314,6 +312,21 @@ class EaMergeTest:
 
                 # ファイル群をリセット
                 pgui.hotkey('ctrl', 'shift', 'c')
+                com.sleep(2)
+
+                # 古いgif画像は削除して、新しいpngをgif変換
+                try: os.remove(path + '\\' + file + '.gif')
+                except: pass
+                try: os.rename(path + '\\' + file + '.png', path + '\\' + file + '.gif')
+                except: pass
+
+                # HTML本体の、pngをgifに書き換え
+                try:
+                    with open(path + '\\' + file + '.htm', 'r') as read_file:
+                        read_file = read_file.read().replace('png', 'gif')
+                        with open(path + '\\' + file + '.htm', 'w') as write_file:
+                            write_file.write(read_file)
+                except: pass
 
             com.log('保存完了: ' + cst.TEST_OUT_PATH[cst.PC] + 'merge/' + file + '.htm')
         except Exception as e:
