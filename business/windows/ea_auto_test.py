@@ -148,7 +148,9 @@ class EaAutoTest:
                             return
 
                     # MT4起動時設定
-                    self._set_mt4start(i, checks[i][k].split('_')[1])
+                    if not self._set_mt4start(i, checks[i][k].split('_')[1]):
+                        is_interrupt = True
+                        break
 
                     if not is_start:
                         com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
@@ -212,7 +214,10 @@ class EaAutoTest:
 
                             com.log('テスト開始: ' + ea_name + ', ' + logic)
 
-                            self._set_expert(path, file, [logic, (prms[ea_name][0] if 'Best' == logic else '100')])
+                            if not self._set_expert(path, file,
+                                                    [logic, (prms[ea_name][0] if 'Best' == logic else '100')]):
+                                is_interrupt = True
+                                break
 
                             path = cst.EA_PATHS[ea_name.split('_')[0]][-1] + cur
                             file = logic + '_' + cur
@@ -242,7 +247,9 @@ class EaAutoTest:
                         file = checks[i][k]
                         com.log('テスト開始: ' + file)
 
-                        self._set_expert(path, file)
+                        if not self._set_expert(path, file):
+                            is_interrupt = True
+                            break
 
                         if not self._save_report(path, checks[i][k], window, event):
                             is_interrupt = True
@@ -295,77 +302,87 @@ class EaAutoTest:
     # MT4起動時の設定
     def _set_mt4start(self, ea_count, currency, time_frame='H1', start_ym='2005.01', end_ym=com.str_time()[:4] + '.01'):
 
-        # EA選択
-        com.click_pos(self.pos_xy['エキスパート'][0] - 100, self.pos_xy['エキスパート'][1] + 5)
-        [pgui.hotkey('up') for _ in range(10)]
-        [pgui.hotkey('down') for _ in range(0, ea_count)]
-        pgui.hotkey('enter')
+        try:
+            # EA選択
+            com.click_pos(self.pos_xy['エキスパート'][0] - 100, self.pos_xy['エキスパート'][1] + 5)
+            [pgui.hotkey('up') for _ in range(10)]
+            [pgui.hotkey('down') for _ in range(0, ea_count)]
+            pgui.hotkey('enter')
 
-        # 開始日～終了日
-        com.click_pos(self.pos_xy['開始日'][0] + 50, self.pos_xy['開始日'][1] + 5)
-        pgui.write(start_ym[:4])
-        pgui.hotkey('right')
-        pgui.write(start_ym[5:])
-        com.click_pos(self.pos_xy['終了日'][0] + 50, self.pos_xy['終了日'][1] + 5)
-        pgui.write(end_ym[:4])
-        pgui.hotkey('right')
-        pgui.write(end_ym[5:])
+            # 開始日～終了日
+            com.click_pos(self.pos_xy['開始日'][0] + 50, self.pos_xy['開始日'][1] + 5)
+            pgui.write(start_ym[:4])
+            pgui.hotkey('right')
+            pgui.write(start_ym[5:])
+            com.click_pos(self.pos_xy['終了日'][0] + 50, self.pos_xy['終了日'][1] + 5)
+            pgui.write(end_ym[:4])
+            pgui.hotkey('right')
+            pgui.write(end_ym[5:])
 
-        # 通貨ペア
-        com.click_pos(self.pos_xy['通貨'][0] + 70, self.pos_xy['通貨'][1] + 5)
-        pgui.hotkey('home')
-        [pgui.hotkey('down') for _ in range(0, cst.CURRNCYS_EA[0].index(currency))]
-        pgui.hotkey('enter')
+            # 通貨ペア
+            com.click_pos(self.pos_xy['通貨'][0] + 70, self.pos_xy['通貨'][1] + 5)
+            pgui.hotkey('home')
+            [pgui.hotkey('down') for _ in range(0, cst.CURRNCYS_EA[0].index(currency))]
+            pgui.hotkey('enter')
 
-        # スプレッド
-        spread = "".join([cst.CURRNCYS_EA[1][n] for n in range(0, len(cst.CURRNCYS_EA[0]))
-                          if currency == cst.CURRNCYS_EA[0][n]])
-        com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 30)
-        pgui.write(spread)
+            # スプレッド
+            spread = "".join([cst.CURRNCYS_EA[1][n] for n in range(0, len(cst.CURRNCYS_EA[0]))
+                              if currency == cst.CURRNCYS_EA[0][n]])
+            com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 30)
+            pgui.write(spread)
 
-        # 期間
-        com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 5)
-        pgui.hotkey('home')
-        [pgui.hotkey('down') for _ in range(0, ['M1', 'M5', 'M15', 'M30', 'H1', 'H4'].index(time_frame))]
-        pgui.hotkey('enter')
+            # 期間
+            com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 5)
+            pgui.hotkey('home')
+            [pgui.hotkey('down') for _ in range(0, ['M1', 'M5', 'M15', 'M30', 'H1', 'H4'].index(time_frame))]
+            pgui.hotkey('enter')
 
-        # 最適化外し
-        if self.pos_xy['最適化ON'][0] is not None:
-            com.click_pos(self.pos_xy['最適化ON'][0] + 5, self.pos_xy['最適化ON'][1] + 5)
+            # 最適化外し
+            if self.pos_xy['最適化ON'][0] is not None:
+                com.click_pos(self.pos_xy['最適化ON'][0] + 5, self.pos_xy['最適化ON'][1] + 5)
 
-        com.log('MT4設定: ' + currency + '(' + start_ym + ' 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
+            com.log('MT4設定: ' + currency + '(' + start_ym + ' 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
+        except Exception as e:
+            com.log('MT4初期設定エラー: ' + str(e), 'E')
+            com.dialog('MT4初期設定で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
+            return False
+
         return True
 
     # パラメータの設定
     def _set_expert(self, path, file, prm=None):
+        try:
+            target = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH + path + '/' + file + '.set'
 
-        target = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH + path + '/' + file + '.set'
-
-        com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
-        com.sleep(3)
-        com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 5)
-        com.sleep(3)
-
-        com.clip_copy(target.replace('/', '\\'), True)
-
-        # パラメータの変更がある場合
-        if prm is not None:
-
+            com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
             com.sleep(3)
-            if prm[0] not in ['Best', 'Full']:
-                com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Logics'][1] + 5, dbl=True)
-                com.clip_copy(prm[0], True)
+            com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 5)
+            com.sleep(3)
+
+            com.clip_copy(target.replace('/', '\\'), True)
+
+            # パラメータの変更がある場合
+            if prm is not None:
+
+                com.sleep(3)
+                if prm[0] not in ['Best', 'Full']:
+                    com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Logics'][1] + 5, click=2)
+                    com.clip_copy(prm[0], True)
+                    com.sleep(1)
+
+                com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Risk'][1] + 5, click=2)
+                com.clip_copy(prm[1], True)
                 com.sleep(1)
 
-            com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Risk'][1] + 5, dbl=True)
-            com.clip_copy(prm[1], True)
-            com.sleep(1)
+            com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 40)
+            com.sleep(3)
 
-        com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 40)
-        com.sleep(3)
-
-        com.log('テスト開始: ' + target + ', ' + str(prm))
-        com.click_pos(self.pos_xy['スタート'][0] + 5, self.pos_xy['スタート'][1] + 5)
+            com.log('テスト開始: ' + target + ', ' + str(prm))
+            com.click_pos(self.pos_xy['スタート'][0] + 5, self.pos_xy['スタート'][1] + 5)
+        except Exception as e:
+            com.log('パラメータ設定エラー: ' + str(e), 'E')
+            com.dialog('パラメータ設定で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
+            return False
 
         return True
 
@@ -400,6 +417,11 @@ class EaAutoTest:
                     is_interrupt = True
                     break
 
+        except Exception as e:
+            com.log('テスト保存エラー: ' + str(e), 'E')
+            com.dialog('テスト保存で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
+            return False
+
         finally:
             # マッチングのマーキングimg出力
             try: cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
@@ -408,32 +430,39 @@ class EaAutoTest:
         if is_interrupt:
             return False
 
-        com.sleep(3)
-        target = cst.TEST_UNIT[cst.PC] + path + '/' + file + '.htm'
+        try:
+            com.sleep(3)
+            target = cst.TEST_UNIT[cst.PC] + path + '/' + file + '.htm'
 
-        # 全体画面の撮影
-        shot, gray = com.shot_grab()
-        if shot is None:
+            # 全体画面の撮影
+            shot, gray = com.shot_grab()
+            if shot is None:
+                return False
+
+            # レポート保存
+            report = self._get_position(shot, gray, cst.MATCH_IMG_MT4['レポート'], (0, 255, 0))
+
+            com.click_pos(report[0] + 5, report[1] + 5)
+            com.sleep(2)
+            pgui.rightClick(report[0] + 5, report[1] - 100)
+            com.sleep(1)
+            pgui.hotkey('s')
+            com.sleep(3)
+            com.clip_copy(target.replace('/', '\\'), True)
+            com.sleep(1)
+            pgui.hotkey('y')
+            com.sleep(3)
+            com.click_pos(30, report[1] + 5)
+
+            # マッチングのマーキングimg出力
+            cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
+            com.log('テストデータ保存: ' + target)
+
+        except Exception as e:
+            com.log('テスト保存エラー: ' + str(e), 'E')
+            com.dialog('テスト保存で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
             return False
 
-        # レポート保存
-        report = self._get_position(shot, gray, cst.MATCH_IMG_MT4['レポート'], (0, 255, 0))
-
-        com.click_pos(report[0] + 5, report[1] + 5)
-        com.sleep(2)
-        pgui.rightClick(report[0] + 5, report[1] - 100)
-        com.sleep(1)
-        pgui.hotkey('s')
-        com.sleep(3)
-        com.clip_copy(target.replace('/', '\\'), True)
-        com.sleep(1)
-        pgui.hotkey('y')
-        com.sleep(3)
-        com.click_pos(30, report[1] + 5)
-
-        # マッチングのマーキングimg出力
-        cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
-        com.log('テストデータ保存: ' + target)
         return True
 
 

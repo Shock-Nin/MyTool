@@ -61,8 +61,8 @@ def main():
             login = sg.Window('パスワード入力', keep_on_top=True, modal=True, element_justification='c',
                               background_color=cst.MAIN_BGCOLOR, margins=(20, 20),
                               icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, layout=
-                              [[sg.Input('', key='pw', password_char='*', size=(12, 3), font=('', 30))],
-                               [sg.Button('ログイン', key='login', font=('', 16), pad=((0, 0), (20, 0)), size=(12, 1))]])
+                              [[sg.Input('', key='pw', password_char='*', font=('', 30), size=(12, 3))],
+                               [sg.Button('ログイン', key='login', font=('', 16), size=(12, 1), pad=((0, 0), (20, 0)))]])
             while True:
                 event, values = login.read()
 
@@ -93,20 +93,20 @@ def main():
                 for i in range(0, len((cst.MENU_CSV['Fold']))) if cst.MENU_CSV['Fold'].at[i, 'Type'] == cst.PC]
         web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len((cst.MENU_CSV['Web'])))]
 
+        xy_size = ((DP_XY_WIDTH[cst.PC][2]), 1)
+
         # メイン画面レイアウト
         layout = [[sg.Text('', key='act', background_color=cst.MAIN_ACT_COLOR[0], text_color=cst.MAIN_ACT_COLOR[1],
-                           size=((DP_XY_WIDTH[cst.PC][2]), 1), font=('', 18),
-                           pad=((0, 0), (0, 5)))],
+                           font=('', 18), size=xy_size, pad=((0, 0), (0, 5)))],
                   [sg.Combo(fold, default_value='　Fold', key='Fold', enable_events=True, readonly=True,
-                            font=('', 16), size=((DP_XY_WIDTH[cst.PC][2]), 1), pad=((0, 0), (0, 5)))],
+                            font=('', 16), size=xy_size, pad=((0, 0), (0, 5)))],
                   [sg.Combo(web, default_value='　Web', key='Web', enable_events=True, readonly=True,
-                            font=('', 16), size=((DP_XY_WIDTH[cst.PC][2]), 1), pad=((0, 0), (0, 15)))],
-                  [[sg.Button(btn, key=btn, font=('', 16), pad=((0, 0), (0, 5)),
-                              size=((DP_XY_WIDTH[cst.PC][2]), 1))] for btn in BTN]]
+                            font=('', 16), size=xy_size, pad=((0, 0), (0, 15)))],
+                  [[sg.Button(btn, key=btn, font=('', 16), pad=((0, 0), (0, 5)), size=xy_size)] for btn in BTN]]
 
-        window = sg.Window(cst.PC, modal=True, element_justification='c', background_color=cst.MAIN_BGCOLOR,
-                           element_padding=((0, 0), (0, 0)), margins=(0, 0),
-                           icon=(os.getcwd() + cst.ICON_FILE), location=
+        window = sg.Window(cst.PC, modal=True, element_justification='c', icon=(os.getcwd() + cst.ICON_FILE),
+                           background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
+                           element_padding=((0, 0), (0, 0)), margins=(0, 0), location=
                            (win_x - DP_XY_WIDTH[cst.PC][0], win_y - DP_XY_WIDTH[cst.PC][1]), layout=layout)
         # 画面のイベント監視
         while True:

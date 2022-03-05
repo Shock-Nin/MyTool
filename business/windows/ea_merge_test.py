@@ -12,7 +12,6 @@ import PySimpleGUI as sg
 
 from business. windows import ea_edits as inheritance
 
-TEST_PATH = cst.TEST_OUT_PATH[cst.PC]
 NAME_FILE = cst.DATA_PATH[cst.PC] + 'Unit.html'
 
 
@@ -80,7 +79,7 @@ class EaMergeTest:
         targets.append(alls)
         name_list.append('All')
 
-        if com.question('開始しますか？\n\n　' + "\n　".join([name for name in name_list]), '開始確認') <= 0:
+        if com.question(self.myjob + ' 開始しますか？\n\n　' + "\n　".join([name for name in name_list]), '開始確認') <= 0:
             return
 
         # 進捗と中断の監視
@@ -95,7 +94,7 @@ class EaMergeTest:
                 process.kill()
                 com.sleep(2)
                 process = subprocess.Popen(cst.RM_PATH + '/reportmanager.exe')
-                com.sleep(5)
+                com.sleep(7)
 
                 if cst.IP == cst.DEV_IP:
 
@@ -110,11 +109,14 @@ class EaMergeTest:
                                                      cst.MATCH_IMG_RM[key], (0, 0, 255))
 
                     # エキスパート設定のマッチングが失敗の場合、エラー終了
-                    if self.pos_xy['マージ'][0] is None or self.pos_xy['保存'][0] is None or self.pos_xy['初期化'][0] is None:
+                    if self.pos_xy['マージ'][0] is None or self.pos_xy['保存'][0] is None:
                         com.log('マッチングエラー: ' + str(self.pos_xy))
                         com.dialog('マッチングエラー\n　' + "\n　".join([key + ' = ' + str(self.pos_xy[key])
                                                                for key in self.pos_xy]), self.myjob, 'E')
                         return
+
+                    # マッチングのマーキングimg出力
+                    cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
 
             while True:
                 count = 0
@@ -145,13 +147,18 @@ class EaMergeTest:
                         if key.lower() == target_ea \
                                 or (key.lower() != target_ea and i == len(targets) - 1):
 
-                            self._call_report(ea_fold, targets[i], key.lower() == target_ea, True)
+                            if not self._call_report(ea_fold, targets[i], key.lower() == target_ea, True):
+                                is_interrupt = True
+                                break
+
                             if key.lower() == target_ea:
                                 break
 
                         # フォルダ内、個別指定タイプ
                         else:
-                            self._call_report(ea_fold, targets[i], ea_fold.find('-') < 0, False)
+                            if not self._call_report(ea_fold, targets[i], ea_fold.find('-') < 0, False):
+                                is_interrupt = True
+                                break
 
                     window.close()
 
@@ -177,84 +184,144 @@ class EaMergeTest:
 
     # レポート読み込み
     def _call_report(self, ea_fold, target, is_other, is_all):
+        try:
+            # 読み込みの選択で、フォルダ内ファイル全選択
+            if is_all:
+                # Otherの読み込みの選択
+                if is_other:
+                    self._select_report(ea_fold, target, True)
 
-        wait = 20
-        # 読み込みの選択で、フォルダ内ファイル全選択
-        if is_all:
-            # Otherの読み込みの選択
-            if is_other:
-                self._select_report(ea_fold)
-                wait = 40
+                # Allの読み込みの選択
+                else:
+                    for cur in cst.CURRNCYS_EA[0]:
+                        self._select_report(ea_fold + cur, target, True)
 
-            # Allの読み込みの選択
+            # 読み込みの選択で、フォルダ内ファイル単独選択
             else:
+                if is_other:
+                    return
+
+                # 個別に読み込みの選択
                 for cur in cst.CURRNCYS_EA[0]:
-                    self._select_report(ea_fold + cur)
-                    wait = 60
+                    if not self._select_report(ea_fold + cur, "".join([file for file in target if 0 <= file.find(cur.lower())]), False):
+                        return False
 
-        # 読み込みの選択で、フォルダ内ファイル単独選択
-        else:
-            if is_other:
-                return
+        except Exception as e:
+            com.log('レポート読み込みエラー: ' + str(e), 'E')
+            com.dialog('レポート読み込みで、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
+            return False
 
-            # 個別に読み込みの選択
-            for cur in cst.CURRNCYS_EA[0]:
-                self._select_report(ea_fold + cur, "".join([file for file in target if 0 <= file.find(cur.lower())]))
+        # マージデータの保存
+        if not self._save_report(('all' if is_all and not is_other else target[0].split('_')[0])):
+            return False
 
-        # レポートの保存
-        self._save_report(('all' if is_all and not is_other else target[0].split('_')[0]), wait)
+        return True
 
     # 読み込みの選択
-    def _select_report(self, path, file=None):
+    def _select_report(self, path, files, is_all):
+        try:
+            if cst.IP == cst.DEV_IP:
 
-        if cst.IP == cst.DEV_IP:
-            # ダイヤログを開く
-            pgui.hotkey('ctrl', 'o')
-            com.sleep(2)
+                # ダイヤログを開く
+                com.click_pos(self.pos_xy['マージ'][0] - 20, self.pos_xy['マージ'][1] + 5)
+                pgui.hotkey('ctrl', 'o')
+                com.sleep(2)
 
-            # フォルダ選択
-            com.clip_copy((TEST_PATH + path).replace('/', '\\'), True)
-            com.sleep(2)
+                # フォルダ選択
+                com.clip_copy((cst.TEST_UNIT[cst.PC] + path).replace('/', '\\'), True)
+                com.sleep(2)
 
-            # 全結合の場合は全選択
-            if file is None:
-                pgui.hotkey('ctrl', 'a')
-                pgui.hotkey('enter')
+                # 全結合の場合は、リスト全投入
+                if is_all:
+                    # pgui.hotkey('shift', 'tab')
+                    # com.sleep(1)
+                    # pgui.hotkey('ctrl', 'a')
+                    # com.sleep(1)
+                    # [pgui.hotkey('tab') for _ in range(3)]
+                    # com.sleep(1)
 
-            # 個別の場合は、ファイル指定
-            else:
-                com.clip_copy(file, True)
+                    is_cur = False
+                    for cur in cst.CURRNCYS_EA[0]:
+                        if 0 <= path.find(cur):
+                            is_cur = True
+                            break
 
-        com.sleep(1)
+                    com.clip_copy(" ".join(['"' + file + '"' for file in files
+                                            if not is_cur or (is_cur and 0 <= file.find(cur))]), True)
 
-    # レポートの保存
-    def _save_report(self, file, wait):
+                # 個別の場合は、ファイル指定
+                else:
+                    com.clip_copy(files, True)
 
-        if cst.IP == cst.DEV_IP:
-            # マージファイル待機
-            com.click_pos(self.pos_xy['マージ'][0] + 5, self.pos_xy['マージ'][1] + 5)
-            com.sleep(3)
-            pgui.hotkey('end')
-            com.sleep(wait)
-
-            # ダイヤログを開く
-            com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
-            com.sleep(2)
-
-            # フォルダ選択
-            com.clip_copy((TEST_PATH + 'merge').replace('/', '\\'), True)
-            com.sleep(2)
-
-            # ファイル選択
-            com.clip_copy(file + '.htm', True)
             com.sleep(1)
+        except Exception as e:
+            com.log('レポート読み込みエラー: ' + str(e), 'E')
+            com.dialog('レポート読み込みで、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
+            return False
 
-            pgui.hotkey('enter')
-            com.sleep(2)
+        return True
 
-            com.click_pos(self.pos_xy['初期化'][0] + 5, self.pos_xy['初期化'][1] + 5)
+    # マージデータの保存
+    def _save_report(self, file):
+        try:
+            if cst.IP == cst.DEV_IP:
 
-        com.log('保存完了: ' + TEST_PATH + 'merge/' + file + '.htm')
+                # マージファイル出現まで待機
+                com.click_pos(self.pos_xy['マージ'][0] + 5, self.pos_xy['マージ'][1] + 5)
+                com.sleep(3)
+
+                while True:
+                    shot, gray = com.shot_grab()
+                    xy = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
+                                   cst.MATCH_IMG_RM['ファイル'], (255, 0, 255))
+
+                    if xy[0] is not None:
+                        break
+                    com.sleep(2)
+
+                # データ行出現まで待機
+                pgui.hotkey('end')
+
+                while True:
+                    shot, gray = com.shot_grab()
+                    xy = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
+                                   cst.MATCH_IMG_RM['データ'], (255, 0, 255))
+
+                    if xy[0] is not None:
+                        break
+                    com.sleep(2)
+
+                # マッチングのマーキングimg出力
+                cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
+                com.sleep(2)
+
+                # ダイヤログを開く
+                com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
+                com.sleep(2)
+
+                # フォルダ選択
+                com.clip_copy((cst.TEST_OUT_PATH[cst.PC] + 'merge').replace('/', '\\'), True)
+                com.sleep(2)
+
+                # ファイル選択
+                com.clip_copy(file + '.htm', True)
+                com.sleep(1)
+
+                pgui.hotkey('enter')
+                com.sleep(2)
+                pgui.hotkey('y')
+                com.sleep(2)
+
+                # ファイル群をリセット
+                pgui.hotkey('ctrl', 'shift', 'c')
+
+            com.log('保存完了: ' + cst.TEST_OUT_PATH[cst.PC] + 'merge/' + file + '.htm')
+        except Exception as e:
+            com.log('マージデータ保存エラー: ' + str(e), 'E')
+            com.dialog('マージデータ保存で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
+            return False
+
+        return True
 
 
 # 中断イベント
