@@ -64,5 +64,5 @@ def shot_grab():
         return cv2.imread(shot_path), cv2.imread(shot_path, 0)
     except Exception as e:
         com.log('全体スクリーンショット撮影エラー: ' + str(e), 'E')
-        com.dialog('全体スクリーンショット撮影エラー: ' + str(e), 'E')
+        com.dialog('全体スクリーンショットの撮影に失敗しました。\n' + str(e), 'テンプレートマッチングエラー', 'E')
         return None, None
