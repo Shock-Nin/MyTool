@@ -331,6 +331,7 @@ def _edit_unit_list():
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
                     com.log(str(e))
 
+                window[bar2 + '_'].Update(0)
             html_data += html_row + '</tr>'
     finally:
         try: window.close()
@@ -374,9 +375,9 @@ def _edit_unit_list():
 # 推奨ロットの計算
 def _calucu_lot(lot, winrate, ddown, loss1):
 
-    dd10 = 0.1 / (ddown / 100) * lot
-    loss3 = 0.03 / (loss1 / 100) * lot
-    win50 = min(dd10, loss3) * ((100 - (50 - winrate)) if winrate < 50 else (100 + (winrate - 50))) / 100
+    dd10 = round(0.1 / (ddown / 100) * lot, 2)
+    loss3 = round(0.03 / (loss1 / 100) * lot, 2)
+    win50 = round(min(dd10, loss3) * ((100 - (50 - winrate)) if winrate < 50 else (100 + (winrate - 50))) / 100, 2)
     best = min(win50, dd10, loss3)
 
     return best, win50, dd10, loss3

@@ -389,6 +389,7 @@ class EaAutoTest:
                 # 全体画面の撮影
                 shot, gray = com.shot_grab()
                 if shot is None:
+                    is_interrupt = True
                     break
 
                 xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['スタート'], (0, 255, 0))
