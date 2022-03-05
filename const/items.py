@@ -16,7 +16,7 @@ MATCH_IMG_MT4 = {
     '最適化OFF': 'opt.png',
     'スプレッド': 'spread.png',
     'エキスパート': 'experts.png',
-    'レポート': 'merge.png',
+    'レポート': 'report.png',
     'スタート': 'start.png',
     'ストップ': 'stop.png',
     'パラメータ': 'prm.png',
