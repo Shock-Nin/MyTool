@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import math
 
 from common import com
 from const import cst
@@ -111,16 +112,16 @@ def _edit_unit_list():
     try:
         for i in range(0, len(tests)):
             html_row = ''
+            if 0 == i:
+                bar1 = tests[i][0].split('/')[-2]
+                bar2 = tests[i][0].split('/')[-1].split('.')[0]
 
             for k in range(0, len(tests[i])):
                 targets = tests[i][k].split('/')
 
                 # 進捗表示
-                if 0 == i + k:
-                    bar1 = targets[-2]
-                    bar2 = targets[-1].split('.')[0]
-                    window = com.progress('3. 集計データ作成中', [bar1, len(tests)], [bar2, len(tests[i])])
-                    window.read(timeout=0)
+                window = com.progress('3. 集計データ作成中', [bar1, len(tests)], [bar2, len(tests[i])])
+                window.read(timeout=0)
 
                 window[bar1].update(targets[-2] + '(' + str(i) + ' / ' + str(len(tests)) + ')')
                 window[bar2].update(targets[-1].split('.')[0] + '(' + str(k) + ' / ' + str(len(tests[i])) + ')')
@@ -331,7 +332,6 @@ def _edit_unit_list():
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
                     com.log(str(e))
 
-                window[bar2 + '_'].Update(0)
             html_data += html_row + '</tr>'
     finally:
         try: window.close()
@@ -375,9 +375,9 @@ def _edit_unit_list():
 # 推奨ロットの計算
 def _calucu_lot(lot, winrate, ddown, loss1):
 
-    dd10 = round(0.1 / (ddown / 100) * lot, 2)
-    loss3 = round(0.03 / (loss1 / 100) * lot, 2)
-    win50 = round(min(dd10, loss3) * ((100 - (50 - winrate)) if winrate < 50 else (100 + (winrate - 50))) / 100, 2)
+    dd10 = math.floor(0.1 / (ddown / 100) * lot * 10) / 10
+    loss3 = math.floor(0.03 / (loss1 / 100) * lot * 10) / 10
+    win50 = math.floor(min(dd10, loss3) * ((100 - (50 - winrate)) if winrate < 50 else (100 + (winrate - 50))) / 100 * 10) / 10
     best = min(win50, dd10, loss3)
 
     return best, win50, dd10, loss3
