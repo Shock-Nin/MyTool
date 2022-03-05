@@ -25,6 +25,8 @@ MATCH_IMG_MT4 = {
     'Risk': 'risk.png',
     '読み込み': 'read.png',
 }
+# ReportManagerマッチング
+MATCH_IMG_RM = {'レポート': 'report.png', '保存': 'save.png'}
 
 # EA並び順
 EA_PATHS = {'AnomalyGoToBe': ['Other'], 'AnomalyShocknin': ['Main', 'Unit-']}

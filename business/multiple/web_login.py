@@ -63,6 +63,7 @@ class WebLogin:
 
                 else:
                     if '三菱UFJ' == name:
+                        com.sleep(3)
                         web_driver.find_element(self.wd, 'tx-branch-number').send_keys('')
                     elif '三井住友' == name:
                         web_driver.find_element(self.wd, 'tab-switchB02').click()

@@ -9,13 +9,11 @@ import cv2
 import subprocess
 import pyautogui as pgui
 import PySimpleGUI as sg
-from PIL import ImageGrab
 
 from business. windows import ea_edits as inheritance
 
 PRM_PATH = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
 EA_EXE = cst.MT4_DEV[cst.PC] + '/terminal.exe /portable'
-SHOT_PATH = cst.TEMP_PATH[cst.PC] + 'shot.png'
 
 
 class EaAutoTest:
@@ -100,7 +98,7 @@ class EaAutoTest:
 
                 is_start = False
 
-                window = com.progress(self.myjob,
+                window = com.progress(self.myjob + '(' + com.str_time().split(' ')[1] + ')',
                                       [checks[i][0].split('_')[0], len(checks)],
                                       [checks[i][0], len(checks[0])], interrupt=True)
 
@@ -135,9 +133,7 @@ class EaAutoTest:
                         com.log('初回マッチング開始')
 
                         # 全体画面の撮影
-                        ImageGrab.grab().save(SHOT_PATH)
-                        shot = cv2.imread(SHOT_PATH)
-                        gray = cv2.imread(SHOT_PATH, 0)
+                        shot, gray = com.shot_grab()
 
                         for key in cst.MATCH_IMG_MT4:
                             self.pos_xy[key] = self._get_position(shot, gray, cst.MATCH_IMG_MT4[key], (0, 0, 255))
@@ -156,9 +152,8 @@ class EaAutoTest:
                         com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
                         com.sleep(3)
 
-                        ImageGrab.grab().save(SHOT_PATH)
-                        shot = cv2.imread(SHOT_PATH)
-                        gray = cv2.imread(SHOT_PATH, 0)
+                        # 全体画面の撮影
+                        shot, gray = com.shot_grab()
 
                         com.sleep(3)
                         for key in cst.MATCH_IMG_MT4:
@@ -218,7 +213,7 @@ class EaAutoTest:
                             path = cst.EA_PATHS[ea_name.split('_')[0]][-1] + cur
                             file = logic + '_' + cur
 
-                            if not self._save_report(path, file, SHOT_PATH, window, event):
+                            if not self._save_report(path, file, window, event):
                                 is_interrupt = True
                                 break
 
@@ -245,7 +240,7 @@ class EaAutoTest:
 
                         self._set_expert(path, file)
 
-                        if not self._save_report(path, checks[i][k], SHOT_PATH, window, event):
+                        if not self._save_report(path, checks[i][k], window, event):
                             is_interrupt = True
                             break
 
@@ -352,12 +347,15 @@ class EaAutoTest:
         # パラメータの変更がある場合
         if prm is not None:
 
+            com.sleep(3)
             if prm[0] not in ['Best', 'Full']:
                 com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Logics'][1] + 5, dbl=True)
                 com.clip_copy(prm[0], True)
+                com.sleep(1)
 
             com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Risk'][1] + 5, dbl=True)
             com.clip_copy(prm[1], True)
+            com.sleep(1)
 
         com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 40)
         com.sleep(3)
@@ -368,7 +366,7 @@ class EaAutoTest:
         return True
 
     # テストの保存
-    def _save_report(self, path, file, shot_path, window, event):
+    def _save_report(self, path, file, window, event):
 
         com.sleep(10)
         xy = [None, None]
@@ -384,9 +382,8 @@ class EaAutoTest:
                     is_interrupt = True
                     break
 
-                ImageGrab.grab().save(shot_path)
-                shot = cv2.imread(shot_path)
-                gray = cv2.imread(shot_path, 0)
+                # 全体画面の撮影
+                shot, gray = com.shot_grab()
 
                 xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['スタート'], (0, 255, 0))
 
@@ -398,7 +395,8 @@ class EaAutoTest:
 
         finally:
             # マッチングのマーキングimg出力
-            cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
+            try: cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
+            except: pass
 
         if is_interrupt:
             return False
@@ -406,10 +404,10 @@ class EaAutoTest:
         com.sleep(3)
         target = cst.TEST_UNIT[cst.PC] + path + '/' + file + '.htm'
 
+        # 全体画面の撮影
+        shot, gray = com.shot_grab()
+
         # レポート保存
-        ImageGrab.grab().save(shot_path)
-        shot = cv2.imread(shot_path)
-        gray = cv2.imread(shot_path, 0)
         report = self._get_position(shot, gray, cst.MATCH_IMG_MT4['レポート'], (0, 255, 0))
 
         com.click_pos(report[0] + 5, report[1] + 5)

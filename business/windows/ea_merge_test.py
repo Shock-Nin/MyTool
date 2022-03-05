@@ -9,7 +9,6 @@ import cv2
 import subprocess
 import pyautogui as pgui
 import PySimpleGUI as sg
-from PIL import ImageGrab
 
 from business. windows import ea_edits as inheritance
 
@@ -21,17 +20,18 @@ class EaMergeTest:
 
     def __init__(self, job):
         self.myjob = job
-        self.pos_xy = ['report.png', 'save.png']
+        self.pos_xy = cst.MATCH_IMG_RM.copy()
 
     def do(self):
 
         tests = {}
-        series = []
         paths = os.listdir(cst.TEST_OUT_PATH[cst.PC])
 
+        # EAの名前リストを取得
         name_list = inheritance.name_list(NAME_FILE)
         if name_list is None:
-            return ['以下のファイルでエラーが発生しました。\n　' + NAME_FILE, '読み込みエラー', 'E']
+            com.dialog('以下のファイルでエラーが発生しました。\n　' + NAME_FILE, '読み込みエラー', 'E')
+            return
 
         # テストデータの、フォルダとファイル名を取得
         for ea in cst.EA_PATHS:
@@ -97,6 +97,21 @@ class EaMergeTest:
                 process = subprocess.Popen(cst.RM_PATH + '/reportmanager.exe')
                 com.sleep(5)
 
+                # 全体画面の撮影
+                shot, gray = com.shot_grab()
+
+                # テンプレートマッチング
+                for key in cst.MATCH_IMG_RM:
+                    self.pos_xy[key] = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
+                                                 cst.MATCH_IMG_RM[key], (0, 0, 255))
+
+                # エキスパート設定のマッチングが失敗の場合、エラー終了
+                if self.pos_xy['レポート'][0] is None or self.pos_xy['保存'][0] is None:
+                    com.log('マッチングエラー: ' + str(self.pos_xy))
+                    com.dialog('マッチングエラー\n　' + "\n　".join([key + ' = ' + str(self.pos_xy[key])
+                                                           for key in self.pos_xy]), self.myjob, 'E')
+                    return
+
             while True:
                 count = 0
 
@@ -121,12 +136,15 @@ class EaMergeTest:
                             is_interrupt = True
                             return
 
+                        # フォルダ内、全選択タイプ
                         if key.lower() == target_ea \
                                 or (key.lower() != target_ea and i == len(targets) - 1):
 
                             self._call_report(ea_fold, targets[i], key.lower() == target_ea, True)
                             if key.lower() == target_ea:
                                 break
+
+                        # フォルダ内、個別指定タイプ
                         else:
                             self._call_report(ea_fold, targets[i], ea_fold.find('-') < 0, False)
 
@@ -154,20 +172,64 @@ class EaMergeTest:
 
         if is_all:
             if is_other:
-                print(TEST_PATH + ea_fold + ' ' + str(target))
+                self._select_report(ea_fold)
+                wait = 40
             else:
                 for cur in cst.CURRNCYS_EA[0]:
-                    print(TEST_PATH + ea_fold + cur + '/' + cur + ' ALL')
+                    self._select_report(ea_fold + cur)
+                    wait = 60
         else:
             if is_other:
                 return
 
             for cur in cst.CURRNCYS_EA[0]:
-                print(TEST_PATH + ea_fold + cur + '/' + "".join([file for file in target if 0 <= file.find(cur.lower())]))
+                self._select_report(ea_fold + cur, "".join([file for file in target if 0 <= file.find(cur.lower())]))
+                wait = 20
 
-        print(TEST_PATH + 'merge/' + ('all' if is_all and not is_other else target[0].split('_')[0]) + '.htm')
+        self._save_report(('all' if is_all and not is_other else target[0].split('_')[0]), wait)
 
-        print('-------------------')
+    def _select_report(self, path, file=None):
+
+        # ダイヤログを開く
+        pgui.hotkey('ctrl', 'o')
+        com.sleep(2)
+
+        # フォルダ選択
+        com.clip_copy((TEST_PATH + path).replace('/', '\\'), True)
+        com.sleep(2)
+
+        # 全結合の場合は全選択
+        if file is None:
+            pgui.hotkey('ctrl', 'a')
+            pgui.hotkey('enter')
+
+        # 個別の場合は、ファイル指定
+        else:
+            com.clip_copy(file, True)
+
+        com.sleep(1)
+
+    def _save_report(self, file, wait):
+
+        # マージファイル待機
+        com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
+        com.sleep(3)
+        pgui.hotkey('end')
+        com.sleep(wait)
+
+        # ダイヤログを開く
+        com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 20)
+        pgui.hotkey('ctrl', 'o')
+        com.sleep(5)
+
+        # フォルダ選択
+        com.clip_copy((TEST_PATH + 'merge').replace('/', '\\'), True)
+        com.sleep(2)
+        com.clip_copy(file + '.htm', True)
+        com.sleep(1)
+
+        com.click_pos(self.pos_xy['レポート'][0] + 5, self.pos_xy['レポート'][1] + 5)
+        com.log('保存完了: ' + TEST_PATH + 'merge/' + file + '.htm')
 
 
 # 中断イベント

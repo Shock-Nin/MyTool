@@ -10,7 +10,6 @@ import pyautogui as pgui
 import PySimpleGUI as sg
 
 from time import sleep
-from PIL import ImageGrab
 
 WIN_X_MINUS = 50
 BGCOLOR_ON = '#AAFFFF'
@@ -82,10 +81,7 @@ class Eng1min:
                 continue
 
             # 全体画面の撮影
-            shot_path = cst.TEMP_PATH[cst.PC] + 'shot.png'
-            ImageGrab.grab().save(shot_path)
-            shot = cv2.imread(shot_path)
-            gray = cv2.imread(shot_path, 0)
+            shot, gray = com.shot_grab()
             is_end = False
 
             # もう一度再生とのマッチング

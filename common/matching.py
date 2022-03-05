@@ -8,6 +8,8 @@ import cv2
 import numpy as np
 import pyautogui as pgui
 
+from PIL import ImageGrab
+
 
 # マウスを移動
 def move_pos(x=None, y=None):
@@ -52,3 +54,15 @@ def match(shot, gray, tmp_path, color):
         cv2.rectangle(shot, pt, (pt[0] + w, pt[1] + h), color, 5)
 
     return int(x), int(y)
+
+
+# 全体スクリーンショット撮影
+def shot_grab():
+    try:
+        shot_path = cst.TEMP_PATH[cst.PC] + 'shot.png'
+        ImageGrab.grab().save(shot_path)
+        return cv2.imread(shot_path), cv2.imread(shot_path, 0)
+    except Exception as e:
+        com.log('全体スクリーンショット撮影エラー: ' + str(e), 'E')
+        com.dialog('全体スクリーンショット撮影エラー: ' + str(e), 'E')
+        return None, None

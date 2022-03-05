@@ -31,6 +31,7 @@ from common import matching
 move_pos = matching.move_pos
 click_pos = matching.click_pos
 match = matching.match
+shot_grab = matching.shot_grab
 
 
 # 日時を文字型で取得
@@ -75,7 +76,7 @@ def log(msg, lv=''):
 
     if 'E' == lv:
         logger.error(msg)
-        my_ip = requests.get('https://ifconfig.me').text
+        my_ip = cst.IP
 
         # エラー時は専用メールで送受信(Mac以外)
         if 'Mac' != cst.PC:
