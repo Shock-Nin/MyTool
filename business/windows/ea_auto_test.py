@@ -134,6 +134,8 @@ class EaAutoTest:
 
                         # 全体画面の撮影
                         shot, gray = com.shot_grab()
+                        if shot is None:
+                            return
 
                         for key in cst.MATCH_IMG_MT4:
                             self.pos_xy[key] = self._get_position(shot, gray, cst.MATCH_IMG_MT4[key], (0, 0, 255))
@@ -154,6 +156,8 @@ class EaAutoTest:
 
                         # 全体画面の撮影
                         shot, gray = com.shot_grab()
+                        if shot is None:
+                            return
 
                         com.sleep(3)
                         for key in cst.MATCH_IMG_MT4:
@@ -293,7 +297,7 @@ class EaAutoTest:
 
         # EA選択
         com.click_pos(self.pos_xy['エキスパート'][0] - 100, self.pos_xy['エキスパート'][1] + 5)
-        [pgui.hotkey('up') for _ in range(10)]
+        pgui.hotkey('home')
         [pgui.hotkey('down') for _ in range(0, ea_count)]
         pgui.hotkey('enter')
 
@@ -309,7 +313,7 @@ class EaAutoTest:
 
         # 通貨ペア
         com.click_pos(self.pos_xy['通貨'][0] + 70, self.pos_xy['通貨'][1] + 5)
-        [pgui.hotkey('up') for _ in range(0, len(cst.CURRNCYS_EA[0]) + 1)]
+        pgui.hotkey('home')
         [pgui.hotkey('down') for _ in range(0, cst.CURRNCYS_EA[0].index(currency))]
         pgui.hotkey('enter')
 
@@ -321,7 +325,7 @@ class EaAutoTest:
 
         # 期間
         com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 5)
-        [pgui.hotkey('up') for _ in range(10)]
+        pgui.hotkey('home')
         [pgui.hotkey('down') for _ in range(0, ['M1', 'M5', 'M15', 'M30', 'H1', 'H4'].index(time_frame))]
         pgui.hotkey('enter')
 
@@ -384,6 +388,8 @@ class EaAutoTest:
 
                 # 全体画面の撮影
                 shot, gray = com.shot_grab()
+                if shot is None:
+                    break
 
                 xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['スタート'], (0, 255, 0))
 
@@ -406,6 +412,8 @@ class EaAutoTest:
 
         # 全体画面の撮影
         shot, gray = com.shot_grab()
+        if shot is None:
+            return False
 
         # レポート保存
         report = self._get_position(shot, gray, cst.MATCH_IMG_MT4['レポート'], (0, 255, 0))

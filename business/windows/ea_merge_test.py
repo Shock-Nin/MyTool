@@ -81,7 +81,7 @@ class EaMergeTest:
         name_list.append('All')
 
         if com.question('開始しますか？\n\n　' + "\n　".join([name for name in name_list]), '開始確認') <= 0:
-            return None
+            return
 
         # 進捗と中断の監視
         is_interrupt = False
@@ -99,6 +99,8 @@ class EaMergeTest:
 
                 # 全体画面の撮影
                 shot, gray = com.shot_grab()
+                if shot is None:
+                    return
 
                 # テンプレートマッチング
                 for key in cst.MATCH_IMG_RM:

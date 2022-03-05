@@ -82,6 +82,9 @@ class Eng1min:
 
             # 全体画面の撮影
             shot, gray = com.shot_grab()
+            if shot is None:
+                return
+
             is_end = False
 
             # もう一度再生とのマッチング
