@@ -97,39 +97,42 @@ class EaMergeTest:
                 process = subprocess.Popen(cst.RM_PATH + '/reportmanager.exe')
                 com.sleep(5)
 
-                # 全体画面の撮影
-                shot, gray = com.shot_grab()
-                if shot is None:
-                    return
+                if cst.IP == cst.DEV_IP:
 
-                # テンプレートマッチング
-                for key in cst.MATCH_IMG_RM:
-                    self.pos_xy[key] = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
-                                                 cst.MATCH_IMG_RM[key], (0, 0, 255))
+                    # 全体画面の撮影
+                    shot, gray = com.shot_grab()
+                    if shot is None:
+                        return
 
-                # エキスパート設定のマッチングが失敗の場合、エラー終了
-                if self.pos_xy['レポート'][0] is None or self.pos_xy['保存'][0] is None:
-                    com.log('マッチングエラー: ' + str(self.pos_xy))
-                    com.dialog('マッチングエラー\n　' + "\n　".join([key + ' = ' + str(self.pos_xy[key])
-                                                           for key in self.pos_xy]), self.myjob, 'E')
-                    return
+                    # テンプレートマッチング
+                    for key in cst.MATCH_IMG_RM:
+                        self.pos_xy[key] = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
+                                                     cst.MATCH_IMG_RM[key], (0, 0, 255))
+
+                    # エキスパート設定のマッチングが失敗の場合、エラー終了
+                    if self.pos_xy['マージ'][0] is None or self.pos_xy['保存'][0] is None or self.pos_xy['初期化'][0] is None:
+                        com.log('マッチングエラー: ' + str(self.pos_xy))
+                        com.dialog('マッチングエラー\n　' + "\n　".join([key + ' = ' + str(self.pos_xy[key])
+                                                               for key in self.pos_xy]), self.myjob, 'E')
+                        return
 
             while True:
                 count = 0
 
                 for key in cst.EA_PATHS:
                     ea_fold = cst.EA_PATHS[key][-1]
+                    bar2 = name_list[0]
 
                     for i in range(count, len(targets)):
-                        bar2 = targets[0][0].split('_')[0]
-                        window = com.progress(self.myjob, ['ea', len(cst.EA_PATHS)], [bar2, len(targets[i])],
-                                              interrupt=True)
+
+                        window = com.progress(self.myjob, ['ea', len(cst.EA_PATHS)],
+                                              [bar2, len(targets[i]) + count], interrupt=True)
                         event, values = window.read(timeout=0)
 
-                        window['ea'].update(key)
+                        window['ea'].update(key + '(' + str(count) + '/' + str(len(cst.EA_PATHS)) + ')')
                         window['ea_'].update(count)
-                        window[bar2].update(targets[i][0].split('_')[0])
-                        window[bar2 + '_'].update(i)
+                        window[bar2].update(name_list[i] + '(' + str(i - count) + '/' + str(len(targets) - count) + ')')
+                        window[bar2 + '_'].update(i - count)
 
                         target_ea = targets[count][0].split('_')[0]
 
@@ -150,6 +153,8 @@ class EaMergeTest:
                         else:
                             self._call_report(ea_fold, targets[i], ea_fold.find('-') < 0, False)
 
+                    window.close()
+
                     # 中断送り
                     if is_interrupt:
                         break
@@ -166,71 +171,89 @@ class EaMergeTest:
             try: window.close()
             except: pass
 
-        com.log(self.myjob + ': ' + ('全終了' if is_interrupt else '中断') + '(' + com.conv_time_str(total_time) + ')')
-        com.dialog(('完了' if is_interrupt else '中断') + 'しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
+        com.log(self.myjob + ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')')
+        com.dialog(('中断' if is_interrupt else '完了') + 'しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
         return
 
+    # レポート読み込み
     def _call_report(self, ea_fold, target, is_other, is_all):
 
+        wait = 20
+        # 読み込みの選択で、フォルダ内ファイル全選択
         if is_all:
+            # Otherの読み込みの選択
             if is_other:
                 self._select_report(ea_fold)
                 wait = 40
+
+            # Allの読み込みの選択
             else:
                 for cur in cst.CURRNCYS_EA[0]:
                     self._select_report(ea_fold + cur)
                     wait = 60
+
+        # 読み込みの選択で、フォルダ内ファイル単独選択
         else:
             if is_other:
                 return
 
+            # 個別に読み込みの選択
             for cur in cst.CURRNCYS_EA[0]:
                 self._select_report(ea_fold + cur, "".join([file for file in target if 0 <= file.find(cur.lower())]))
-                wait = 20
 
+        # レポートの保存
         self._save_report(('all' if is_all and not is_other else target[0].split('_')[0]), wait)
 
+    # 読み込みの選択
     def _select_report(self, path, file=None):
 
-        # ダイヤログを開く
-        pgui.hotkey('ctrl', 'o')
-        com.sleep(2)
+        if cst.IP == cst.DEV_IP:
+            # ダイヤログを開く
+            pgui.hotkey('ctrl', 'o')
+            com.sleep(2)
 
-        # フォルダ選択
-        com.clip_copy((TEST_PATH + path).replace('/', '\\'), True)
-        com.sleep(2)
+            # フォルダ選択
+            com.clip_copy((TEST_PATH + path).replace('/', '\\'), True)
+            com.sleep(2)
 
-        # 全結合の場合は全選択
-        if file is None:
-            pgui.hotkey('ctrl', 'a')
-            pgui.hotkey('enter')
+            # 全結合の場合は全選択
+            if file is None:
+                pgui.hotkey('ctrl', 'a')
+                pgui.hotkey('enter')
 
-        # 個別の場合は、ファイル指定
-        else:
-            com.clip_copy(file, True)
+            # 個別の場合は、ファイル指定
+            else:
+                com.clip_copy(file, True)
 
         com.sleep(1)
 
+    # レポートの保存
     def _save_report(self, file, wait):
 
-        # マージファイル待機
-        com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
-        com.sleep(3)
-        pgui.hotkey('end')
-        com.sleep(wait)
+        if cst.IP == cst.DEV_IP:
+            # マージファイル待機
+            com.click_pos(self.pos_xy['マージ'][0] + 5, self.pos_xy['マージ'][1] + 5)
+            com.sleep(3)
+            pgui.hotkey('end')
+            com.sleep(wait)
 
-        # ダイヤログを開く
-        com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 20)
-        pgui.hotkey('ctrl', 'o')
-        com.sleep(5)
+            # ダイヤログを開く
+            com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
+            com.sleep(2)
 
-        # フォルダ選択
-        com.clip_copy((TEST_PATH + 'merge').replace('/', '\\'), True)
-        com.sleep(2)
-        com.clip_copy(file + '.htm', True)
-        com.sleep(1)
+            # フォルダ選択
+            com.clip_copy((TEST_PATH + 'merge').replace('/', '\\'), True)
+            com.sleep(2)
 
-        com.click_pos(self.pos_xy['レポート'][0] + 5, self.pos_xy['レポート'][1] + 5)
+            # ファイル選択
+            com.clip_copy(file + '.htm', True)
+            com.sleep(1)
+
+            pgui.hotkey('enter')
+            com.sleep(2)
+
+            com.click_pos(self.pos_xy['初期化'][0] + 5, self.pos_xy['初期化'][1] + 5)
+
         com.log('保存完了: ' + TEST_PATH + 'merge/' + file + '.htm')
 
 

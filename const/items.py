@@ -16,7 +16,7 @@ MATCH_IMG_MT4 = {
     '最適化OFF': 'opt.png',
     'スプレッド': 'spread.png',
     'エキスパート': 'experts.png',
-    'レポート': 'report.png',
+    'レポート': 'merge.png',
     'スタート': 'start.png',
     'ストップ': 'stop.png',
     'パラメータ': 'prm.png',
@@ -26,7 +26,7 @@ MATCH_IMG_MT4 = {
     '読み込み': 'read.png',
 }
 # ReportManagerマッチング
-MATCH_IMG_RM = {'レポート': 'report.png', '保存': 'save.png'}
+MATCH_IMG_RM = {'マージ': 'merge.png', '保存': 'save.png', '初期化': 'reset.png'}
 
 # EA並び順
 EA_PATHS = {'AnomalyGoToBe': ['Other'], 'AnomalyShocknin': ['Main', 'Unit-']}

@@ -297,7 +297,7 @@ class EaAutoTest:
 
         # EA選択
         com.click_pos(self.pos_xy['エキスパート'][0] - 100, self.pos_xy['エキスパート'][1] + 5)
-        pgui.hotkey('home')
+        [pgui.hotkey('up') for _ in range(10)]
         [pgui.hotkey('down') for _ in range(0, ea_count)]
         pgui.hotkey('enter')
 
@@ -333,7 +333,7 @@ class EaAutoTest:
         if self.pos_xy['最適化ON'][0] is not None:
             com.click_pos(self.pos_xy['最適化ON'][0] + 5, self.pos_xy['最適化ON'][1] + 5)
 
-        print('MT4設定: ' + currency + '(' + start_ym + ' 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
+        com.log('MT4設定: ' + currency + '(' + start_ym + ' 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
         return True
 
     # パラメータの設定
@@ -364,7 +364,7 @@ class EaAutoTest:
         com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 40)
         com.sleep(3)
 
-        print('テスト開始: ' + target + ', ' + str(prm))
+        com.log('テスト開始: ' + target + ', ' + str(prm))
         com.click_pos(self.pos_xy['スタート'][0] + 5, self.pos_xy['スタート'][1] + 5)
 
         return True
@@ -433,7 +433,7 @@ class EaAutoTest:
 
         # マッチングのマーキングimg出力
         cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
-        print('テストデータ保存: ' + target)
+        com.log('テストデータ保存: ' + target)
         return True
 
 
