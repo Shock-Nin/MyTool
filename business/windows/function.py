@@ -54,7 +54,7 @@ class Function:
         if cst.IP == cst.DEV_IP:
 
             mt4_path = cst.CURRENT_PATH['Win'] + 'Documents/MT4/'
-            in_path = ['MT4DEV/OANDA', 'MT_D_EV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA',
+            in_path = ['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA',
                        'MT4_TEST/Test2', 'MT4_RATE/MyFx']
             out_path = ['Test1', 'Test1_2', 'Test1_3', 'Test1_4',
                         'Test2_2', 'Test3']
