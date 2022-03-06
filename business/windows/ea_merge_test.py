@@ -256,10 +256,8 @@ class EaMergeTest:
 
     # マージデータの保存
     def _save_report(self, file):
-
-
-
         try:
+            msg = ''
             if cst.IP == cst.DEV_IP:
 
                 # マージファイル出現まで待機
@@ -271,13 +269,13 @@ class EaMergeTest:
                     xy = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
                                    cst.MATCH_IMG_RM['ファイル'], (255, 0, 255))
 
+                    pgui.hotkey('end')
+
                     if xy[0] is not None:
                         break
                     com.sleep(2)
 
                 # データ行出現まで待機
-                pgui.hotkey('end')
-
                 while True:
                     shot, gray = com.shot_grab()
                     xy = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
@@ -315,20 +313,31 @@ class EaMergeTest:
                 com.sleep(2)
 
                 # 古いgif画像は削除して、新しいpngをgif変換
-                try: os.remove(path + '\\' + file + '.gif')
-                except: pass
-                try: os.rename(path + '\\' + file + '.png', path + '\\' + file + '.gif')
-                except: pass
+                if os.path.exists(path + '\\' + file + '.png'):
+                    try:
+                        os.remove(path + '\\' + file + '.gif')
+                        msg += 'gif削除'
+                    except:
+                        msg += 'gif削除(失敗)'
+                    try:
+                        os.rename(path + '\\' + file + '.png', path + '\\' + file + '.gif')
+                        msg += ', png → gif変更'
+                    except:
+                        msg += ', png → gif変更(失敗)'
 
-                # HTML本体の、pngをgifに書き換え
-                try:
-                    with open(path + '\\' + file + '.htm', 'r') as read_file:
-                        read_file = read_file.read().replace('png', 'gif')
-                        with open(path + '\\' + file + '.htm', 'w') as write_file:
-                            write_file.write(read_file)
-                except: pass
+                    # HTML本体の、pngをgifに書き換え
+                    try:
+                        with open(path + '\\' + file + '.htm', 'r') as read_file:
+                            read_file = read_file.read().replace('.png', '.gif')
+                            with open(path + '\\' + file + '.htm', 'w') as write_file:
+                                write_file.write(read_file)
+                                msg += ', HTML変換'
+                    except:
+                        msg += ', HTML変換(失敗)'
+                else:
+                    msg = 'HTML変換なし'
 
-            com.log('保存完了: ' + cst.TEST_OUT_PATH[cst.PC] + 'merge/' + file + '.htm')
+            com.log('保存完了[' + cst.TEST_OUT_PATH[cst.PC] + 'merge/' + file + '.htm] ' + msg)
         except Exception as e:
             com.log('マージデータ保存エラー: ' + str(e), 'E')
             com.dialog('マージデータ保存で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')

@@ -55,7 +55,7 @@ TICK_HISTORY = ['C:/Program Files (x86)/Tickstory/Tickstory.exe',
 # EAパラメータのファイルパス(Googleドライブ)
 PRM_PATH = 'FX/Presets/'
 # ReportManager
-RM_PATH = GDRIVE_PATH['Win'] + 'app/ReportManager/'
+RM_PATH = CURRENT_PATH['Win'] + 'Documents/MT4/ReportManager/'
 # テンプレートマッチングのパス
 MATCH_PATH = 'item/match/'
 

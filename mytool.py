@@ -11,6 +11,7 @@ from const import cst
 from common import com
 from batch import Batch
 from business.multiple import web_login
+from business.windows import function
 
 import os
 import argparse
@@ -19,16 +20,14 @@ import pyautogui as pgui
 import PySimpleGUI as sg
 import subprocess
 
+""" PW_INPUT = True | CHANGE_MENU = -1 """
 PW_INPUT = False
-CHANGE_MENU = -1
-# CHANGE_MENU = 0
+CHANGE_MENU = 0
+""" ---------------------------------- """
 
 MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
 BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
-    'EA連続テスト': 'windows.ea_auto_test',
-    'EAテスト結合': 'windows.ea_merge_test',
-    'EAデータ編集': 'windows.ea_edits',
     }, cst.WEB_IP: {
     'Pochi': 'multiple.blog_pochi',
     }, cst.MY_IP: {
@@ -38,9 +37,27 @@ BTNS = {cst.DEV_IP: {
     '資産': 'mac.my_asset',
     '英単語': 'mac.eng1min',
     }, }
+EA_MENU = {
+    'EA連続テスト': 'windows.ea_auto_test',
+    'EAテスト結合': 'windows.ea_merge_test',
+    'EAデータ編集': 'windows.ea_edits',
+}
+FUNC_MENU = {
+    '最適化セット': 'DEV',
+    '最適化MT4起動': 'DEV',
+    'MQL編集': 'DEV',
+    'EX4コピー': 'DEV',
+    'EX4展開': 'ALL',
+    'Winアップデート': 'ALL',
+    'ヒストリカル編集': 'DEV',
+    'ヒストリカルコピー': 'DEV',
+    'ヒストリカル取得': 'DEV',
+}
 BTN = BTNS[cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]]
-DP_XY_WIDTH = {'Win': [220, 100 + (int(len(BTN) + 2) * 40), 16],
-               'Mac': [130, 80 + (int(len(BTN) + 2) * 40), 10]}
+height = 2 + (1 if cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0) + \
+         (1 if cst.MAC_IP != (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0)
+DP_XY_WIDTH = {'Win': [220, 100 + (int(len(BTN) + height) * 40), 16],
+               'Mac': [130, 80 + (int(len(BTN) + height) * 40), 11]}
 
 
 def main():
@@ -90,8 +107,8 @@ def main():
 
         # コンボボックスのメニュー作成
         fold = [cst.MENU_CSV['Fold'].at[i, 'Name']
-                for i in range(0, len((cst.MENU_CSV['Fold']))) if cst.MENU_CSV['Fold'].at[i, 'Type'] == cst.PC]
-        web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len((cst.MENU_CSV['Web'])))]
+                for i in range(0, len(cst.MENU_CSV['Fold'])) if cst.MENU_CSV['Fold'].at[i, 'Type'] == cst.PC]
+        web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len(cst.MENU_CSV['Web']))]
 
         xy_size = ((DP_XY_WIDTH[cst.PC][2]), 1)
 
@@ -103,6 +120,16 @@ def main():
                   [sg.Combo(web, default_value='　Web', key='Web', enable_events=True, readonly=True,
                             font=('', 16), size=xy_size, pad=((0, 0), (0, 15)))],
                   [[sg.Button(btn, key=btn, font=('', 16), pad=((0, 0), (0, 5)), size=xy_size)] for btn in BTN]]
+
+        is_dev = (cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]))
+        if is_dev:
+            layout.append([sg.Combo([key for key in EA_MENU],
+                                    default_value='　EA', key='EA', enable_events=True, readonly=True,
+                                    font=('', 16), size=xy_size, pad=((0, 0), (0, 15)))])
+        if cst.MAC_IP != (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]):
+            layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
+                                    default_value='　機能', key='機能', enable_events=True, readonly=True,
+                                    font=('', 16), size=xy_size, pad=((0, 0), (0, 15)))])
 
         window = sg.Window(cst.PC, modal=True, element_justification='c', icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
@@ -118,12 +145,18 @@ def main():
                 return
 
             # セレクト選択した場合、ターミナルコマンドを実行
-            if event in ['Fold', 'Web']:
-                menu = cst.MENU_CSV[event]
+            if event in ['Fold', 'Web', 'EA', '機能']:
+
+                if event in ['Fold', 'Web']:
+                    menu = cst.MENU_CSV[event]
 
                 select = (menu[(menu['Type'] == cst.PC) & (menu['Name'] == values[event])]['Path'].values[0]
                           if 'Fold' == event else
-                          menu[(menu['Name'] == values[event])])
+                          menu[(menu['Name'] == values[event])]
+                          if 'Web' == event else
+                          values[event]
+                          if 'EA' == event else
+                          values[event])
 
                 window['act'].update(event[0] + ': ' + values[event])
                 window[event].update('　' + event[0].upper() + event[1:])
@@ -136,9 +169,20 @@ def main():
                     com.log('フォルダ: ' + select)
 
                 # Webセレクトで選択した場合
-                else:
+                elif 'Web' == event:
                     processes.append(
                         web_login.WebLogin('ログイン').do(select['Name'].values[0], select['URL'].values[0]))
+
+                # EAセレクトで選択した場合
+                elif 'EA' == event:
+                    # 動的モジュールを実行
+                    processes.append(subprocess.Popen(
+                        [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py', '-m', EA_MENU[select], '-e', select]))
+
+                # 単独機能で選択した場合
+                else:
+                    processes.append(function.Function(event).do(select))
+
 
             # ボタン選択した場合
             else:

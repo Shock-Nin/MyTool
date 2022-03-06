@@ -50,7 +50,7 @@ def _slim_html():
                     bar1 = targets[-2]
                     bar2 = targets[-1].split('.')[0]
                     window = com.progress('2. HTML整形中', [bar1, len(tests)], [bar2, len(tests[i])])
-                    window.read(timeout=0)
+                    event, values = window.read(timeout=0)
 
                 window[bar1].update(targets[-2] + '(' + str(i) + ' / ' + str(len(tests)) + ')')
                 window[bar2].update(targets[-1].split('.')[0] + '(' + str(k) + ' / ' + str(len(tests[i])) + ')')
@@ -117,7 +117,7 @@ def _edit_unit_list():
             bar1 = tests[i][0].split('/')[-2]
             bar2 = tests[i][0].split('/')[-1].split('.')[0]
             window = com.progress('3. 集計データ作成中', [bar1, len(tests)], [bar2, len(tests[i])])
-            window.read(timeout=0)
+            event, values = window.read(timeout=0)
 
             for k in range(0, len(tests[i])):
                 targets = tests[i][k].split('/')

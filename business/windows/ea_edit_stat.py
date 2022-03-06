@@ -53,7 +53,7 @@ def _edit_stat_status():
             if 0 == i:
                 bar1 = name_list[i] + '(' + str(i) + ' / ' + str(len(name_list)) + ')'
                 window = com.progress('4. 統合データ作成中', [bar1, len(name_list)])
-                window.read(timeout=0)
+                event, values = window.read(timeout=0)
 
             window[bar1].update(name_list[i] + '(' + str(i) + ' / ' + str(len(name_list)) + ')')
             window[bar1 + '_'].update(i)
@@ -240,15 +240,22 @@ def _edit_stat_status():
 
                 # 最新年〜前々年の、年率, 総数, 勝率, 勝, 敗
                 for k in reversed(range(len(years_annuals) - 3, len(years_annuals))):
-                    years_row += base_tag + str(format(prf_annuals[k] / balance_start * 100, '.1f')) + '%</td>'
+                    years_row += '<td class="' + ea_class
+                    years_row += (' alert' if prf_annuals[k] <= 0 else ' warning' if prf_annuals[k] / balance_start <= 0.1 else '')
+                    years_row += '" align="right">' + str(format(prf_annuals[k] / balance_start * 100, '.1f')) + '%</td>'
                     years_row += base_tag + str(trade_annuals[k]) + '</td>'
-                    years_row += base_tag + str(format(win_annuals[k] / trade_annuals[k] * 100, '.1f')) + '%</td>'
+
+                    years_row += '<td class="' + ea_class + (' warning' if win_annuals[k] <= lose_annuals[k] else '')
+                    years_row += '" align="right">' + str(format(win_annuals[k] / trade_annuals[k] * 100, '.1f')) + '%</td>'
+
                     years_row += base_tag + str(win_annuals[k]) + '</td>'
                     years_row += base_tag + str(lose_annuals[k]) + '</td>'
 
                 # 前々年以前の、年率
                 for k in reversed(range(0, len(years_annuals) - 3)):
-                    years_row += base_tag + str(format(prf_annuals[k] / balance_start * 100, '.1f')) + '%</td>'
+                    years_row += '<td class="' + ea_class
+                    years_row += (' alert' if prf_annuals[k] <= 0 else ' warning' if prf_annuals[k] / balance_start <= 0.1 else '')
+                    years_row += '" align="right">' + str(format(prf_annuals[k] / balance_start * 100, '.1f')) + '%</td>'
 
             except Exception as e:
                 err_msg += '\n　' + targets + '\n　　' + str(e)
