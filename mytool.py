@@ -22,7 +22,7 @@ import subprocess
 
 """ PW_INPUT = True | CHANGE_MENU = -1 """
 PW_INPUT = False
-CHANGE_MENU = 0
+CHANGE_MENU = -1
 """ ---------------------------------- """
 
 MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
@@ -44,14 +44,13 @@ EA_MENU = {
 }
 FUNC_MENU = {
     '最適化セット': 'DEV',
-    '最適化MT4起動': 'DEV',
+    'MT4起動': 'ALL',
     'MQL編集': 'DEV',
-    'EX4コピー': 'DEV',
-    'EX4展開': 'ALL',
+    'EX4コピー': 'ALL',
     'Winアップデート': 'ALL',
     'ヒストリカル編集': 'DEV',
     'ヒストリカルコピー': 'DEV',
-    'ヒストリカル取得': 'DEV',
+    'Tickstory': 'DEV',
 }
 BTN = BTNS[cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]]
 height = 2 + (1 if cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0) + \

@@ -32,9 +32,11 @@ TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
              'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/'}
 RUN_PATH = {'Mac': '/opt/anaconda3/envs/py39/bin/python',
             'Win': 'C:/ProgramData/Anaconda3/envs/py39/python.exe'}
+# MT4のパス
+MT4_PATH = CURRENT_PATH['Win'] + 'Documents/MT4/'
 # 開発MT4のパス
 MT4_DEV = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/',
-           'Win': CURRENT_PATH['Win'] + 'Documents/MT4/MT4_DEV/OANDA/'}
+           'Win': MT4_PATH + 'MT4_DEV/OANDA/'}
 # パラメータ・集計データのCSV・HTML格納フォルダ
 DATA_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/frame/',
              'Win': 'C:/inetpub/wwwroot/menu/frame/'}
