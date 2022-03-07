@@ -51,8 +51,10 @@ TEST_LINK = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
              'Win': 'http://' + DEV_IP + '/test/'}
 
 # TickStoryのExeと作成先フォルダ
-TICK_HISTORY = ['C:/Program Files (x86)/Tickstory/Tickstory.exe',
-                CURRENT_PATH['Win'] + 'Documents/MT4/history']
+TICK_STORY = 'C:/Program Files (x86)/Tickstory/Tickstory.exe'
+HST_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Desktop/test_root/MT4/history/',
+            'Win': CURRENT_PATH['Win'] + 'Documents/MT4/history/'}
+
 
 # EAパラメータのファイルパス(Googleドライブ)
 PRM_PATH = 'FX/Presets/'

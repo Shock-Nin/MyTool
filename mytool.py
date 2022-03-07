@@ -22,7 +22,7 @@ import subprocess
 
 """ PW_INPUT = True | CHANGE_MENU = -1 """
 PW_INPUT = False
-CHANGE_MENU = -1
+CHANGE_MENU = 0
 """ ---------------------------------- """
 
 MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
@@ -48,6 +48,7 @@ FUNC_MENU = {
     'MQL編集': 'DEV',
     'EX4コピー': 'ALL',
     'MT4ログ削除': 'ALL',
+    '週間レート': 'DEV',
     'Winアップデート': 'ALL',
     'ヒストリカル編集': 'DEV',
     'ヒストリカルコピー': 'DEV',
@@ -181,7 +182,7 @@ def main():
 
                 # 単独機能で選択した場合
                 else:
-                    processes.append(function.Function(event).do(select))
+                    processes.append(function.Function(event, MENUS[CHANGE_MENU]).do(select))
 
 
             # ボタン選択した場合
@@ -218,10 +219,10 @@ def main():
 
 # 動的モジュールの実行
 def _run(event):
-    function = BTN[event]
-    module_name = 'business.' + function
+    fnc = BTN[event]
+    module_name = 'business.' + fnc
 
-    class_name = function.split('.')[len(function.split('.')) - 1]
+    class_name = fnc.split('.')[len(fnc.split('.')) - 1]
     class_name = "".join([name[0].upper() + name[1:] for name in class_name.split('_')])
 
     instance = importlib.import_module(module_name)

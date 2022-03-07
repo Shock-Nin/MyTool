@@ -7,22 +7,28 @@ import os
 import cv2
 import shutil
 import subprocess
+import pandas as pd
 import PySimpleGUI as sg
 
 
 class Function:
 
-    def __init__(self, job):
+    def __init__(self, job, ip):
         self.myjob = job
+        self.ip = ip
 
     def do(self, fnc):
 
-        if fnc in ['最適化セット', 'MT4起動']:
+        if fnc in ['ヒストリカル編集', 'ヒストリカルコピー']:
+            if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
+                return
+
+        if fnc in ['最適化セット', 'MT4起動', '週間レート']:
             self.set_optimize(
                 fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1_2', 'MT4_TEST/Test1_3'],
                 affinity=['F', '2', '4', '8'],
                 web_path=['Web_MT4'],
-                my_path=['FxPro', 'OANDA', 'Rakuten']  # 'MyFx', 'XM'
+                my_path=['FxPro', 'OANDA', 'Rakuten'],  # 'MyFx', 'XM'
             )
         elif 'EX4コピー' == fnc:
             # コピー(target)はワイルドカード、削除(remove)は完全一致
@@ -39,13 +45,10 @@ class Function:
             self.log_delete(fnc)
 
         elif 'ヒストリカル編集' == fnc:
-            self.edit_history(fnc)
-
+            self.edit_history(
+                fnc, in_path=['processing/old/', ''], out_path='processing/'
+            )
         elif 'ヒストリカルコピー' == fnc:
-
-            if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
-                return
-
             self.copy_history(
                 fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_TEST/Test2', 'MT4_RATE/MyFx'],
                 out_path=['Test1', 'Test1_2', 'Test1_3', 'Test2_2', 'Test3'],
@@ -58,7 +61,7 @@ class Function:
             elif 'Winアップデート' == fnc:
                 target = os.getcwd() + '/item/app/Wub/Wub.exe'
             elif 'Tickstory' == fnc:
-                target = cst.TICK_HISTORY[0]
+                target = cst.TICK_STORY
 
             if 0 < len(target):
                 return subprocess.Popen(target)
@@ -72,10 +75,15 @@ class Function:
             # MT4起動コマンドを設定
             commands = []
             if cst.IP == cst.DEV_IP:
-                for i in range(0, len(opt_path)):
-                    commands.append(
-                        'cmd /c start "" /affinity ' + (affinity[i] + ' "' + cst.MT4_PATH + opt_path[i] +
-                                                        '/terminal.exe"').replace('/', '\\') + ' "/portable"')
+                if '週間レート' == fnc:
+                    rates = os.listdir(cst.MT4_PATH + 'MT4_RATE')
+                    for i in range(0, len(rates)):
+                        commands.append(cst.MT4_PATH + 'MT4_RATE/' + rates[i] + '/terminal.exe /portable')
+                else:
+                    for i in range(0, len(opt_path)):
+                        commands.append(
+                            'cmd /c start "" /affinity ' + (affinity[i] + ' "' + cst.MT4_PATH + opt_path[i] +
+                                                            '/terminal.exe"').replace('/', '\\') + ' "/portable"')
             elif cst.IP == cst.WEB_IP:
                 for i in range(0, len(web_path)):
                     commands.append(cst.MT4_PATH + web_path[i] + '/terminal.exe /portable')
@@ -266,7 +274,72 @@ class Function:
                                                             for row in msg])), fnc + ' 完了')
 
     # TickstoryのCSVファイル編集
-    def edit_history(self, fuc):
+    def edit_history(self, fnc, in_path, out_path):
+        if self.ip == cst.DEV_IP:
+
+            is_interrupt = False
+            total_time = 0
+
+            out_path = cst.HST_PATH[cst.PC] + out_path
+            files = os.listdir(cst.HST_PATH[cst.PC] + in_path[0])
+            files = [file for file in files if 0 <= file.find('.csv')]
+
+            err_msg = ''
+            try:
+                # 進捗表示
+                bar = files[0]
+                window = com.progress('ヒストリカルデータ編集中', [bar, len(files)], interrupt=True)
+
+                for i in range(0, len(files)):
+
+                    merge_file = []
+                    start_time = com.time_start()
+
+                    try:
+                        event, values = window.read(timeout=0)
+                        window[files[0]].update(files[i] + '(' + str(i) + ' / ' + str(len(files)) + ')')
+                        window[files[0] + '_'].update(i)
+
+                        for k in range(0, len(in_path)):
+
+                            com.log('読み込み中: ' + in_path[k] + files[i])
+                            in_file = cst.HST_PATH[cst.PC] + in_path[k] + files[i]
+                            merge_file.append(pd.read_csv(in_file, encoding='cp932'))
+
+                            # 中断イベント
+                            if _is_interrupt(window, event):
+                                is_interrupt = True
+                                break
+
+                    except Exception as e:
+                        err_msg += '\n　' + in_file + '\n　　' + str(e)
+                        com.log(str(e))
+                        continue
+
+                    # 中断送り
+                    if is_interrupt:
+                        break
+
+                    result = pd.concat(merge_file)
+                    result['Volume'] = 10.0
+                    result.to_csv(out_path + files[i], index=False)
+
+                    run_time = com.time_end(start_time)
+                    total_time += run_time
+                    com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+
+            finally:
+                try: window.close()
+                except: pass
+
+            com.log(fnc + ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')' +
+                    (' エラーあり' if 0 < len(err_msg) else ''), lv=('W' if 0 < len(err_msg) else None))
+            com.dialog(('中断' if is_interrupt else '完了') + 'しました。(' + com.conv_time_str(total_time) + ')' +
+                       ('\n以下でエラーが発生しました。\n' + err_msg if 0 < len(err_msg) else ''),
+                       fnc, lv=('W' if 0 < len(err_msg) else None))
+
+        else:
+            com.log(fnc + ': 端末対象外 ' + cst.IPS[cst.IP])
 
         return True
 
@@ -329,7 +402,7 @@ class Function:
                 try: window.close()
                 except: pass
 
-            com.log(fnc+ ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')')
+            com.log(fnc + ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')')
             com.dialog(('中断' if is_interrupt else '完了') + 'しました。(' + com.conv_time_str(total_time) + ')', fnc)
 
         else:
