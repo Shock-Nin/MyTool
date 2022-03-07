@@ -17,30 +17,35 @@ class Function:
 
     def do(self, fnc):
 
-        if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
-            return
-
         if fnc in ['最適化セット', 'MT4起動']:
             self.set_optimize(
-                fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1-2', 'MT4_TEST/Test1-3'],
+                fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1_2', 'MT4_TEST/Test1_3'],
                 affinity=['F', '2', '4', '8'],
                 web_path=['Web_MT4'],
                 my_path=['FxPro', 'OANDA', 'Rakuten']  # 'MyFx', 'XM'
             )
         elif 'EX4コピー' == fnc:
+            # コピー(target)はワイルドカード、削除(remove)は完全一致
             self.copy_ex4(
-                fnc, dev_out=['Test1', 'Test1-2', 'Test1-3', 'Test2', 'Test2_2', 'Test3'],
+                fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2', 'Test3', 'Test4'],
                 web_path=['Web_MT4'],
                 my_path=['FxPro', 'OANDA', 'Rakuten', 'MyFx', 'XM'],
                 target_ea=['AnomalyShocknin', 'AnomalyGoToBe'],
-                target_ind=['AnomalyShocknin*', 'AnomalyGoToBe', 'sts*', 'JikanDeGo', 'WheSitaDoch'],
+                target_ind=['AnomalyShocknin', 'AnomalyGoToBe', 'sts', 'JikanDeGo', 'WheSitaDoch'],
                 remove_ea=[],
                 remove_ind=[]
             )
+        elif 'MT4ログ削除' == fnc:
+            self.log_delete(fnc)
+
         elif 'ヒストリカル編集' == fnc:
-            pass
+            self.edit_history(fnc)
 
         elif 'ヒストリカルコピー' == fnc:
+
+            if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
+                return
+
             self.copy_history(
                 fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_TEST/Test2', 'MT4_RATE/MyFx'],
                 out_path=['Test1', 'Test1_2', 'Test1_3', 'Test2_2', 'Test3'],
@@ -68,8 +73,9 @@ class Function:
             commands = []
             if cst.IP == cst.DEV_IP:
                 for i in range(0, len(opt_path)):
-                    commands.append('start "" /affinity ' + affinity[i] +
-                                    ' "' + cst.MT4_PATH + opt_path[i] + '/terminal.exe" "/portable"')
+                    commands.append(
+                        'cmd /c start "" /affinity ' + (affinity[i] + ' "' + cst.MT4_PATH + opt_path[i] +
+                                                        '/terminal.exe"').replace('/', '\\') + ' "/portable"')
             elif cst.IP == cst.WEB_IP:
                 for i in range(0, len(web_path)):
                     commands.append(cst.MT4_PATH + web_path[i] + '/terminal.exe /portable')
@@ -86,10 +92,12 @@ class Function:
             # MT4が開かれていない場合、MT4を起動
             expert_x, expert_y = com.match(shot, gray, cst.MATCH_PATH + 'auto_test/' +
                                            cst.MATCH_IMG_MT4['エキスパート'], (0, 0, 255))
-            if expert_x is not None:
+            if expert_x is None:
                 for i in range(0, len(commands)):
+                    com.log('起動: ' + commands[i])
                     subprocess.Popen(commands[i])
                     com.sleep(1)
+                com.sleep(5)
             else:
                 com.log(fnc + ': MT4起動済み')
 
@@ -129,6 +137,8 @@ class Function:
 
                     com.clip_copy((cst.GDRIVE_PATH['Win'] + 'FX/Presets/開発用.set').replace('/', '\\'), True)
                     com.sleep(2)
+                    com.click_pos(read_x + 5, read_y + 40)
+                    com.sleep(2)
 
                     # 最適化チェック
                     if opt_x is not None:
@@ -145,69 +155,115 @@ class Function:
     # EAとインジケータのコピー
     def copy_ex4(self, fnc, dev_out, web_path, my_path, target_ea, target_ind, remove_ea, remove_ind):
         if 'Win' == cst.PC:
+
+            msg = []
             center = cst.GDRIVE_PATH['Win'] + 'FX/MQL4/'
 
+            # 開発端末の場合、テスト用と転送用(GoogleDrive)にコピー
             if cst.IP == cst.DEV_IP:
                 in_path = cst.MT4_PATH + 'MT4_DEV/OANDA/MQL4/'
+                msg.append(in_path + ' → ')
 
                 for out in dev_out:
                     out_path = cst.MT4_PATH + 'MT4_TEST/' + out + '/MQL4/'
 
                     for target in target_ea:
-                        # shutil.copy2(in_path + 'Experts' + target + 'ex4', out_path + 'Experts')
-                        # shutil.copy2(in_path + 'Experts' + target + 'ex4', center + 'Experts')
-                        com.log('コピー: ' + in_path + 'Experts' + target + 'ex4' + ' → ' + out_path + 'Experts')
-                        com.log('コピー: ' + in_path + 'Experts' + target + 'ex4' + ' → ' + center + 'Experts')
+                        self._copy_ex4_sub(in_path, out_path, 'Experts', target)
+                        self._copy_ex4_sub(in_path, center, 'Experts', target)
                     for target in target_ind:
-                        # shutil.copy2(in_path + 'Indicators' + target + 'ex4', out_path + 'Indicators')
-                        # shutil.copy2(in_path + 'Indicators' + target + 'ex4', center + 'Indicators')
-                        com.log('コピー: ' + in_path + 'Indicators' + target + 'ex4' + ' → ' + out_path + 'Indicators')
-                        com.log('コピー: ' + in_path + 'Indicators' + target + 'ex4' + ' → ' + center + 'Indicators')
+                        self._copy_ex4_sub(in_path, out_path, 'Indicators', target)
+                        self._copy_ex4_sub(in_path, center, 'Indicators', target)
 
                     for target in remove_ea:
-                        # os.remove(out_path + 'Experts' + target + 'ex4')
-                        # os.remove(center + 'Experts' + target + 'ex4')
-                        com.log('削除: ' + out_path + 'Experts' + target + 'ex4')
-                        com.log('削除: ' + center + 'Experts' + target + 'ex4')
+                        self._delete_ex4_sub(out_path, 'Experts', target)
                     for target in remove_ind:
-                        # os.remove(out_path + 'Indicators' + target + 'ex4')
-                        # os.remove(center + 'Indicators' + target + 'ex4')
-                        com.log('削除: ' + out_path + 'Indicators' + target + 'ex4')
-                        com.log('削除: ' + center + 'Indicators' + target + 'ex4')
+                        self._delete_ex4_sub(out_path, 'Indicators', target)
+
+                    msg.append('　' + out_path)
+                msg.append('　' + center)
+
+            # 開発端末以外の場合、転送用(GoogleDrive)から運用MT4にコピー
             else:
-                if cst.IP == cst.WEB_IP:
+                path = (web_path if cst.IP == cst.WEB_IP else my_path)
+                msg.append(path + ' → ')
+
+                for out in path:
+                    out_path = cst.MT4_PATH + out + '/MQL4/'
+
                     for target in target_ea:
-                        # shutil.copy2(center + 'Experts' + target + 'ex4', web_path + 'Experts')
-                        com.log('コピー: ' + center + 'Experts' + target + 'ex4' + ' → ' + web_path + 'Experts')
+                        self._copy_ex4_sub(center, out_path, 'Experts', target)
                     for target in target_ind:
-                        # shutil.copy2(center + 'Indicators' + target + 'ex4', web_path + 'Indicators')
-                        com.log('コピー: ' + center + 'Indicators' + target + 'ex4' + ' → ' + web_path + 'Indicators')
+                        self._copy_ex4_sub(center, out_path, 'Indicators', target)
 
                     for target in remove_ea:
-                        # os.remove(center + 'Experts' + target + 'ex4')
-                        com.log('削除: ' + center + 'Experts' + target + 'ex4')
+                        self._delete_ex4_sub(out_path, 'Experts', target)
                     for target in remove_ind:
-                        # os.remove(center + 'Indicators' + target + 'ex4')
-                        com.log('削除: ' + center + 'Indicators' + target + 'ex4')
+                        self._delete_ex4_sub(out_path, 'Indicators', target)
 
-                elif cst.IP == cst.MY_IP:
-                    for target in target_ea:
-                        # shutil.copy2(center + 'Experts' + target + 'ex4', my_path + 'Experts')
-                        com.log('コピー: ' + center + 'Experts' + target + 'ex4' + ' → ' + my_path + 'Experts')
-                    for target in target_ind:
-                        # shutil.copy2(center + 'Indicators' + target + 'ex4', my_path + 'Indicators')
-                        com.log('コピー: ' + center + 'Indicators' + target + 'ex4' + ' → ' + my_path + 'Indicators')
+                    msg.append('　' + out_path)
 
-                    for target in remove_ea:
-                        # os.remove(center + 'Experts' + target + 'ex4')
-                        com.log('削除: ' + center + 'Experts' + target + 'ex4')
-                    for target in remove_ind:
-                        # os.remove(center + 'Indicators' + target + 'ex4')
-                        com.log('削除: ' + center + 'Indicators' + target + 'ex4')
+            com.log(fnc + '完了')
+            com.dialog(fnc + '完了しました(' + str(len(msg) - 1) + ')\n\n' +
+                       "".join(['\n　' + row.replace(cst.MT4_PATH, '') for row in msg]), fnc + ' 完了')
         else:
             com.log(fnc + ': 端末対象外 ' + cst.IPS[cst.IP])
 
         return True
+
+    # コピーの実行
+    def _copy_ex4_sub(self, in_path, out_path, file_type, target):
+
+        files = os.listdir(in_path + file_type)
+        files = [file for file in files if 0 <= file.find(target) and 0 <= file.find('.ex4')]
+
+        for file in files:
+            shutil.copy2(in_path + file_type + '/' + file, out_path + file_type)
+            com.log('ex4コピー: ' + in_path.replace(cst.MT4_PATH, '') + file_type + '/' + file + ' → ' +
+                    out_path.replace(cst.MT4_PATH, '') + file_type)
+
+    # 削除の実行
+    def _delete_ex4_sub(self, delete_path, file_type, target):
+
+        os.remove(delete_path + file_type + '/' + target + '.ex4')
+        com.log('ex4削除: ' + delete_path.replace(cst.MT4_PATH, '') + file_type + '/' + target + '.ex4')
+
+    # ログとテストヒストリカルデータの削除
+    def log_delete(self, fnc):
+        if 'Win' == cst.PC:
+
+            deletes = [['logs', '.log'], ['tester/logs', '.log'], ['tester/history', '.fxt'], ['tester/caches', '.0']]
+            paths = []
+
+            paths1 = os.listdir(cst.MT4_PATH)
+            for path1 in paths1:
+
+                if os.path.exists(cst.MT4_PATH + path1 + '/terminal.exe'):
+                    paths.append(cst.MT4_PATH + path1)
+                    continue
+
+                paths2 = os.listdir(cst.MT4_PATH + path1)
+                for path2 in paths2:
+                    if os.path.exists(cst.MT4_PATH + path1 + '/' + path2 + '/terminal.exe'):
+                        paths.append(cst.MT4_PATH + path1 + '/' + path2)
+                        continue
+
+            msg = []
+            for path in paths:
+                for i in range(0, len(deletes)):
+
+                    files = os.listdir(path + '/' + deletes[i][0])
+                    files = [file for file in files if 0 <= file.find(deletes[i][1])]
+
+                    for file in files:
+                        msg.append(path + '/' + deletes[i][0] + '/' + file)
+                        com.log('MT4ログ削除: ' + path + '/' + deletes[i][0] + '/' + file)
+                        os.remove(path + '/' + deletes[i][0] + '/' + file)
+
+            com.log(fnc + '完了(' + str(len(msg)) + ')')
+            com.dialog(fnc + '完了しました(' + str(len(msg)) + ')\n' +
+                       ('削除はありませんでした。' if 0 == len(msg) else
+                       '\n　' + cst.MT4_PATH[:-1] + "".join(['\n　　' + row.replace(cst.MT4_PATH, '')
+                                                            for row in msg])), fnc + ' 完了')
 
     # TickstoryのCSVファイル編集
     def edit_history(self, fuc):
