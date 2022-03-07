@@ -22,7 +22,7 @@ import subprocess
 
 """ PW_INPUT = True | CHANGE_MENU = -1 """
 PW_INPUT = False
-CHANGE_MENU = 0
+CHANGE_MENU = 1
 """ ---------------------------------- """
 
 MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
@@ -54,6 +54,8 @@ FUNC_MENU = {
     'ヒストリカルコピー': 'DEV',
     'Tickstory': 'DEV',
 }
+NAMES = ['DEV', 'Web', 'My', 'Mac']
+NAME = (cst.PC if CHANGE_MENU < 0 else NAMES[CHANGE_MENU])
 BTN = BTNS[cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]]
 height = 2 + (1 if cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0) + \
          (1 if cst.MAC_IP != (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0)
@@ -108,7 +110,8 @@ def main():
 
         # コンボボックスのメニュー作成
         fold = [cst.MENU_CSV['Fold'].at[i, 'Name']
-                for i in range(0, len(cst.MENU_CSV['Fold'])) if cst.MENU_CSV['Fold'].at[i, 'Type'] == cst.PC]
+                for i in range(0, len(cst.MENU_CSV['Fold']))
+                if cst.MENU_CSV['Fold'].at[i, 'Type'] in [cst.PC, NAME]]
         web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len(cst.MENU_CSV['Web']))]
 
         xy_size = ((DP_XY_WIDTH[cst.PC][2]), 1)
