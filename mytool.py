@@ -59,8 +59,10 @@ NAME = (cst.PC if CHANGE_MENU < 0 else NAMES[CHANGE_MENU])
 BTN = BTNS[cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]]
 height = 2 + (1 if cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0) + \
          (1 if cst.MAC_IP != (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0)
-DP_XY_WIDTH = {'Win': [220, 100 + (int(len(BTN) + height) * 40), 16],
-               'Mac': [130, 80 + (int(len(BTN) + height) * 40), 11]}
+DP_XY_WIDTH = {cst.DEV_IP: [0, 100 + (int(len(BTN) + height) * 60), 16, 2],
+               cst.WEB_IP: [0, 0, 20, 4],
+               cst.MY_IP: [0, 0, 20, 4],
+               cst.MAC_IP: [130, 80 + (int(len(BTN) + height) * 40), 11, 1]}
 
 
 def main():
@@ -114,31 +116,34 @@ def main():
                 if cst.MENU_CSV['Fold'].at[i, 'Type'] in [cst.PC, NAME]]
         web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len(cst.MENU_CSV['Web']))]
 
-        xy_size = ((DP_XY_WIDTH[cst.PC][2]), 1)
+        xy_size = ((DP_XY_WIDTH[MENUS[CHANGE_MENU]][2]), 1)
 
         # メイン画面レイアウト
         layout = [[sg.Text('', key='act', background_color=cst.MAIN_ACT_COLOR[0], text_color=cst.MAIN_ACT_COLOR[1],
-                           font=('', 18), size=xy_size, pad=((0, 0), (0, 5)))],
+                           font=('', 18 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 5)))],
                   [sg.Combo(fold, default_value='　Fold', key='Fold', enable_events=True, readonly=True,
-                            font=('', 16), size=xy_size, pad=((0, 0), (0, 5)))],
+                            font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 5)))],
                   [sg.Combo(web, default_value='　Web', key='Web', enable_events=True, readonly=True,
-                            font=('', 16), size=xy_size, pad=((0, 0), (0, 15)))],
-                  [[sg.Button(btn, key=btn, font=('', 16), pad=((0, 0), (0, 5)), size=xy_size)] for btn in BTN]]
+                            font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 15)))],
+                  [[sg.Button(btn, key=btn, font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), pad=((0, 0), (0, 5)), size=xy_size)] for btn in BTN]]
 
         is_dev = (cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]))
         if is_dev:
             layout.append([sg.Combo([key for key in EA_MENU],
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
-                                    font=('', 16), size=xy_size, pad=((0, 0), (0, 15)))])
+                                    font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 15)))])
         if cst.MAC_IP != (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]):
             layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
                                     default_value='　機能', key='機能', enable_events=True, readonly=True,
-                                    font=('', 16), size=xy_size, pad=((0, 0), (0, 15)))])
+                                    font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 15)))])
+
+        location = (None, None) if 0 == DP_XY_WIDTH[MENUS[CHANGE_MENU]][0] + DP_XY_WIDTH[MENUS[CHANGE_MENU]][1] else (
+            win_x - DP_XY_WIDTH[MENUS[CHANGE_MENU]][0] if 0 < DP_XY_WIDTH[MENUS[CHANGE_MENU]][0] else 0,
+            win_y - DP_XY_WIDTH[MENUS[CHANGE_MENU]][1] if 0 < DP_XY_WIDTH[MENUS[CHANGE_MENU]][1] else 0)
 
         window = sg.Window(cst.PC, modal=True, element_justification='c', icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
-                           element_padding=((0, 0), (0, 0)), margins=(0, 0), location=
-                           (win_x - DP_XY_WIDTH[cst.PC][0], win_y - DP_XY_WIDTH[cst.PC][1]), layout=layout)
+                           element_padding=((0, 0), (0, 0)), margins=(0, 0), location=location, layout=layout)
         # 画面のイベント監視
         while True:
             event, values = window.read()
@@ -154,13 +159,15 @@ def main():
                 if event in ['Fold', 'Web']:
                     menu = cst.MENU_CSV[event]
 
-                select = (menu[(menu['Type'] == cst.PC) & (menu['Name'] == values[event])]['Path'].values[0]
-                          if 'Fold' == event else
-                          menu[(menu['Name'] == values[event])]
-                          if 'Web' == event else
-                          values[event]
-                          if 'EA' == event else
-                          values[event])
+                try:
+                    select = (menu[(menu['Type'] == cst.PC) & (menu['Name'] == values[event])]['Path'].values[0]
+                              if 'Fold' == event else
+                              menu[(menu['Name'] == values[event])]
+                              if 'Web' == event else
+                              values[event]
+                              if 'EA' == event else
+                              values[event])
+                except: continue
 
                 window['act'].update(event[0] + ': ' + values[event])
                 window[event].update('　' + event[0].upper() + event[1:])

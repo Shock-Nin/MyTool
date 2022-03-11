@@ -50,11 +50,11 @@ class BlogPochi:
             try:
                 try:
                     web_driver.find_element(self.wd, 'jq-rfrank-link-rank-footer').click()
-                    com.sleep(1)
+                    com.sleep(2)
                 except: pass
                 try:
                     web_driver.find_element(self.wd, 'jq-rfrank-link-close').click()
-                    com.sleep(1)
+                    com.sleep(2)
                 except: pass
 
                 if 'Mac' == cst.PC:
@@ -62,11 +62,10 @@ class BlogPochi:
                 else:
                     self.wd.get('https://blog.with2.net/out.php?id=1487139&url=https%3A%2F%2F' +
                                 cst.BLOG_URL.replace('https://', ''))
-                com.sleep(1)
+                com.sleep(2)
                 ok_cnt += 1
 
                 com.log('ランキング: OUT (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
-                com.sleep(1)
 
                 self.wd.switch_to.window(self.wd.window_handles[len(self.wd.window_handles) - 1])
                 com.sleep(2)

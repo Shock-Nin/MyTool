@@ -15,7 +15,7 @@ ANM_URL = cst.BLOG_URL
 ANM_URL += 'anomaly'
 ANM_OUT_PATH = cst.ANM_OUT_PATH[cst.PC]
 # ANM_OUT_PATH += 'test'
-IS_TWEET = False
+IS_TWEET = True
 # IS_TWEET = True
 
 
