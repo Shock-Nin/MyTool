@@ -65,7 +65,7 @@ def get_method(before=0):
 # クリップボードコピペ
 def clip_copy(string, enter=None):
     pyperclip.copy(string)
-    pgui.hotkey('ctrl', 'v')
+    pgui.hotkey('ctrl' if 'Win' == cst.PC else 'command', 'v')
     if enter:
         pgui.hotkey('enter')
 

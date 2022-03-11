@@ -11,7 +11,7 @@ class BlogPochi:
     def __init__(self, job):
         self.myjob = job
         self.is_batch = ('Batch' == job)
-        self.wd = web_driver.driver()
+        self.wd = web_driver.driver(headless=self.is_batch)
 
     def do(self):
 
@@ -32,10 +32,12 @@ class BlogPochi:
             self.wd.get(cst.BLOG_URL)
             self.wd.maximize_window()
             home = self.wd.window_handles[0]
+            com.sleep(2)
 
             # ブログランキング
             blog_title = self.wd.title
             web_driver.find_element(self.wd, 'brank').click()
+            com.sleep(1)
             ok_cnt += 1
 
             com.log('ランキング: IN (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
@@ -60,6 +62,7 @@ class BlogPochi:
                 else:
                     self.wd.get('https://blog.with2.net/out.php?id=1487139&url=https%3A%2F%2F' +
                                 cst.BLOG_URL.replace('https://', ''))
+                com.sleep(1)
                 ok_cnt += 1
 
                 com.log('ランキング: OUT (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
@@ -101,6 +104,7 @@ class BlogPochi:
 
                 # ブログ村
                 web_driver.find_element(self.wd, 'bmura').click()
+                com.sleep(2)
                 ok_cnt += 1
 
                 com.log('ブログ村: IN (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
@@ -114,6 +118,7 @@ class BlogPochi:
                 com.log('ブログ村: IN失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
             try:
                 web_driver.find_element(self.wd, '/html/body/div[5]/div[1]/div/div/a').click()
+                com.sleep(2)
                 ok_cnt += 1
 
                 com.log('ブログ村: OUT (' + str(ok_cnt) + '/' + str(max_cnt) + ')')

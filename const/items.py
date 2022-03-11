@@ -32,7 +32,7 @@ MATCH_IMG_RM = {'マージ': 'merge.png', '保存': 'save.png', 'ファイル': 
 EA_PATHS = {'AnomalyGoToBe': ['Other'], 'AnomalyShocknin': ['Main', 'Unit-']}
 CURRNCYS_EA = [['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD', 'GOLD'],
                ['25', '25', '25', '25', '25', '25', '25', '70']]
-CURRNCYS_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',
+CURRNCYS_365 = ['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD',
                 'ZAR', 'TRY', 'NOK', 'HKD', 'SEK', 'MXN', 'PLN']
 EA_DATA_NAMES = ['EA個別成績', 'EA統合成績', 'EA統合年率']
 
@@ -44,3 +44,23 @@ BLOG_MAIL = 'shocknin7@gmail.com'
 BLOG_MAIL_PW = 'Shock19800226'
 ERROR_MAIL = 'error19800226@gmail.com'
 ERROR_MAIL_PW = 'Error@1980'
+
+# アノマリー Twitter
+TWITTER_ID = BLOG_MAIL
+TWITTER_PASS = 'Shock19800226'
+TWITTER_TAG = '#アノマリー #統計 #確率 #為替 #AI #学習'
+TWEET_TIME = [20, 8]
+# アノマリー 期間
+ANM_SPAN = ['8-11', '12-15', '16-19', '20-23', '0-3', '4-7']
+ANM_RANGE = ['15', '15']
+ANM_AFTER = '12'
+ANM_OPEN = 7
+ANM_RATE = [4, 4, 6, 1]
+ANM_HOUR_UD = 0.2
+# アノマリー 確率差(0.1 = 55 %:45 %)
+ANM_DIFF = 0.1
+ANM_JUDGE = 0.5
+# アノマリー レポート合格
+ANM_BEST = 5
+ANM_REPORT_UD = 0.2
+DAY_WEEK = ['月', '火', '水', '木', '金']

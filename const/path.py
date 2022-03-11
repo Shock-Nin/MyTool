@@ -14,7 +14,7 @@ IP = requests.get('http://ipconfig.me').text
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'
 DEV_IP = '164.70.84.254'
-MAC_IP = '133.32.224.211'
+MAC_IP = ('IP??? ' if IP.find('133.32.') < 0 else '') + IP
 IPS = {WEB_IP: 'Web', MY_IP: 'My', DEV_IP: 'DEV', MAC_IP: 'Mac'}
 
 MY_LINKS = {
@@ -52,9 +52,16 @@ TEST_LINK = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
 
 # TickStoryのExeと作成先フォルダ
 TICK_STORY = 'C:/Program Files (x86)/Tickstory/Tickstory.exe'
-HST_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Desktop/test_root/MT4/history/',
+HST_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/test_root/MT4/history/',
             'Win': CURRENT_PATH['Win'] + 'Documents/MT4/history/'}
 
+# アノマリー MT4パス
+ANM_FOLD = '/anm/anomaly_'
+ANM_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/test_root/ANM',
+            'Win': CURRENT_PATH['Win'] + 'Documents/MT4/Web_MT4/MQL4/Files/ANM'}
+# アノマリー MT4パス
+ANM_OUT_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/test_root/anm_out/anm',
+                'Win': CURRENT_PATH['Win'] + 'Documents/apache-tomcat/webapps/ROOT/anm'}
 
 # EAパラメータのファイルパス(Googleドライブ)
 PRM_PATH = 'FX/Presets/'

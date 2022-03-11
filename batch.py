@@ -17,6 +17,7 @@ from common import com
 from const import cst
 
 from business.multiple.blog_pochi import BlogPochi
+from business.batch.anomaly import Anomaly
 
 
 class Batch:
@@ -77,15 +78,31 @@ class Batch:
     def _windows_web(self):
         jobs = []
 
-        # 土曜日12時～月曜4字まで休止
-        if ((5 == self.now.weekday and 12 < self.now.hour)
-                or 6 == self.now.weekday
-                or (5 == self.now.weekday and self.now.hour < 4)):
+        # 土曜日12時～月曜4時まで休止
+        if ((5 == self.now.weekday() and 12 < self.now.hour)
+                or 6 == self.now.weekday()
+                or (5 == self.now.weekday() and self.now.hour < 4)):
             return jobs
 
         # 30分未満の場合にのみ実行
         if self.now.minute < 30:
-            pass
+
+            if 0 == len(jobs):
+                com.log('Batch開始: ' + cst.IP)
+
+            jobs.append('アノマリー')
+            instance = Anomaly(self.myjob)
+            topic_texts = instance.create()
+
+            # 4で割れる時間、月曜6時〜金曜最終、元旦とクリスマス以外、にツイート実行
+            if (self.now.hour + 2) % 4 == 0 \
+                and ((0 == self.now.weekday() and 6 < self.now.hour) or 0 < self.now.weekday() < 5) \
+                and not (1 == self.now.month and 1 == self.now.day) \
+                and not (12 == self.now.month and 25 == self.now.day):
+
+                is_tweet = instance.tweet(topic_texts)
+                com.log(str(self.now.day) + ' ' + str(self.now.hour) + 'h ' +
+                        ('' if is_tweet else 'エラー'), lv=('' if is_tweet else 'E'))
 
         # 30分以上の場合にのみ実行
         else:

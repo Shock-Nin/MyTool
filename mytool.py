@@ -22,7 +22,7 @@ import subprocess
 
 """ PW_INPUT = True | CHANGE_MENU = -1 """
 PW_INPUT = False
-CHANGE_MENU = 1
+CHANGE_MENU = -1
 """ ---------------------------------- """
 
 MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
@@ -36,7 +36,7 @@ BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
     '資産': 'mac.my_asset',
     '英単語': 'mac.eng1min',
-    }, }
+    }}
 EA_MENU = {
     'EA連続テスト': 'windows.ea_auto_test',
     'EAテスト結合': 'windows.ea_merge_test',

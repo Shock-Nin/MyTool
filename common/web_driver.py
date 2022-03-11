@@ -3,14 +3,23 @@
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
 
-def driver():
+def driver(headless=False):
+    options = Options()
+    options.add_argument('--headless')
+
+    wd = None
     try:
-        return webdriver.Chrome(ChromeDriverManager().install())
-    except:
-        return None
+        if headless:
+            wd = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+        else:
+            wd = webdriver.Chrome(ChromeDriverManager().install())
+    except: pass
+
+    return wd
 
 
 def find_element(wd, element):

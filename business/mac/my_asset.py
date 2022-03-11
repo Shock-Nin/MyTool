@@ -57,13 +57,13 @@ class MyAsset:
             # ViewCard取得
             target = targets[('ViewCard' == targets['Name'])]
             vcard, wd1 = self._get_view_card(target)
-            if 0 == len(vcard):
+            if vcard is None:
                 return
 
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
             rcard, wd2 = self._get_rakuten_card(target)
-            if 0 == len(rcard):
+            if rcard is None:
                 return
 
             banks = []
@@ -71,7 +71,7 @@ class MyAsset:
             # 三井住友銀行取得
             target = targets[('三井住友' == targets['Name'])]
             result, wd3 = self._get_smbc_bank(target)
-            if 0 == len(result):
+            if result is None:
                 return
             else:
                 banks.append(result)
@@ -79,7 +79,7 @@ class MyAsset:
             # 三菱UFJ銀行取得
             target = targets[('三菱UFJ' == targets['Name'])]
             result, wd4 = self._get_mufg_bank(target)
-            if 0 == len(result):
+            if result is None:
                 return
             else:
                 banks.append(result)
@@ -87,7 +87,7 @@ class MyAsset:
             # 楽天銀行取得
             target = targets[('楽天銀行' == targets['Name'])]
             result, wd5 = self._get_rakuten_bank(target)
-            if 0 == len(result):
+            if result is None:
                 return
             else:
                 banks.append(result)
@@ -128,7 +128,7 @@ class MyAsset:
         wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
         if wd is None:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return results, wd
+            return None, None
 
         # 金額取得(未確定・1月前・2月前・3月前)
         try:
@@ -140,6 +140,7 @@ class MyAsset:
         except Exception as e:
             com.log('WebDriverエラー: Viewカード, ' + str(e), 'E')
             com.dialog('Viewカードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+            return None, None
 
         return results, wd
 
@@ -151,7 +152,7 @@ class MyAsset:
         wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
         if wd is None:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return results, wd
+            return None, None
 
         # 金額取得(未確定・1月前・2月前・3月前)
         try:
@@ -165,6 +166,7 @@ class MyAsset:
         except Exception as e:
             com.log('WebDriverエラー: 楽天カード, ' + str(e), 'E')
             com.dialog('楽天カードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+            return None, None
 
         return results, wd
 
@@ -176,7 +178,7 @@ class MyAsset:
         wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
         if wd is None:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return result, wd
+            return None, None
 
         # 金額取得
         try:
@@ -184,6 +186,7 @@ class MyAsset:
         except Exception as e:
             com.log('WebDriverエラー: 三井住友, ' + str(e), 'E')
             com.dialog('三井住友で、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+            return None, None
 
         return result, wd
 
@@ -195,7 +198,7 @@ class MyAsset:
         wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
         if wd is None:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return result, wd
+            return None, None
 
         # 金額取得
         try:
@@ -205,6 +208,7 @@ class MyAsset:
         except Exception as e:
             com.log('WebDriverエラー: 三菱UFJ, ' + str(e), 'E')
             com.dialog('三菱UFJで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+            return None, None
 
         return result, wd
 
@@ -216,7 +220,7 @@ class MyAsset:
         wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
         if wd is None:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return result, wd
+            return None, None
 
         # 金額取得
         try:
@@ -225,6 +229,7 @@ class MyAsset:
         except Exception as e:
             com.log('WebDriverエラー: 楽天銀行, ' + str(e), 'E')
             com.dialog('楽天銀行で、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+            return None, None
 
         return result, wd
 

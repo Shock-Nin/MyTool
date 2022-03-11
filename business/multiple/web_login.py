@@ -5,6 +5,8 @@ from common import com
 from const import cst
 from common import web_driver
 
+import pyautogui as pgui
+
 
 class WebLogin:
 
@@ -112,14 +114,18 @@ class WebLogin:
 
                     if '楽天銀行' == name:
                         try:
-                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_BRANCH_CODE"]').sendKeys('225')
-                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:INPUT_ACCOUNT_NUMBER"]').sendKeys('2152671')
-                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:SECRET_WORD"]').sendKeys('ああああ')
-                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM:_idJsp83"]').click()
+                            pgui.hotkey('eisu')
+                            pgui.write('225')
+                            pgui.hotkey('tab')
+                            pgui.write('2152671')
+                            pgui.hotkey('tab')
+                            pgui.hotkey('tab')
+                            com.clip_copy('ああああ')
+                            web_driver.find_element(self.wd, 'INPUT_FORM:_idJsp83').click()
                             com.sleep(1)
                         except: pass
                         try:
-                            web_driver.find_element(self.wd, '//*[@id="INPUT_FORM_P:_idJsp176"]').click()
+                            web_driver.find_element(self.wd, 'INPUT_FORM_P:_idJsp176').click()
                         except: pass
 
                     elif name in ['楽天カード', 'リクルート']:
