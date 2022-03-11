@@ -193,7 +193,7 @@ class Function:
             # 開発端末以外の場合、転送用(GoogleDrive)から運用MT4にコピー
             else:
                 path = (web_path if cst.IP == cst.WEB_IP else my_path)
-                msg.append(path + ' → ')
+                msg.append(center + ' → ')
 
                 for out in path:
                     out_path = cst.MT4_PATH + out + '/MQL4/'
