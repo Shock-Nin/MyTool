@@ -11,11 +11,13 @@ PC = 'Win' if 'Windows' == pf else 'Mac' if 'Darwin' == pf else ''
 PC_NAME = socket.gethostname()
 IP = requests.get('http://ipconfig.me').text
 
+DEV_IP = '164.70.84.254'
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'
-DEV_IP = '164.70.84.254'
 MAC_IP = ('IP??? ' if IP.find('133.32.') < 0 else '') + IP
-IPS = {WEB_IP: 'Web', MY_IP: 'My', DEV_IP: 'DEV', MAC_IP: 'Mac'}
+
+IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MY_IP: 'My', MAC_IP: 'Mac'}
+IP_LIST = [DEV_IP, WEB_IP, MY_IP, MAC_IP]
 
 MY_LINKS = {
     WEB_IP: ['', '', '', '', '', '', '', '', '', ''],

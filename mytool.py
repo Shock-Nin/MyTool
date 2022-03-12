@@ -24,8 +24,6 @@ import subprocess
 PW_INPUT = False
 CHANGE_MENU = -1
 """ ---------------------------------- """
-
-MENUS = [cst.DEV_IP, cst. WEB_IP, cst.MY_IP, cst.MAC_IP]
 BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
     }, cst.WEB_IP: {
@@ -54,11 +52,9 @@ FUNC_MENU = {
     'ヒストリカルコピー': 'DEV',
     'Tickstory': 'DEV',
 }
-NAMES = ['DEV', 'Web', 'My', 'Mac']
-NAME = (cst.PC if CHANGE_MENU < 0 else NAMES[CHANGE_MENU])
-BTN = BTNS[cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]]
-height = 2 + (1 if cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0) + \
-         (1 if cst.MAC_IP != (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]) else 0)
+WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])
+BTN = BTNS[WORK_IP]
+height = 2 + (1 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
 DP_XY_WIDTH = {cst.DEV_IP: [0, 100 + (int(len(BTN) + height) * 60), 16, 2],
                cst.WEB_IP: [0, 0, 20, 4],
                cst.MY_IP: [0, 0, 20, 4],
@@ -113,33 +109,33 @@ def main():
         # コンボボックスのメニュー作成
         fold = [cst.MENU_CSV['Fold'].at[i, 'Name']
                 for i in range(0, len(cst.MENU_CSV['Fold']))
-                if cst.MENU_CSV['Fold'].at[i, 'Type'] in [cst.PC, NAME]]
+                if cst.MENU_CSV['Fold'].at[i, 'Type'] in [cst.PC, cst.IPS[WORK_IP]]]
         web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len(cst.MENU_CSV['Web']))]
 
-        xy_size = ((DP_XY_WIDTH[MENUS[CHANGE_MENU]][2]), 1)
+        dp = DP_XY_WIDTH[WORK_IP]
+        xy_size = ((dp[2]), 1)
 
         # メイン画面レイアウト
         layout = [[sg.Text('', key='act', background_color=cst.MAIN_ACT_COLOR[0], text_color=cst.MAIN_ACT_COLOR[1],
-                           font=('', 18 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 5)))],
+                           font=('', 18 * dp[3]), size=xy_size, pad=((0, 0), (0, 5)))],
                   [sg.Combo(fold, default_value='　Fold', key='Fold', enable_events=True, readonly=True,
-                            font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 5)))],
+                            font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (0, 5)))],
                   [sg.Combo(web, default_value='　Web', key='Web', enable_events=True, readonly=True,
-                            font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 15)))],
-                  [[sg.Button(btn, key=btn, font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), pad=((0, 0), (0, 5)), size=xy_size)] for btn in BTN]]
+                            font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (0, 15)))],
+                  [[sg.Button(btn, key=btn, font=('', 16 * dp[3]), pad=((0, 0), (0, 5)), size=xy_size)] for btn in BTN]]
 
-        is_dev = (cst.DEV_IP == (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]))
+        is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev:
             layout.append([sg.Combo([key for key in EA_MENU],
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
-                                    font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 15)))])
-        if cst.MAC_IP != (cst.IP if CHANGE_MENU < 0 else MENUS[CHANGE_MENU]):
+                                    font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (10, 5)))])
+        if cst.MAC_IP != WORK_IP:
             layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
                                     default_value='　機能', key='機能', enable_events=True, readonly=True,
-                                    font=('', 16 * DP_XY_WIDTH[MENUS[CHANGE_MENU]][3]), size=xy_size, pad=((0, 0), (0, 15)))])
+                                    font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (0, 5)))])
 
-        location = (None, None) if 0 == DP_XY_WIDTH[MENUS[CHANGE_MENU]][0] + DP_XY_WIDTH[MENUS[CHANGE_MENU]][1] else (
-            win_x - DP_XY_WIDTH[MENUS[CHANGE_MENU]][0] if 0 < DP_XY_WIDTH[MENUS[CHANGE_MENU]][0] else 0,
-            win_y - DP_XY_WIDTH[MENUS[CHANGE_MENU]][1] if 0 < DP_XY_WIDTH[MENUS[CHANGE_MENU]][1] else 0)
+        location = (None, None) if 0 == dp[0] + dp[1] else (
+            win_x - dp[0] if 0 < dp[0] else 0, win_y - dp[1] if 0 < dp[1] else 0)
 
         window = sg.Window(cst.PC, modal=True, element_justification='c', icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
@@ -192,7 +188,7 @@ def main():
 
                 # 単独機能で選択した場合
                 else:
-                    processes.append(function.Function(event, MENUS[CHANGE_MENU]).do(select))
+                    processes.append(function.Function(event, WORK_IP).do(select))
 
 
             # ボタン選択した場合
