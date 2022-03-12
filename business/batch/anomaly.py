@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+"""
+バッチ
+アノマリーのトピック作成(ブラウザ)取得、DB登録
+"""
 from common import com
 from const import cst
 from common import web_driver
@@ -102,7 +105,6 @@ class Anomaly:
         try:
             # ウェブ操作スタート
             wd = web_driver.driver(headless=self.is_batch)
-            # wd = web_driver.driver()
             if wd is None:
                 com.log('WebDriverエラー', 'E')
                 return
@@ -163,7 +165,6 @@ class Anomaly:
         try:
             # ウェブ操作スタート
             wd = web_driver.driver(headless=self.is_batch)
-            # wd = web_driver.driver()
             if wd is None:
                 com.log('WebDriverエラー', 'E')
                 return

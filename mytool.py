@@ -54,14 +54,18 @@ FUNC_MENU = {
 }
 WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])
 BTN = BTNS[WORK_IP]
-height = 2 + (1 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
-DP_XY_WIDTH = {cst.DEV_IP: [0, 100 + (int(len(BTN) + height) * 60), 16, 2],
-               cst.WEB_IP: [0, 0, 20, 4],
-               cst.MY_IP: [0, 0, 20, 4],
-               cst.MAC_IP: [130, 80 + (int(len(BTN) + height) * 40), 11, 1]}
+HEIGHT = 2 + (1 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
+DP_XY_WIDTH = {
+    cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
+    cst.WEB_IP: [0, 0, 20, 4],
+    cst.MY_IP: [0, 0, 20, 4],
+    cst.MAC_IP: [150, 80 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
+DP = DP_XY_WIDTH[WORK_IP]
+XY_SIZE = (DP[2], 1)
 
 
 def main():
+
     processes = []
     # メニュー系CSV読み込み
     if not com.get_menu():
@@ -112,30 +116,27 @@ def main():
                 if cst.MENU_CSV['Fold'].at[i, 'Type'] in [cst.PC, cst.IPS[WORK_IP]]]
         web = [cst.MENU_CSV['Web'].at[i, 'Name'] for i in range(0, len(cst.MENU_CSV['Web']))]
 
-        dp = DP_XY_WIDTH[WORK_IP]
-        xy_size = ((dp[2]), 1)
-
         # メイン画面レイアウト
         layout = [[sg.Text('', key='act', background_color=cst.MAIN_ACT_COLOR[0], text_color=cst.MAIN_ACT_COLOR[1],
-                           font=('', 18 * dp[3]), size=xy_size, pad=((0, 0), (0, 5)))],
+                           font=('', 18 * DP[3]), size=XY_SIZE, pad=((0, 0), (0, 5)))],
                   [sg.Combo(fold, default_value='　Fold', key='Fold', enable_events=True, readonly=True,
-                            font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (0, 5)))],
+                            font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (0, 5)))],
                   [sg.Combo(web, default_value='　Web', key='Web', enable_events=True, readonly=True,
-                            font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (0, 15)))],
-                  [[sg.Button(btn, key=btn, font=('', 16 * dp[3]), pad=((0, 0), (0, 5)), size=xy_size)] for btn in BTN]]
+                            font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (0, 15)))],
+                  [[sg.Button(btn, key=btn, font=('', 16 * DP[3]), pad=((0, 0), (0, 5)), size=XY_SIZE)] for btn in BTN]]
 
         is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev:
             layout.append([sg.Combo([key for key in EA_MENU],
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
-                                    font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (10, 5)))])
+                                    font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (10, 5)))])
         if cst.MAC_IP != WORK_IP:
             layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
                                     default_value='　機能', key='機能', enable_events=True, readonly=True,
-                                    font=('', 16 * dp[3]), size=xy_size, pad=((0, 0), (0, 5)))])
+                                    font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (0, 5)))])
 
-        location = (None, None) if 0 == dp[0] + dp[1] else (
-            win_x - dp[0] if 0 < dp[0] else 0, win_y - dp[1] if 0 < dp[1] else 0)
+        location = (None, None) if 0 == DP[0] + DP[1] else (
+            win_x - DP[0] if 0 < DP[0] else 0, win_y - DP[1] if 0 < DP[1] else 0)
 
         window = sg.Window(cst.PC, modal=True, element_justification='c', icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),

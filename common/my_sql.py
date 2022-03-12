@@ -102,7 +102,7 @@ class MySql:
         try:
             cursor = self.cnx.cursor()
             cursor.execute(sql)
-            result = cursor
+            result = cursor.fetchall()
         except Exception as e:
             com.log('SQLエラー: ' + sql.replace('\n', ' ') + ', ' + str(e), 'E')
             return ''

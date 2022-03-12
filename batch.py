@@ -18,6 +18,8 @@ from const import cst
 
 from business.multiple.blog_pochi import BlogPochi
 from business.batch.anomaly import Anomaly
+from business.batch.saya_daily import SayaDaily
+from business.batch.saya_timely import SayaTimely
 
 
 class Batch:
@@ -90,7 +92,6 @@ class Batch:
             if 0 == len(jobs):
                 com.log('Batch開始: ' + cst.IP)
 
-            jobs.append('アノマリー')
             instance = Anomaly(self.myjob)
             topic_texts = instance.create()
 
@@ -104,9 +105,13 @@ class Batch:
                 com.log(str(self.now.day) + ' ' + str(self.now.hour) + 'h ' +
                         ('' if is_tweet else 'エラー'), lv=('' if is_tweet else 'E'))
 
-        # 30分以上の場合にのみ実行
-        else:
-            pass
+            jobs.append('アノマリー')
+
+        if 0 == len(jobs):
+            com.log('Batch開始: ' + cst.IP)
+
+        SayaTimely(self.myjob).get_web()
+        jobs.append('365リアル更新')
 
         return ", ".join([job for job in jobs])
 

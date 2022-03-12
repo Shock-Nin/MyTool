@@ -20,6 +20,9 @@ class MyAsset:
 
     def do(self):
 
+        if com.question(self.myjob + ' 開始しますか？', '開始確認') <= 0:
+            return
+
         start_time = com.time_start()
         total_time = 0
 

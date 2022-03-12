@@ -32,13 +32,17 @@ MATCH_IMG_RM = {'マージ': 'merge.png', '保存': 'save.png', 'ファイル': 
 EA_PATHS = {'AnomalyGoToBe': ['Other'], 'AnomalyShocknin': ['Main', 'Unit-']}
 CURRNCYS_EA = [['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD', 'GOLD'],
                ['25', '25', '25', '25', '25', '25', '25', '70']]
-CURRNCYS_365 = ['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD',
+CURRNCYS_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',
                 'ZAR', 'TRY', 'NOK', 'HKD', 'SEK', 'MXN', 'PLN']
 EA_DATA_NAMES = ['EA個別成績', 'EA統合成績', 'EA統合年率']
 
+# くりっく365 CSV取引データ
+RATE_CSV = 'https://www.tfx.co.jp/kawase/document/PRT-010-CSV-003-'
+# くりっく365 リアルデータ
+RATE_REAL = 'https://www.click365.jp/market.html'
+
 # ブログ
 BLOG_URL = 'https://shock-nin.info/'
-
 # メール
 BLOG_MAIL = 'shocknin7@gmail.com'
 BLOG_MAIL_PW = 'Shock19800226'

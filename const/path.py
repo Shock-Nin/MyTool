@@ -19,13 +19,6 @@ MAC_IP = ('IP??? ' if IP.find('133.32.') < 0 else '') + IP
 IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MY_IP: 'My', MAC_IP: 'Mac'}
 IP_LIST = [DEV_IP, WEB_IP, MY_IP, MAC_IP]
 
-MY_LINKS = {
-    WEB_IP: ['', '', '', '', '', '', '', '', '', ''],
-    MY_IP: ['', '', '', '', '', '', '', '', '', ''],
-    DEV_IP: ['', '', '', '', '', '', '', '', '', ''],
-    MAC_IP: ['', '', '', '', '', '', '', '', '', '']
-}
-
 CURRENT_PATH = {'Mac': '/Users/dsk_nagaoka/',
                 'Win': 'C:/Users/Administrator/'}
 GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
