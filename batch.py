@@ -9,8 +9,6 @@ Windowsタスクスケジューラ
 　開始
 　　C:/Users/Administrator/Documents/MyTool
 """
-import datetime
-
 from common import com
 from const import cst
 
@@ -19,6 +17,8 @@ from business.batch.anomaly import Anomaly
 from business.batch.saya_daily import SayaDaily
 from business.batch.saya_timely import SayaTimely
 from business.batch.log_analy import LogAnaly
+
+import datetime
 
 
 class Batch:
@@ -88,9 +88,9 @@ class Batch:
             jobs.append('解析ログ編集')
 
         # 土曜日12時～月曜4時まで休止
-        if ((5 == self.now.weekday() and 12 < self.now.hour)
-                or 6 == self.now.weekday()
-                or (5 == self.now.weekday() and self.now.hour < 4)):
+        if (5 == self.now.weekday() and 12 < self.now.hour) \
+                or 6 == self.now.weekday() \
+                or (0 == self.now.weekday() and self.now.hour < 4):
             return jobs
 
         # 30分未満の場合にのみ実行
