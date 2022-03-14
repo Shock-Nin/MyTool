@@ -32,22 +32,9 @@ class MyAsset:
         targets = cst.MENU_CSV['Web']
         targets = targets[('資産' == targets['Type'])]
 
-        # 接続情報をセット
-        info = cst.MENU_CSV['Sql']
-        info = info[('data_my' == info['DBNAME'])]
-
-        host = info['HOST'].values[0]
-        dbname = info['DBNAME'].values[0]
-        user = info['USER'].values[0]
-        pw = info['PASS'].values[0]
-
         try:
             # DB接続
-            self.cnx = my_sql.MySql(host, dbname, user, pw)
-
-            if self.cnx is None:
-                com.dialog('MySQL接続エラー\n　[' + host + '(' + dbname + ')] ', 'MySQL接続エラー',  'E')
-                return
+            self.cnx = my_sql.MySql('data_my')
 
             # 最新日のデータ取得
             before = self.cnx.select('*', TARGET_TABLES[0], '', 'ORDER BY 日付 DESC LIMIT 1')
@@ -227,7 +214,8 @@ class MyAsset:
 
         # 金額取得
         try:
-            result = web_driver.find_element(wd, '//*[@id="BALANCEINQUIRYBODYPERSONAL:FORM_HEAD:_idJsp223"]/span[2]') \
+            com.sleep(1)
+            result = web_driver.find_element(wd, '//*[@id="BALANCEINQUIRYBODYPERSONAL:FORM_HEAD:_idJsp343"]/span[2]') \
                 .text.replace(',', '').replace('円', '')
         except Exception as e:
             com.log('WebDriverエラー: 楽天銀行, ' + str(e), 'E')

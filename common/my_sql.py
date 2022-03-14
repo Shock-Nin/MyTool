@@ -9,8 +9,17 @@ import mysql.connector as db
 
 class MySql:
 
-    def __init__(self, host, dbname, user, pw):
+    def __init__(self, dbname):
         cnx = None
+
+        # 接続情報をセット
+        info = cst.MENU_CSV['Sql']
+        info = info[(dbname == info['DBNAME'])]
+
+        host = info['HOST'].values[0]
+        user = info['USER'].values[0]
+        pw = info['PASS'].values[0]
+
         try:
             cnx = db.connect(host=host, user=user, password=pw, auth_plugin='mysql_native_password')
             com.log('MySQL: 接続 [' + host + '(' + dbname + ')]')
@@ -121,4 +130,4 @@ class MySql:
 
     def rollback(self):
         self.cnx.rollback()
-        com.log('MySQL: ロールバック')
+        com.log('MySQL: ロールバック', 'E')

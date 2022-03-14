@@ -101,17 +101,8 @@ class SayaTimely:
                 else:
                     buys.append(rates[i])
 
-            # 接続情報をセット
-            info = cst.MENU_CSV['Sql']
-            info = info[('fx_saya365' == info['DBNAME'])]
-
-            host = info['HOST'].values[0]
-            dbname = info['DBNAME'].values[0]
-            user = info['USER'].values[0]
-            pw = info['PASS'].values[0]
-
             # SQL実行
-            cnx = my_sql.MySql(host, dbname, user, pw)
+            cnx = my_sql.MySql('fx_saya365')
             is_sql = cnx.delete(TARGET_TABLES[0], 'DATE <> \'' + com.str_time() + '\'')
             if is_sql:
                 is_sql = cnx.insert(columns, [sells], TARGET_TABLES[0])

@@ -3,10 +3,8 @@
 """
 Windowsタスクスケジューラ
 　プログラム
-　　C:/Users/Administrator/Documents/MyTool/venv/Scripts/python.exe
 　　C:/Users/Administrator/Documents/MyTool/mytool.exe
 　引数
-　　mytool.py -f Batch
 　　-f Batch
 　開始
 　　C:/Users/Administrator/Documents/MyTool
@@ -20,6 +18,7 @@ from business.multiple.blog_pochi import BlogPochi
 from business.batch.anomaly import Anomaly
 from business.batch.saya_daily import SayaDaily
 from business.batch.saya_timely import SayaTimely
+from business.batch.log_analy import LogAnaly
 
 
 class Batch:
@@ -80,6 +79,14 @@ class Batch:
     def _windows_web(self):
         jobs = []
 
+        # 2:30に実行
+        if 2 == self.now.hour and 30 <= self.now.minute:
+            if 0 == len(jobs):
+                com.log('Batch開始: ' + cst.IP)
+
+            LogAnaly(self.myjob).get_log()
+            jobs.append('解析ログ編集')
+
         # 土曜日12時～月曜4時まで休止
         if ((5 == self.now.weekday() and 12 < self.now.hour)
                 or 6 == self.now.weekday()
@@ -107,6 +114,12 @@ class Batch:
 
             jobs.append('アノマリー')
 
+            # 8・9・10時に実行
+            if self.now.hour in [8, 9, 10]:
+                SayaDaily(self.myjob).get_csv()
+                jobs.append('365日足更新')
+
+        # 30分間隔で実行
         if 0 == len(jobs):
             com.log('Batch開始: ' + cst.IP)
 
@@ -119,13 +132,13 @@ class Batch:
     def _windows_my(self):
         jobs = []
 
-        # 30分未満の場合にのみ実行
-        if self.now.minute < 30:
-            pass
+        # 2:00に実行
+        if 2 == self.now.hour and self.now.minute < 30:
+            if 0 == len(jobs):
+                com.log('Batch開始: ' + cst.IP)
 
-        # 30分以上の場合にのみ実行
-        else:
-            pass
+            LogAnaly(self.myjob).get_log()
+            jobs.append('解析ログ編集')
 
         return ", ".join([job for job in jobs])
 

@@ -22,20 +22,9 @@ class SayaDaily:
         self.is_batch = ('Batch' == job)
 
     def get_csv(self):
-
-        # 接続情報をセット
-        info = cst.MENU_CSV['Sql']
-        info = info[('fx_saya365' == info['DBNAME'])]
-
-        host = info['HOST'].values[0]
-        dbname = info['DBNAME'].values[0]
-        user = info['USER'].values[0]
-        pw = info['PASS'].values[0]
-
-        dt = "0"
         try:
             # SQL実行
-            cnx = my_sql.MySql(host, dbname, user, pw)
+            cnx = my_sql.MySql('fx_saya365')
             last_date = cnx.free('SELECT MAX(DATE) FROM ' + TARGET_TABLES[0])[0]
 
             # 前日をセット
@@ -105,8 +94,6 @@ class SayaDaily:
         finally:
             try: cnx.close()
             except: pass
-
-        return dt
 
         return True
 

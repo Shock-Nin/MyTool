@@ -36,8 +36,9 @@ shot_grab = matching.shot_grab
 
 
 # 日時を文字型で取得
-def str_time():
-    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+def str_time(msec=False):
+    stf = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')
+    return stf[:-3] if msec else stf
 
 
 # 時間計測開始
@@ -72,33 +73,16 @@ def clip_copy(string, enter=None):
 
 # ログをレベルに応じて出力
 def log(msg, lv=''):
-    logger = _format()
-    msg = ' ' + get_method() + ' | ' + msg
+    txt = str_time(True) + ' [' + ('ERROR' if 'E' == lv else 'WARNING' if 'E' == lv else 'INFO')
+    txt += '] ' + get_method() + ' | ' + msg
+    with open(cst.TEMP_PATH[cst.PC] + 'Log/' + str_time(False).split(' ')[0].replace('-', '') + '.log', 'a') as f:
+        f.write(txt + '\n')
+    print(txt)
 
-    if 'E' == lv:
-        logger.error(msg)
-        my_ip = cst.IP
-
-        # エラー時は専用メールで送受信(Mac以外)
-        if 'Mac' != cst.PC:
-            send_mail('エラー発生[ ' + cst.IPS[my_ip] + ' | ' + my_ip + ' ]', msg,
-                      cst.ERROR_MAIL, cst.ERROR_MAIL, cst.ERROR_MAIL_PW)
-
-    elif 'W' == lv:
-        logger.warning(msg)
-    else:
-        logger.info(msg)
-
-
-# ログフォーマット
-def _format():
-    logger = logging.getLogger(__name__)
-    logging.basicConfig(
-        format='%(asctime)s [%(levelname)s]%(message)s', level=logging.INFO,
-        handlers=[logging.StreamHandler(), logging.FileHandler(
-            cst.TEMP_PATH[cst.PC] + 'Log/' +
-            datetime.datetime.now().strftime('%Y-%m-%d').replace('-', '').split(' ')[0] + '.log')])
-    return logger
+    # エラー時は専用メールで送受信(Mac以外)
+    if 'E' == lv and 'Mac' != cst.PC:
+        send_mail('エラー発生[ ' + cst.IPS[cst.IP] + ' | ' + cst.IP + ' ]', msg,
+                  cst.ERROR_MAIL, cst.ERROR_MAIL, cst.ERROR_MAIL_PW)
 
 
 # ログフォルダ作成

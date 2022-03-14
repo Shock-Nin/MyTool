@@ -57,8 +57,8 @@ BTN = BTNS[WORK_IP]
 HEIGHT = 2 + (1 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
 DP_XY_WIDTH = {
     cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
-    cst.WEB_IP: [0, 0, 20, 4],
-    cst.MY_IP: [0, 0, 20, 4],
+    cst.WEB_IP: [0, 0, 20, 3],
+    cst.MY_IP: [0, 0, 20, 3],
     cst.MAC_IP: [150, 80 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
@@ -138,7 +138,8 @@ def main():
         location = (None, None) if 0 == DP[0] + DP[1] else (
             win_x - DP[0] if 0 < DP[0] else 0, win_y - DP[1] if 0 < DP[1] else 0)
 
-        window = sg.Window(cst.PC, modal=True, element_justification='c', icon=(os.getcwd() + cst.ICON_FILE),
+        window = sg.Window(cst.PC, modal=True, keep_on_top=True, element_justification='c',
+                           icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
                            element_padding=((0, 0), (0, 0)), margins=(0, 0), location=location, layout=layout)
         # 画面のイベント監視
@@ -190,7 +191,6 @@ def main():
                 # 単独機能で選択した場合
                 else:
                     processes.append(function.Function(event, WORK_IP).do(select))
-
 
             # ボタン選択した場合
             else:
