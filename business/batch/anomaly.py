@@ -170,7 +170,7 @@ class Anomaly:
                 return
 
             wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
-                   '&text=' + urllib.parse.quote(msg, 'UTF-8'))
+                   '&text=' + urllib.parse.quote(msg, 'utf8'))
             act = '2'
             com.sleep(10)
 
