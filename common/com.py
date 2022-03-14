@@ -38,7 +38,7 @@ shot_grab = matching.shot_grab
 # 日時を文字型で取得
 def str_time(msec=False):
     stf = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')
-    return stf[:-3] if msec else stf
+    return stf[:-3] if msec else stf.split(',')[0]
 
 
 # 時間計測開始
@@ -75,7 +75,7 @@ def clip_copy(string, enter=None):
 def log(msg, lv=''):
     txt = str_time(True) + ' [' + ('ERROR' if 'E' == lv else 'WARNING' if 'E' == lv else 'INFO')
     txt += '] ' + get_method() + ' | ' + msg
-    with open(cst.TEMP_PATH[cst.PC] + 'Log/' + str_time(False).split(' ')[0].replace('-', '') + '.log', 'a') as f:
+    with open(cst.TEMP_PATH[cst.PC] + 'Log/' + str_time().split(' ')[0].replace('-', '') + '.log', 'a') as f:
         f.write(txt + '\n')
     print(txt)
 
