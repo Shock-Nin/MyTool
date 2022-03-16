@@ -60,7 +60,7 @@ class Anomaly:
 
         self._output_topic(topic_texts)
 
-        com.log(now_day_str + ' ' + str(self.trade_h) + 'h[' + my_span_str + ']完了しました。')
+        com.log('アノマリーTopic ' + now_day_str + ' ' + str(self.trade_h) + 'h[' + my_span_str + '] 完了')
 
         return topic_texts
 
@@ -107,7 +107,7 @@ class Anomaly:
             wd = web_driver.driver(headless=self.is_batch)
             if wd is None:
                 com.log('WebDriverエラー', 'E')
-                return
+                return None
 
             wd.get(ANM_URL)
             com.sleep(1)
@@ -167,8 +167,9 @@ class Anomaly:
             wd = web_driver.driver(headless=self.is_batch)
             if wd is None:
                 com.log('WebDriverエラー', 'E')
-                return
+                return None
 
+            pgui.FAILSAFE = False
             wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
                    '&text=' + urllib.parse.quote(msg, 'utf8'))
             act = '2'
@@ -185,24 +186,28 @@ class Anomaly:
             act = '3'
             com.sleep(2)
 
-            pgui.hotkey('tab')
-            pgui.hotkey('tab')
-            pgui.hotkey('tab')
+            [pgui.hotkey('tab') for _ in range(3)]
             pgui.hotkey('enter')
             act = '4'
             com.sleep(15)
 
             if IS_TWEET:
-                wd.find_element('//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
-                act = '5'
+
+                try:
+                    wd.find_element('//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
+                    act = '5'
+                except:
+                    act = '5-1'
+                    [pgui.hotkey('tab') for _ in range(8)]
+                    pgui.hotkey('enter')
+                    act = '5-2'
                 com.sleep(2)
 
         except Exception as e:
-            com.log('ツイート送信エラー発生(' + act + ') ' + str(e))
-            return False
+            return ' エラー発生(' + act + ') ' + str(e)
 
         finally:
             try: wd.quit()
             except: pass
 
-        return True
+        return ''

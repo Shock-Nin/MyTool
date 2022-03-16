@@ -12,7 +12,7 @@ from common import my_sql
 import requests
 import datetime
 
-TARGET_TABLES = ['rate']
+TARGET_TABLES = ['rate', 'swap']
 
 
 class SayaDaily:

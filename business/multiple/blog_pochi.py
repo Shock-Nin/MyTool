@@ -61,11 +61,11 @@ class BlogPochi:
                     com.sleep(2)
                 except: pass
 
-                if 'Mac' == cst.PC:
-                    web_driver.find_element(wd, blog_title).click()
-                else:
-                    wd.get('https://blog.with2.net/out.php?id=1487139&url=https%3A%2F%2F' +
-                                cst.BLOG_URL.replace('https://', ''))
+                # if 'Mac' == cst.PC:
+                #     web_driver.find_element(wd, blog_title).click()
+                # else:
+                wd.get('https://blog.with2.net/out.php?id=1487139&url=https%3A%2F%2F' +
+                       cst.BLOG_URL.replace('https://', ''))
                 com.sleep(2)
                 ok_cnt += 1
 

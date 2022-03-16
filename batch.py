@@ -101,18 +101,23 @@ class Batch:
 
             instance = Anomaly(self.myjob)
             topic_texts = instance.create()
+            jobs.append('アノマリーTopic')
 
-            # 4で割れる時間、月曜6時〜金曜最終、元旦とクリスマス以外、にツイート実行
-            if (self.now.hour + 2) % 4 == 0 \
-                and ((0 == self.now.weekday() and 6 < self.now.hour) or 0 < self.now.weekday() < 5) \
-                and not (1 == self.now.month and 1 == self.now.day) \
-                and not (12 == self.now.month and 25 == self.now.day):
+            if topic_texts is not None:
 
-                is_tweet = instance.tweet(topic_texts)
-                com.log(str(self.now.day) + ' ' + str(self.now.hour) + 'h ' +
-                        ('' if is_tweet else 'エラー'), lv=('' if is_tweet else 'E'))
+                # 4で割れる時間、月曜6時〜金曜最終、元旦とクリスマス以外、にツイート実行
+                if (self.now.hour + 2) % 4 == 0 \
+                        and ((0 == self.now.weekday() and 6 < self.now.hour)
+                             or 0 < self.now.weekday() < 5) \
+                        and not (1 == self.now.month and 1 == self.now.day) \
+                        and not (12 == self.now.month and 25 == self.now.day):
 
-            jobs.append('アノマリー')
+                    err_msg = instance.tweet(topic_texts)
+                    jobs.append('アノマリーTweet')
+
+                    if err_msg is not None:
+                        com.log('アノマリーTweet [' + str(self.now.day) + '日 ' + str(self.now.hour) + 'h]' +
+                                (' 完了' if 0 == len(err_msg) else err_msg), lv=('' if 0 == len(err_msg) else 'E'))
 
             # 8・9・10時に実行
             if self.now.hour in [8, 9, 10]:

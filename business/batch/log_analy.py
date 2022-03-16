@@ -39,7 +39,7 @@ class LogAnaly:
                 if os.path.exists(file):
                     com.log('解析対象ログ: ' + file.replace(cst.TEMP_PATH[cst.PC], ''))
 
-                    with open(file, 'r') as read_file:
+                    with open(file, 'r', encoding='utf8') as read_file:
                     
                         if TARGET_LOGS[0] == fold:
                             self._analy_cook(cnx, read_file)
