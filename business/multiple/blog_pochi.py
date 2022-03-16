@@ -61,19 +61,16 @@ class BlogPochi:
                     com.sleep(2)
                 except: pass
 
-                # if 'Mac' == cst.PC:
-                #     web_driver.find_element(wd, blog_title).click()
-                # else:
-                wd.get('https://blog.with2.net/out.php?id=1487139&url=https%3A%2F%2F' +
-                       cst.BLOG_URL.replace('https://', ''))
+                wd.get('https://blog.with2.net/out.php?id=1487139&url=https%3A%2F%2Fshock-nin.info')
                 com.sleep(2)
                 ok_cnt += 1
 
                 com.log('ランキング: OUT (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
 
-                wd.switch_to.window(wd.window_handles[len(wd.window_handles) - 1])
-                com.sleep(2)
-                wd.close()
+                if 'Mac' != cst.PC:
+                    wd.switch_to.window(wd.window_handles[len(wd.window_handles) - 1])
+                    com.sleep(2)
+                    wd.close()
 
             except:
                 is_err = True

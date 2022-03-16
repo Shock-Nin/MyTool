@@ -112,12 +112,8 @@ class Batch:
                         and not (1 == self.now.month and 1 == self.now.day) \
                         and not (12 == self.now.month and 25 == self.now.day):
 
-                    err_msg = instance.tweet(topic_texts)
+                    instance.tweet(topic_texts)
                     jobs.append('アノマリーTweet')
-
-                    if err_msg is not None:
-                        com.log('アノマリーTweet [' + str(self.now.day) + '日 ' + str(self.now.hour) + 'h]' +
-                                (' 完了' if 0 == len(err_msg) else err_msg), lv=('' if 0 == len(err_msg) else 'E'))
 
             # 8・9・10時に実行
             if self.now.hour in [8, 9, 10]:

@@ -9,8 +9,6 @@ import cv2
 import pyautogui as pgui
 import PySimpleGUI as sg
 
-from time import sleep
-
 WIN_X_MINUS = 50
 BGCOLOR_ON = '#AAFFFF'
 BGCOLOR_OFF = '#FF7777'
@@ -27,7 +25,7 @@ class Eng1min:
         self.now_x, self.now_y = pgui.position()
         self.last_x, self.last_y = pgui.position()
         com.log(self.myjob + ': 開始')
-        sleep(2)
+        com.sleep(2)
 
     def do(self):
 
@@ -48,13 +46,13 @@ class Eng1min:
                     if is_stop is not None:
                         continue
             elif is_stop:
-                sleep(3)
+                com.sleep(3)
                 continue
 
             # 不動時間のカウント
             self.now_x, self.now_y = pgui.position()
             if self.last_x == self.now_x and self.last_y == self.now_y:
-                sleep(3)
+                com.sleep(3)
                 self.move += 1
 
                 # 画面のイベント監視
@@ -65,7 +63,7 @@ class Eng1min:
                         if is_stop is not None:
                             continue
                 elif is_stop:
-                    sleep(3)
+                    com.sleep(3)
                     continue
 
             # 動きがあればリセット
@@ -76,8 +74,8 @@ class Eng1min:
 
             # 監視待機回数未満なら動作なし
             if self.move < cst.ENG1MIN_MONITOR:
-                if 0 == self.move % 5:
-                    print('Move: ' + str(self.move))
+                if self.move % 5 == 0 < self.move:
+                    print(com.str_time().split(' ')[1] + ' Move(' + str(self.move) + ')')
                 continue
 
             # 全体画面の撮影
@@ -111,7 +109,7 @@ class Eng1min:
                     if is_stop is not None:
                         continue
             elif is_stop:
-                sleep(3)
+                com.sleep(3)
                 continue
 
             # 終了系とのマッチングがなかった場合
@@ -130,7 +128,7 @@ class Eng1min:
                         if self.last_x == self.now_x and self.last_y == self.now_y:
 
                             com.click_pos(x / 2 + 5, y / 2 + 10)
-                            sleep(3)
+                            com.sleep(3)
 
                         # 動きがあればリセット
                         else:
@@ -152,7 +150,7 @@ class Eng1min:
                     if is_stop is not None:
                         continue
             if not is_end:
-                sleep(3)
+                com.sleep(3)
 
     def _window(self, stop_btn):
         return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color=self.bgcolor,

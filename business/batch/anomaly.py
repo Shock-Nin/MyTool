@@ -38,6 +38,8 @@ class Anomaly:
         self.trade_h = self.trade_now.hour
         self.week_count = 0
         self.now_span = 0
+        self.now_day_str = ''
+        self.my_span_str = ''
 
         self.anm_path = cst.ANM_PATH[cst.PC]
 
@@ -53,8 +55,8 @@ class Anomaly:
             str(self.trade_h) + 'h-' + str(self.now_span) + ', ' + str(cst.ANM_SPAN[self.now_span]) + ']')
 
         # 日時条件設定
-        now_day_str = str(self.trade_d) + '日'
-        my_span_str = cst.ANM_SPAN[self.now_span]
+        self.now_day_str = str(self.trade_d) + '日'
+        self.my_span_str = cst.ANM_SPAN[self.now_span]
 
         topic_texts = self._edit_topic_texts()
 
@@ -152,6 +154,8 @@ class Anomaly:
     def tweet(self, topic_texts):
 
         msg = ''
+        err_msg = ''
+
         for topic in topic_texts:
             topic = topic.replace('<br>', '\n')
             while 0 <= topic.find('<'):
@@ -189,10 +193,9 @@ class Anomaly:
             [pgui.hotkey('tab') for _ in range(3)]
             pgui.hotkey('enter')
             act = '4'
-            com.sleep(15)
 
             if IS_TWEET:
-
+                com.sleep(15)
                 try:
                     wd.find_element('//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
                     act = '5'
@@ -204,10 +207,13 @@ class Anomaly:
                 com.sleep(2)
 
         except Exception as e:
-            return ' エラー発生(' + act + ') ' + str(e)
+            err_msg = ' エラー発生(' + act + ') ' + str(e)
 
         finally:
             try: wd.quit()
             except: pass
+
+        com.log('アノマリーTweet [' + self.now_day_str + '日 ' + self.my_span_str + 'h]' +
+                (' 完了' if 0 == len(err_msg) else err_msg), lv=('' if 0 == len(err_msg) else 'E'))
 
         return ''
