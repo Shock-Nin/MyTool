@@ -51,7 +51,7 @@ ERROR_MAIL_PW = 'Error@1980'
 
 # アノマリー Twitter
 TWITTER_ID = BLOG_MAIL
-TWITTER_PASS = 'Shock19800226'
+TWITTER_PW = 'Shock19800226'
 TWITTER_TAG = '#アノマリー #統計 #確率 #為替 #AI #学習'
 TWEET_TIME = [20, 8]
 # アノマリー 期間

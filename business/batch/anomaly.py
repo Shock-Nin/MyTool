@@ -62,7 +62,7 @@ class Anomaly:
 
         self._output_topic(topic_texts)
 
-        com.log('アノマリーTopic ' + now_day_str + ' ' + str(self.trade_h) + 'h[' + my_span_str + '] 完了')
+        com.log('アノマリーTopic ' + self.now_day_str + ' ' + str(self.trade_h) + 'h[' + self.my_span_str + '] 完了')
 
         return topic_texts
 
@@ -164,7 +164,6 @@ class Anomaly:
             msg += topic + '\n'
 
         msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
-
         act = '1'
         try:
             # ウェブ操作スタート
@@ -173,38 +172,24 @@ class Anomaly:
                 com.log('WebDriverエラー', 'E')
                 return None
 
-            pgui.FAILSAFE = False
             wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
                    '&text=' + urllib.parse.quote(msg, 'utf8'))
-            act = '2'
-            com.sleep(10)
+            com.sleep(5)
+            act = '2, ' + wd.title
 
-            com.clip_copy('')
-            pgui.hotkey('ctrl' if 'Win' == cst.PC else 'command', 'a')
-            pgui.write('')
-            com.sleep(1)
-            com.clip_copy(cst.TWITTER_ID)
-            pgui.hotkey('tab')
-            com.sleep(1)
-            com.clip_copy(cst.TWITTER_PASS)
-            act = '3'
-            com.sleep(2)
+            web_driver.find_element(wd, 'session[username_or_email]').send_keys(cst.TWITTER_ID)
+            web_driver.find_element(wd, 'session[password]').send_keys(cst.TWITTER_PW)
+            act = '3, ' + wd.title
 
-            [pgui.hotkey('tab') for _ in range(3)]
-            pgui.hotkey('enter')
-            act = '4'
+            web_driver.find_element(wd, '/html/body/div/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
+            com.sleep(5)
+            act = '4, ' + wd.title
 
             if IS_TWEET:
-                com.sleep(15)
-                try:
-                    wd.find_element('//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
-                    act = '5'
-                except:
-                    act = '5-1'
-                    [pgui.hotkey('tab') for _ in range(8)]
-                    pgui.hotkey('enter')
-                    act = '5-2'
-                com.sleep(2)
+                web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
+                com.sleep(3)
+                act = '5, ' + wd.title
+                com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
 
         except Exception as e:
             err_msg = ' エラー発生(' + act + ') ' + str(e)
@@ -213,7 +198,7 @@ class Anomaly:
             try: wd.quit()
             except: pass
 
-        com.log('アノマリーTweet [' + self.now_day_str + '日 ' + self.my_span_str + 'h]' +
+        com.log('アノマリーTweet [' + self.now_day_str + ' ' + self.my_span_str + 'h]' +
                 (' 完了' if 0 == len(err_msg) else err_msg), lv=('' if 0 == len(err_msg) else 'E'))
 
         return ''

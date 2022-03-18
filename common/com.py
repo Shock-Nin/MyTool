@@ -1,15 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import subprocess
-
 from const import cst
 
 import os
 import time
-import logging
 import inspect
 import datetime
-import requests
 import smtplib
 import pyperclip
 import pandas as pd
@@ -119,7 +115,7 @@ def send_mail(subject, body, to, account=cst.BLOG_MAIL, password=cst.BLOG_MAIL_P
     # 閉じる
     server.quit()
 
-    log('メール送信: [' + to + '] ' + subject + ' : ' + body)
+    log('メール送信: [' + to + '] ' + subject)
 
 
 # メニュー系CSV読み込み

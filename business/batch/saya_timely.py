@@ -105,9 +105,7 @@ class SayaTimely:
             cnx = my_sql.MySql('fx_saya365')
             is_sql = cnx.delete(TARGET_TABLES[0], 'DATE <> \'' + com.str_time() + '\'')
             if is_sql:
-                is_sql = cnx.insert(columns, [sells], TARGET_TABLES[0])
-            if is_sql:
-                is_sql = cnx.insert(columns, [buys], TARGET_TABLES[0])
+                is_sql = cnx.insert(columns, [sells, buys], TARGET_TABLES[0])
 
             # コミットで確定
             if is_sql:

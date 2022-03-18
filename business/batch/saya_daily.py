@@ -36,10 +36,11 @@ class SayaDaily:
                         ('0' if last_date[0].month< 10 else '') + str(last_date[0].month) + \
                         ('0' if last_date[0].day < 10 else '') + str(last_date[0].day)
             last_date = datetime.datetime.strptime(last_date, '%Y%m%d')
-            last_date = last_date + datetime.timedelta(days=1)
+            last_date = last_date
 
             # 更新の対象日数
             days_diff = (today - last_date).days
+
             if 0 == days_diff:
                 com.log('365日足取得不要: ' + datetime.datetime.strftime(last_date, '%Y%m%d') + ' 取得済')
 
@@ -49,7 +50,7 @@ class SayaDaily:
             columns.insert(0, 'DATE')
 
             # 更新対象がある間繰り返し
-            for i in range(0, days_diff):
+            for i in range(0, days_diff + 1):
 
                 # 最終更新 +日をセット
                 count_date = last_date + datetime.timedelta(days=i)
