@@ -77,16 +77,16 @@ class SayaDaily:
                         rates.append(data[key][0])
                         swaps.append(data[key][1])
 
-                    # # SQL実行
-                    # is_sql = cnx.insert(columns, [rates], TARGET_TABLES[0])
-                    # if is_sql:
-                    #     is_sql = cnx.insert(columns, [swaps], TARGET_TABLES[1])
-                    #
-                    # # コミットで確定
-                    # if is_sql:
-                    #     cnx.commit()
-                    # else:
-                    #     cnx.rollback()
+                    # SQL実行
+                    is_sql = cnx.insert(columns, [rates], TARGET_TABLES[0])
+                    if is_sql:
+                        is_sql = cnx.insert(columns, [swaps], TARGET_TABLES[1])
+
+                    # コミットで確定
+                    if is_sql:
+                        cnx.commit()
+                    else:
+                        cnx.rollback()
 
                 except Exception as e:
                     com.log('365日足取得(' + target_ymd + ')エラー発生: ' + str(e), 'E')

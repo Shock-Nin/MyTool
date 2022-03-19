@@ -71,8 +71,6 @@ def main():
     if not com.get_menu():
         return
 
-    from business.batch.saya_daily import SayaDaily
-    SayaDaily('').get_csv()
     # 通常の場合、画面表示
     if args.Function is None:
 
