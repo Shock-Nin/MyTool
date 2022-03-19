@@ -30,7 +30,7 @@ class BlogPochi:
 
         menu = cst.MENU_CSV['PwWeb']
         ok_cnt = 0
-        max_cnt = (4 if self.is_batch or 'Mac' != cst.PC else 5)
+        max_cnt = (4 if self.is_batch or 'Mac' != cst.PC else 6)
 
         try:
             wd.get(cst.BLOG_URL)
@@ -144,6 +144,7 @@ class BlogPochi:
 
                 com.log('ブログ村: ログイン')
                 wd.switch_to.window(brank)
+                ok_cnt += 1
             else:
                 wd.switch_to.window(bmura)
 

@@ -50,7 +50,7 @@ class SayaDaily:
             columns.insert(0, 'DATE')
 
             # 更新対象がある間繰り返し
-            for i in range(0, days_diff + 1):
+            for i in range(1, days_diff + 1):
 
                 # 最終更新 +日をセット
                 count_date = last_date + datetime.timedelta(days=i)
@@ -60,10 +60,13 @@ class SayaDaily:
                     # くりっく365公式サイトから、終値とスワップを取得
                     data = self._download(target_ymd.replace('-', ''))
 
+                    com.log('Last ' + datetime.datetime.strftime(last_date, '%Y%m%d') + ' → ' +
+                            'Target ' + datetime.datetime.strftime(count_date, '%Y%m%d') + ' → ' +
+                            'Today ' + datetime.datetime.strftime(today, '%Y%m%d'))
                     if data is None:
                         continue
                     elif 0 == len(data):
-                        com.log('365日足取得(' + target_ymd + ')対象外')
+                        com.log('365日足取得(' + target_ymd + ')不在')
                         continue
 
                     # SQL用データ作成
@@ -74,16 +77,16 @@ class SayaDaily:
                         rates.append(data[key][0])
                         swaps.append(data[key][1])
 
-                    # SQL実行
-                    is_sql = cnx.insert(columns, [rates], TARGET_TABLES[0])
-                    if is_sql:
-                        is_sql = cnx.insert(columns, [swaps], TARGET_TABLES[1])
-
-                    # コミットで確定
-                    if is_sql:
-                        cnx.commit()
-                    else:
-                        cnx.rollback()
+                    # # SQL実行
+                    # is_sql = cnx.insert(columns, [rates], TARGET_TABLES[0])
+                    # if is_sql:
+                    #     is_sql = cnx.insert(columns, [swaps], TARGET_TABLES[1])
+                    #
+                    # # コミットで確定
+                    # if is_sql:
+                    #     cnx.commit()
+                    # else:
+                    #     cnx.rollback()
 
                 except Exception as e:
                     com.log('365日足取得(' + target_ymd + ')エラー発生: ' + str(e), 'E')
