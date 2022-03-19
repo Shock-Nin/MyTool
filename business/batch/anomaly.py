@@ -9,7 +9,6 @@ from const import cst
 from common import web_driver
 
 import datetime
-import pyautogui as pgui
 import urllib.parse
 
 INFO_TOPIC = '食人のアノマリ〜つまみ食い！<br><br>'

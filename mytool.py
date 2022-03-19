@@ -22,7 +22,7 @@ import subprocess
 
 """ PW_INPUT = True | CHANGE_MENU = -1 """
 PW_INPUT = False
-CHANGE_MENU = -1
+CHANGE_MENU = 2
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
@@ -30,6 +30,7 @@ BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
     }, cst.MY_IP: {
     'Pochi': 'multiple.blog_pochi',
+    '英単語辞書': 'windows.english_dict',
     }, cst.MAC_IP: {
     'Pochi': 'multiple.blog_pochi',
     '資産': 'mac.my_asset',

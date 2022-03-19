@@ -152,9 +152,7 @@ class BlogPochi:
             com.log('エラー発生(' + str(ok_cnt) + '/' + str(max_cnt) + '): ' + str(e), 'E')
         finally:
             if self.is_batch:
-                try:
-                    wd.close()
-                    wd.quit()
+                try: wd.quit()
                 except: pass
 
         run_time = com.time_end(start_time)

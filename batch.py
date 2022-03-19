@@ -91,7 +91,7 @@ class Batch:
         if (5 == self.now.weekday() and 12 < self.now.hour) \
                 or 6 == self.now.weekday() \
                 or (0 == self.now.weekday() and self.now.hour < 4):
-            return jobs
+            return ", ".join([job for job in jobs])
 
         # 30分未満の場合にのみ実行
         if self.now.minute < 30:
@@ -115,8 +115,8 @@ class Batch:
                     instance.tweet(topic_texts)
                     jobs.append('アノマリーTweet')
 
-            # 8・9・10時に実行
-            if self.now.hour in [8, 9, 10]:
+            # 9・11時に実行
+            if self.now.hour in [9, 11]:
                 SayaDaily(self.myjob).get_csv()
                 jobs.append('365日足更新')
 
