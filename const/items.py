@@ -74,4 +74,5 @@ ENGLISH_MASTER_URL = 'https://tokoton-eitango.com/eitango/levelindex/'
 ENGLISH_CONTENTS_URL = 'https://ejje.weblio.jp/content/%s?erl=true'
 ENGLISH_IMAGES_URL = 'https://www.google.com/search?q=%s+イメージ'
 ENGLISH_MASTER_LEVEL = 4
+ENGLISH_NOUNS = {'doushi': '動詞', 'meishi': '名詞', 'keiyoshi': '形容詞', 'fukushi': '副詞', 'zenchishi': '前置詞'}
 # ENGLISH_IMAGES_URL = 'https://www.google.com/search?q=consequence+%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8'
