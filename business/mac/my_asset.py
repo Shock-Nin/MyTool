@@ -20,6 +20,23 @@ class MyAsset:
 
     def do(self):
 
+        try:
+            # DB接続
+            self.cnx = my_sql.MySql('data_my')
+
+            # 最新日のデータ取得
+            before = self.cnx.select('*', TARGET_TABLES[0], '', 'ORDER BY 日付 DESC LIMIT 1')
+
+            # 本日のデータ取得済みなら中断
+            if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
+                com.dialog('本日は取得済です。', '本日取得済', 'W')
+                return
+
+        # 最後はDBを閉じる
+        finally:
+            try: self.cnx.close()
+            except: pass
+
         if com.question(self.myjob + ' 開始しますか？', '開始確認') <= 0:
             return
 
@@ -33,17 +50,6 @@ class MyAsset:
         targets = targets[('資産' == targets['Type'])]
 
         try:
-            # DB接続
-            self.cnx = my_sql.MySql('data_my')
-
-            # 最新日のデータ取得
-            before = self.cnx.select('*', TARGET_TABLES[0], '', 'ORDER BY 日付 DESC LIMIT 1')
-
-            # 本日のデータ取得済みなら中断
-            if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
-                com.dialog('本日は取得済です。', '本日取得済', 'W')
-                return
-
             # ViewCard取得
             target = targets[('ViewCard' == targets['Name'])]
             vcard, wd1 = self._get_view_card(target)
@@ -89,6 +95,9 @@ class MyAsset:
 
             # 取得データと前回データの差分計算
             is_change, layout, columns, values = self._edit_data(before, vcard, rcard, banks)
+
+            # DB接続
+            self.cnx = my_sql.MySql('data_my')
 
             # 取得データを登録
             if self.cnx.insert(columns, values, TARGET_TABLES[0]):
@@ -215,7 +224,7 @@ class MyAsset:
         # 金額取得
         try:
             com.sleep(1)
-            result = web_driver.find_element(wd, '//*[@id="BALANCEINQUIRYBODYPERSONAL:FORM_HEAD:_idJsp343"]/span[2]') \
+            result = web_driver.find_element(wd, '//*[@id="BALANCEINQUIRYBODYPERSONAL:FORM_HEAD:_idJsp233"]/span[2]') \
                 .text.replace(',', '').replace('円', '')
         except Exception as e:
             com.log('WebDriverエラー: 楽天銀行, ' + str(e), 'E')

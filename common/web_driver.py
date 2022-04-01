@@ -19,6 +19,7 @@ def driver(headless=False):
             wd = webdriver.Chrome(ChromeDriverManager().install())
     except: pass
 
+    wd.implicitly_wait(5)
     return wd
 
 

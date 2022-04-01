@@ -125,9 +125,20 @@ class MySql:
         except: pass
 
     def commit(self):
-        self.cnx.commit()
-        com.log('SQL: コミット')
+        try:
+            self.cnx.commit()
+            com.log('SQL: コミット')
+            return True
+        except Exception as e:
+            com.log('MySQL: コミット失敗', 'W')
+            self.rollback()
+        return False
 
     def rollback(self):
-        self.cnx.rollback()
-        com.log('MySQL: ロールバック', 'E')
+        try:
+            self.cnx.rollback()
+            com.log('MySQL: ロールバック', 'E')
+            return True
+        except Exception as e:
+            com.log('MySQL: ロールバック失敗, ' + str(e), 'E')
+        return False
