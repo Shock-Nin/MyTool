@@ -99,7 +99,9 @@ class BlogPochi:
                     err_msg.append('ランキング: ルーレット')
                     com.log('ランキング: ルーレット失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
             try:
-                wd.switch_to.window(home)
+                com.sleep(1)
+                try: wd.switch_to.window(home)
+                except: pass
                 com.sleep(1)
 
                 # ブログ村

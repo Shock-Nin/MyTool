@@ -34,7 +34,7 @@ BTNS = {cst.DEV_IP: {
     '英単語辞書': 'mac.english_dict',
     'Pochi': 'multiple.blog_pochi',
     '資産': 'mac.my_asset',
-    '英単語': 'mac.eng1min',
+    'ループ再生': 'mac.english_loop',
     }}
 EA_MENU = {
     'EA連続テスト': 'windows.ea_auto_test',
@@ -58,8 +58,10 @@ BTN = BTNS[WORK_IP]
 HEIGHT = 2 + (1 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
 DP_XY_WIDTH = {
     cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
-    cst.WEB_IP: [0, 0, 20, 2],
-    cst.MY_IP: [0, 0, 20, 2],
+    cst.WEB_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
+    cst.MY_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
+    # cst.WEB_IP: [0, 0, 20, 2],
+    # cst.MY_IP: [0, 0, 20, 2],
     cst.MAC_IP: [150, 80 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
