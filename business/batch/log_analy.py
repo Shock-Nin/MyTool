@@ -189,8 +189,8 @@ class LogAnaly:
         for txt in read_file.read().split('\n'):
             if 0 == len(txt):
                 break
-            if txt.fibnd('{') < 0:
-                break
+            if txt.find('{') < 0:
+                continue
 
             txt = txt.replace('}', '')
             txt = txt.replace('{', ';')
