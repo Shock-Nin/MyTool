@@ -28,7 +28,7 @@ class BlogPochi:
 
         try:
             # ブログランキング
-            ok_cnt, err_msg = self.pochiBrank(menu, ok_cnt, max_cnt, err_msg)
+            ok_cnt, err_msg, wdRank = self.pochiBrank(menu, ok_cnt, max_cnt, err_msg)
 
             # ブログ村
             ok_cnt, err_msg, wdMura = self.pochiBmura(menu, ok_cnt, max_cnt, err_msg)
@@ -49,8 +49,9 @@ class BlogPochi:
 
         finally:
             if self.is_batch:
-                try:
-                    wdMura.quit()
+                try: wdMura.quit()
+                except: pass
+                try: wdRank.quit()
                 except: pass
         return
 
@@ -127,13 +128,8 @@ class BlogPochi:
 
         except Exception as e:
             com.log('エラー発生(' + str(ok_cnt) + '/' + str(max_cnt) + '): ' + str(e), 'E')
-        finally:
-            if self.is_batch:
-                try:
-                    wdRank.quit()
-                except: pass
 
-        return ok_cnt, err_msg
+        return ok_cnt, err_msg, wdRank
 
     # ブログ村
     def pochiBmura(self, menu, ok_cnt, max_cnt, err_msg):
@@ -147,6 +143,7 @@ class BlogPochi:
                 wdMura1.get(cst.BLOG_URL)
                 wdMura1.maximize_window()
                 com.sleep(2)
+                title = wdMura1.title
 
                 web_driver.find_element(wdMura1, 'bmura').click()
                 com.sleep(2)
@@ -169,19 +166,21 @@ class BlogPochi:
             return
         try:
             try:
-                wdMura2.get('https://fx.blogmura.com/swapgroup/ranking/in?p_cid=' +
-                           menu['ブログ村' == menu['SITE']]['ID1'].values[0])
+                # wdMura2.get('https://fx.blogmura.com/swapgroup/ranking/in?p_cid=' +
+                #            menu['ブログ村' == menu['SITE']]['ID1'].values[0])
+                wdMura2.get('https://fx.blogmura.com/swapgroup/ranking/in')
                 com.sleep(2)
 
                 wdMura2.get('https://link.blogmura.com/out/?ch=' + menu['ブログ村' == menu['SITE']]['ID1'].values[0] +
                             '&url=https%3A%2F%2F' + cst.BLOG_URL.replace('https://', ''))
+                # web_driver.find_element(wdMura2, title).click()
                 ok_cnt += 1
 
                 com.log('ブログ村: OUT (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
 
-            except:
+            except Exception as e:
                 err_msg.append('ブログ村: OUT')
-                com.log('ブログ村: OUT失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
+                com.log('ブログ村: OUT失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + '): ' + str(e), 'W')
 
             if 'Mac' == cst.PC:
                 com.sleep(2)
