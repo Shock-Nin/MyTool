@@ -49,9 +49,9 @@ class BlogPochi:
 
         finally:
             if self.is_batch:
+                # try: wdRank.quit()
+                # except: pass
                 try: wdMura.quit()
-                except: pass
-                try: wdRank.quit()
                 except: pass
         return
 
@@ -127,52 +127,38 @@ class BlogPochi:
                     com.log('ランキング: ルーレット失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
 
         except Exception as e:
+            err_msg.append('予期せぬエラー: ブログランキング')
             com.log('エラー発生(' + str(ok_cnt) + '/' + str(max_cnt) + '): ' + str(e), 'E')
 
         return ok_cnt, err_msg, wdRank
 
     # ブログ村
     def pochiBmura(self, menu, ok_cnt, max_cnt, err_msg):
-        wdMura1 = web_driver.driver(headless=self.is_batch)
-        if wdMura1 is None:
+        wdMura = web_driver.driver(headless=self.is_batch)
+        if wdMura is None:
             if not self.is_batch:
                 com.dialog('WebDriver(ブログ村)で異常が発生しました。', 'WebDriver異常', 'E')
             return
         try:
             try:
-                wdMura1.get(cst.BLOG_URL)
-                wdMura1.maximize_window()
+                wdMura.get(cst.BLOG_URL)
+                wdMura.maximize_window()
                 com.sleep(2)
-                title = wdMura1.title
 
-                web_driver.find_element(wdMura1, 'bmura').click()
-                com.sleep(2)
+                web_driver.find_element(wdMura, 'bmura').click()
                 ok_cnt += 1
                 com.log('ブログ村: IN (' + str(ok_cnt) + '/' + str(max_cnt) + ')')
+
+                wdMura.switch_to.window(wdMura.window_handles[len(wdMura.window_handles) - 1])
 
             except:
                 err_msg.append('ブログ村: IN')
                 com.log('ブログ村: IN失敗 (' + str(ok_cnt) + '/' + str(max_cnt) + ')', 'W')
-        except Exception as e:
-            com.log('エラー発生(' + str(ok_cnt) + '/' + str(max_cnt) + '): ' + str(e), 'E')
-        finally:
-            try: wdMura1.quit()
-            except: pass
 
-        wdMura2 = web_driver.driver(headless=self.is_batch)
-        if wdMura2 is None:
-            if not self.is_batch:
-                com.dialog('WebDriver(ブログ村)で異常が発生しました。', 'WebDriver異常', 'E')
-            return
-        try:
             try:
-                # wdMura2.get('https://fx.blogmura.com/swapgroup/ranking/in?p_cid=' +
-                #            menu['ブログ村' == menu['SITE']]['ID1'].values[0])
-                wdMura2.get('https://fx.blogmura.com/swapgroup/ranking/in')
                 com.sleep(2)
-
-                wdMura2.get('https://link.blogmura.com/out/?ch=' + menu['ブログ村' == menu['SITE']]['ID1'].values[0] +
-                            '&url=https%3A%2F%2F' + cst.BLOG_URL.replace('https://', ''))
+                wdMura.get('https://link.blogmura.com/out/?ch=' + menu['ブログ村' == menu['SITE']]['ID1'].values[0] +
+                           '&url=https%3A%2F%2F' + cst.BLOG_URL.replace('https://', ''))
                 # web_driver.find_element(wdMura2, title).click()
                 ok_cnt += 1
 
@@ -184,17 +170,21 @@ class BlogPochi:
 
             if 'Mac' == cst.PC:
                 com.sleep(2)
-                wdMura2.get('https://mypage.blogmura.com/login/')
+                # wdMura.switch_to.window(wdMura.window_handles[len(wdMura.window_handles) - 1])
+                # wdMura.close()
+
+                wdMura.get('https://mypage.blogmura.com/login/')
                 com.sleep(1)
 
-                web_driver.find_element(wdMura2, 'email').send_keys(menu['ブログ村' == menu['SITE']]['ID2'].values[0])
-                web_driver.find_element(wdMura2, 'password').send_keys(menu['ブログ村' == menu['SITE']]['PASS'].values[0])
-                web_driver.find_element(wdMura2, '/html/body/div/div/div[1]/form/div/input').click()
+                web_driver.find_element(wdMura, 'email').send_keys(menu['ブログ村' == menu['SITE']]['ID2'].values[0])
+                web_driver.find_element(wdMura, 'password').send_keys(menu['ブログ村' == menu['SITE']]['PASS'].values[0])
+                web_driver.find_element(wdMura, '/html/body/div/div/div[1]/form/div/input').click()
 
                 com.log('ブログ村: ログイン')
                 ok_cnt += 1
 
         except Exception as e:
+            err_msg.append('予期せぬエラー: ブログ村')
             com.log('エラー発生(' + str(ok_cnt) + '/' + str(max_cnt) + '): ' + str(e), 'E')
 
-        return ok_cnt, err_msg, wdMura2
+        return ok_cnt, err_msg, wdMura
