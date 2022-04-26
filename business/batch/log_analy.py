@@ -39,16 +39,19 @@ class LogAnaly:
                 if os.path.exists(file):
                     com.log('解析対象ログ: ' + file.replace(cst.TEMP_PATH[cst.PC], ''))
 
-                    with open(file, 'r', encoding='utf8') as read_file:
+                    try:
+                        read_file = open(file, 'r', encoding='utf8')
+                    except:
+                        read_file = open(file, 'r', encoding='cp932')
                     
-                        if TARGET_LOGS[0] == fold:
-                            self._analy_cook(cnx, read_file)
-                            
-                        elif TARGET_LOGS[1] == fold:
-                            self._analy_saya(cnx, read_file)
-                            
-                        elif TARGET_LOGS[2] == fold:
-                            self._analy_liberty(cnx, read_file)
+                    if TARGET_LOGS[0] == fold:
+                        self._analy_cook(cnx, read_file)
+
+                    elif TARGET_LOGS[1] == fold:
+                        self._analy_saya(cnx, read_file)
+
+                    elif TARGET_LOGS[2] == fold:
+                        self._analy_liberty(cnx, read_file)
 
         except Exception as e:
             com.log('解析用ログ編集エラー発生: ' + str(e), 'E')
@@ -56,6 +59,8 @@ class LogAnaly:
 
         finally:
             try: cnx.close()
+            except: pass
+            try: read_file.close()
             except: pass
 
         com.log('Insert完了')
