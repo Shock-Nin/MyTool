@@ -12,7 +12,7 @@ import os
 import datetime
 
 OUT_IP = cst.IP_LIST + ['133.32.']
-TARGET_LOGS = ['cook', 'saya365', 'Log_Liberty']
+TARGET_LOGS = ['cook', 'saya365', 'Liberty']
 TARGET_TABLES = ['cook_access', 'fx_saya365_access', 'fx_saya365_input', 'liberty_access']
 
 
