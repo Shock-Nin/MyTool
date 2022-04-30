@@ -218,10 +218,10 @@ class EnglishDict:
                     start_time = com.time_start()
 
                     # # 部分検証用
-                    # if count < 392:
+                    # if count < 260:
                     #     count += 1
                     #     continue
-                    # if 400 < count:
+                    # if 265 < count:
                     #     break
 
                     # 単語個別のHTML取得を、1分まで実施
@@ -274,7 +274,7 @@ class EnglishDict:
                         # 意味・対訳
                         meaning = html[html.find('>') + 1: html.find('</div>')]
                         meaning = meaning[: meaning.rfind('</span>')]
-                        meaning = meaning[meaning.rfind('>') + 1:].strip()
+                        meaning = meaning[meaning.rfind('>') + 1:].replace('(通例', '(').replace('通例 ', '').strip()
 
                         # 品詞
                         partspeech_col = html[html.find('品詞ごとの'):]
@@ -347,8 +347,16 @@ class EnglishDict:
 
                                 while 0 <= eng.find('<a '):
                                     eng = eng.replace(eng[eng.find('<a '): eng.find('>') + 1], '')
+                                eng = eng.replace('（を略して通例）', ' ')
 
-                                jpn = txt[txt.rfind('>') + 1:]
+                                jpn = txt[txt.find('<p') + 1:]
+                                jpn = jpn[jpn.find('<p') + 1:]
+                                jpn = jpn[jpn.find('>') + 1:]
+
+                                jpn = (jpn.split('(')[0].strip() if 0 <= jpn.find('<b>') else jpn)
+                                jpn = (jpn if jpn.find('「') < 0 <= jpn.find('」') else jpn.replace('」', ''))
+                                jpn = (jpn if jpn.find('」') < 0 <= jpn.find('「') else jpn.replace('」', ''))
+
                                 examples.append(eng + ' | ' + jpn)
 
                         up_name = target[:1].upper() + target[1:]
@@ -552,6 +560,7 @@ class EnglishDict:
                         meanings = []
                         for txt in meaning.split('、'):
 
+                            txt = txt.replace('(通例', '(').replace('通例 ', '')
                             txt = txt.replace('…', '〜').replace('・', '．')
                             for check in ['(〜を)', '(〜の)', '(〜に)', '(〜へ)', '(〜と)',
                                           '(〜は)', '(〜が)', '(〜で)', '(へ)', '(〜ない)']:

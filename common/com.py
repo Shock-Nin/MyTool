@@ -71,7 +71,8 @@ def clip_copy(string, enter=None):
 def log(msg, lv=''):
     txt = str_time(True) + ' [' + ('ERROR' if 'E' == lv else 'WARNING' if 'E' == lv else 'INFO')
     txt += '] ' + get_method() + ' | ' + msg
-    with open(cst.TEMP_PATH[cst.PC] + 'Log/' + str_time().split(' ')[0].replace('-', '') + '.log', 'a') as f:
+    with open(cst.TEMP_PATH[cst.PC] + 'Log/' + str_time().split(' ')[0].replace('-', '') + '.log',
+              'a', encoding='utf8') as f:
         f.write(txt + '\n')
     print(txt)
 
