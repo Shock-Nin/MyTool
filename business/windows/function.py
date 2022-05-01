@@ -27,7 +27,7 @@ class Function:
             self.set_optimize(
                 fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1_2', 'MT4_TEST/Test1_3'],
                 affinity=['F', '2', '4', '8'],
-                dev_path={'MT4起動': 'MT4_INVEST', '週間レート': 'MT4_DEV'},
+                dev_path={'MT4起動': 'MT4_INVEST', '週間レート': 'MT4_RATE'},
                 web_path=['Web_MT4'],
                 my_path=['FxPro', 'OANDA', 'Rakuten'],  # 'MyFx', 'XM'
             )
