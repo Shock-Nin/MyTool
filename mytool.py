@@ -43,6 +43,7 @@ EA_MENU = {
 }
 FUNC_MENU = {
     '最適化セット': 'DEV',
+    '最適化起動': 'DEV',
     'MT4起動': 'ALL',
     'MQL編集': 'DEV',
     'EX4コピー': 'ALL',

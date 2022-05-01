@@ -79,11 +79,16 @@ class Function:
                     rates = os.listdir(cst.MT4_PATH + 'MT4_RATE')
                     for i in range(0, len(rates)):
                         commands.append(cst.MT4_PATH + 'MT4_RATE/' + rates[i] + '/terminal.exe /portable')
-                else:
+                elif '最適化起動' == fnc:
                     for i in range(0, len(opt_path)):
                         commands.append(
                             'cmd /c start "" /affinity ' + (affinity[i] + ' "' + cst.MT4_PATH + opt_path[i] +
                                                             '/terminal.exe"').replace('/', '\\') + ' "/portable"')
+                else:
+                    invests = os.listdir(cst.MT4_PATH + 'MT4_INVEST')
+                    for i in range(0, len(invests)):
+                        commands.append(cst.MT4_PATH + 'MT4_INVEST/' + invests[i] + '/terminal.exe /portable')
+
             elif cst.IP == cst.WEB_IP:
                 for i in range(0, len(web_path)):
                     commands.append(cst.MT4_PATH + web_path[i] + '/terminal.exe /portable')
