@@ -23,10 +23,11 @@ class Function:
             if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
                 return
 
-        if fnc in ['最適化セット', 'MT4起動', '週間レート']:
+        if fnc in ['最適化セット', '最適化起動', 'MT4起動', '週間レート']:
             self.set_optimize(
                 fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1_2', 'MT4_TEST/Test1_3'],
                 affinity=['F', '2', '4', '8'],
+                dev_path={'MT4起動': 'MT4_INVEST', '週間レート': 'MT4_DEV'},
                 web_path=['Web_MT4'],
                 my_path=['FxPro', 'OANDA', 'Rakuten'],  # 'MyFx', 'XM'
             )
@@ -69,25 +70,22 @@ class Function:
         return []
 
     # 最適化MT4起動と、set読み込み
-    def set_optimize(self, fnc, opt_path, affinity, web_path, my_path):
+    def set_optimize(self, fnc, opt_path, affinity, dev_path, web_path, my_path):
         if 'Win' == cst.PC:
 
             # MT4起動コマンドを設定
             commands = []
             if cst.IP == cst.DEV_IP:
-                if '週間レート' == fnc:
-                    rates = os.listdir(cst.MT4_PATH + 'MT4_RATE')
-                    for i in range(0, len(rates)):
-                        commands.append(cst.MT4_PATH + 'MT4_RATE/' + rates[i] + '/terminal.exe /portable')
-                elif '最適化起動' == fnc:
+
+                if 0 <= fnc.find('最適化'):
                     for i in range(0, len(opt_path)):
                         commands.append(
                             'cmd /c start "" /affinity ' + (affinity[i] + ' "' + cst.MT4_PATH + opt_path[i] +
                                                             '/terminal.exe"').replace('/', '\\') + ' "/portable"')
                 else:
-                    invests = os.listdir(cst.MT4_PATH + 'MT4_INVEST')
-                    for i in range(0, len(invests)):
-                        commands.append(cst.MT4_PATH + 'MT4_INVEST/' + invests[i] + '/terminal.exe /portable')
+                    mt4s = os.listdir(cst.MT4_PATH + dev_path[fnc])
+                    for i in range(0, len(mt4s)):
+                        commands.append(cst.MT4_PATH + dev_path[fnc] + '/' + mt4s[i] + '/terminal.exe /portable')
 
             elif cst.IP == cst.WEB_IP:
                 for i in range(0, len(web_path)):
