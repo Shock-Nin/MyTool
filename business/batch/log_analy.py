@@ -222,6 +222,8 @@ class LogAnaly:
                     else:
                         val.append(ary[1])
 
+            if len(val) == len(columns) - 1:
+                val.append('')
             values.append(val)
 
         # SQL実行

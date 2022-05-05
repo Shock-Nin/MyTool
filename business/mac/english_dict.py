@@ -347,15 +347,10 @@ class EnglishDict:
 
                                 while 0 <= eng.find('<a '):
                                     eng = eng.replace(eng[eng.find('<a '): eng.find('>') + 1], '')
-                                eng = eng.replace('（を略して通例）', ' ')
 
                                 jpn = txt[txt.find('<p') + 1:]
                                 jpn = jpn[jpn.find('<p') + 1:]
                                 jpn = jpn[jpn.find('>') + 1:]
-
-                                jpn = (jpn.split('(')[0].strip() if 0 <= jpn.find('<b>') else jpn)
-                                jpn = (jpn if jpn.find('「') < 0 <= jpn.find('」') else jpn.replace('」', ''))
-                                jpn = (jpn if jpn.find('」') < 0 <= jpn.find('「') else jpn.replace('」', ''))
 
                                 examples.append(eng + ' | ' + jpn)
 
@@ -485,7 +480,8 @@ class EnglishDict:
         # Content.json作成
         if 1 == fnc:
 
-            inserts = self._get_contents({'インサート_1': True}, insert=True)
+            # inserts = []
+            # inserts.append(self._get_contents({'インサート_1': True}, insert=True))
 
             out_count = 0
             merges = {}
@@ -494,8 +490,10 @@ class EnglishDict:
                 merge = pd.read_json(merge_file.replace(
                             FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), encoding='utf8')
 
-                if 1 == lv:
-                    datas = pd.DataFrame(pd.Series(inserts), columns=[1])
+                insert = self._get_contents({'インサート_' + str(lv): True}, insert=True)
+                if 0 < len(insert):
+
+                    datas = pd.DataFrame(pd.Series(insert), columns=[1])
                     old_keys = []
                     new_keys = []
                     old_datas = []
@@ -544,21 +542,26 @@ class EnglishDict:
                             out_count += 1
                             continue
 
-                        meaning = words[key]['meaning'].split('、')[0]
+                        meaning = words[key]['meaning']
                         if 0 <= meaning.find('；') \
                                 or (0 <= meaning.find('の')
-                                    and (0 <= meaning.find('過去') or 0 <= meaning.find('複数形'))):
+                                    and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
+                                         or 0 <= meaning.find('三人称単数現在') or 0 <= meaning.find('複数形'))):
                             com.log('変化形(meanibg)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
                             out_count += 1
                             continue
 
                         # 意味の編集
-                        meaning = words[key]['meaning']
                         if 0 <= meaning.find('対訳は、'):
                             meaning = meaning.split('対訳は、')[1]
 
                         meanings = []
                         for txt in meaning.split('、'):
+
+                            if txt.find('）') < 0 <= txt.find('（'):
+                                txt = txt.split('（')[0].strip()
+                            elif txt.find('（') < 0 <= txt.find('）') or 0 <= txt.find('表記)'):
+                                continue
 
                             txt = txt.replace('(通例', '(').replace('通例 ', '')
                             txt = txt.replace('…', '〜').replace('・', '．')
@@ -613,10 +616,23 @@ class EnglishDict:
                                 else:
                                     meaning = txt1 + '{' + txt2.replace(')', '}')
 
-                        meaning = meaning.replace('{', '(').replace('}', ')')
-                        words[key]['meaning'] = meaning.split('、')
+                        meanings = meaning.replace('{', '(').replace('}', ')').split('、')
+                        meaning = []
+                        for i in range(0, len(meanings)):
 
-                        partspeechs = []
+                            is_meaning = True
+                            for k in range(0, len(meaning)):
+
+                                if 0 <= meaning[k].find(meanings[i].split('(')[0]):
+                                    is_meaning = False
+                                    break
+
+                            if is_meaning:
+                                meaning.append(meanings[i])
+
+                        words[key]['meaning'] = meaning
+
+                        partspeeches = []
                         txts = []
                         for txt in words[key]['partspeech']:
 
@@ -649,23 +665,23 @@ class EnglishDict:
                             elif 0 <= txt.find('可算'):
                                 n_count += 1
                             else:
-                                partspeechs.append(txt)
+                                partspeeches.append(txt)
 
                         for txt in txts:
                             if 0 <= txt.find('動詞(') and 2 == v_count:
-                                partspeechs.append('動詞(自・他)')
+                                partspeeches.append('動詞(自・他)')
                             elif 0 <= txt.find('名詞(') and 2 == n_count:
-                                partspeechs.append('名詞(可算・不可算)')
+                                partspeeches.append('名詞(可算・不可算)')
                             elif 0 <= txt.find('可算名詞(不可算)') or 0 <= txt.find('不可算名詞(可算)'):
-                                partspeechs.append('名詞(可算・不可算)')
+                                partspeeches.append('名詞(可算・不可算)')
                             else:
-                                partspeechs.append(txt)
+                                partspeeches.append(txt)
 
                         # 品詞の重複を削除
-                        words[key]['partspeech'] = list(set(partspeechs))
+                        words[key]['partspeech'] = list(set(partspeeches))
 
                         # 品詞の「動詞」「名詞」を編集
-                        partspeechs = []
+                        partspeeches = []
                         for txt in words[key]['partspeech']:
                             is_txt = True
 
@@ -676,27 +692,75 @@ class EnglishDict:
                                     if txt != txt2 and txt2.startswith(txt):
                                         is_txt = False
                             if is_txt:
-                                partspeechs.append(txt)
-                        words[key]['partspeech'] = partspeechs
+                                partspeeches.append(txt)
+
+                        words[key]['partspeech'] = partspeeches
 
                         # 変化形の「●詞：」を除去
                         changes = []
                         for txt in words[key]['changes']:
-                            if 0 <= txt.find(','):
+
+                            if 0 <= txt.find('(原形)'):
+                                continue
+
+                            elif 0 <= txt.find(','):
                                 txt = txt.split(',')[1].strip()
 
                             changes.append(txt.split('：')[1] if 0 <= txt.find('：') else txt)
                         words[key]['changes'] = changes
 
+                        # 品詞が存在しない場合
+                        if 0 == len(words[key]['partspeech'][0]):
+                            if key.endswith('ly'):
+                                words[key]['partspeech'] = ['副詞']
+                            elif 0 <= str(changes).find('複数形'):
+                                words[key]['partspeech'] = ['名詞']
+                            else:
+                                com.log('品詞(partspeech)除外: ' + str(lv) + ', ' + key)
+                                out_count += 1
+                                continue
+
+                        # 例文編集
+                        examples = words[key]['examples']
+                        example = []
+                        for i in range(0, len(examples)):
+
+                            eng = examples[i].split('|')[0]
+                            jpn = examples[i].split('|')[1]
+
+                            if 0 <= eng.find(key.upper()) or 0 <= examples[i].find('＜') \
+                                    or 0 <= examples[i].find('also called') < examples[i].find('とも呼ばれる。'):
+                                continue
+
+                            eng = eng.replace('（を略して通例）', ' ')
+
+                            if eng[2:].find('\"') < eng.find('\"') == 0:
+                                eng = eng.replace('\"', '')
+                                jpn = jpn.replace('「', '')
+
+                            # 同一例文の複数和訳まとめ
+                            is_example = True
+                            for k in range(0, len(example)):
+
+                                if example[k].split('|')[0] == eng:
+                                    is_example = False
+                                    break
+
+                            if is_example:
+                                example.append(eng + '|' + jpn)
+                            else:
+                                example[k] = example[k] + '・' + jpn
+
+                        words[key]['examples'] = example
+
                         word[key] = words[key]
+
                     if 0 < len(word):
                         rows.append(word)
                 merges[lv] = rows
 
             with open(merge_file.replace('.json', '.js'), 'w') as out_file:
                 out_file.write('const CONTENTS =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
-
-                # json.dump(merges, out_file, ensure_ascii=False, indent=4)
 
         com.log('除外件数: ' + str(out_count))
         return True

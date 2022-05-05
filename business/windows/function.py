@@ -29,7 +29,7 @@ class Function:
                 affinity=['F', '2', '4', '8'],
                 dev_path={'MT4起動': 'MT4_INVEST', '週間レート': 'MT4_RATE'},
                 web_path=['Web_MT4'],
-                my_path=['FxPro', 'OANDA', 'Rakuten'],  # 'MyFx', 'XM'
+                my_path=['FxPro', 'OANDA'],  # 'MyFx', 'XM'
             )
         elif 'EX4コピー' == fnc:
             # コピー(target)はワイルドカード、削除(remove)は完全一致
