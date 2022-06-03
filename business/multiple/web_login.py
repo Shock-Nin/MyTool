@@ -81,11 +81,10 @@ class WebLogin:
                     web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
 
                     if '三井住友' == name:
-                        try:
-                            web_driver.find_element(self.wd, btn + '[2]/a').click()
-                        except:
-                            web_driver.find_element(self.wd, btn + '[3]/a').click()
-
+                        for i in range(2, 5):
+                            try:
+                                web_driver.find_element(self.wd, btn + '[' + str(i) + ']/a').click()
+                            except: pass
                         try:
                             web_driver.find_element(self.wd, 'pwChangeStopFlag').click()
                             web_driver.find_element(self.wd, '//*[@id="main-area"]/div/section/div[2]/a').click()

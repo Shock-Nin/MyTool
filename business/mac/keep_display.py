@@ -16,7 +16,7 @@ BGCOLOR_ON = '#AAFFFF'
 BGCOLOR_OFF = '#FF7777'
 
 
-class EnglishLoop:
+class KeepDisplay:
 
     def __init__(self, job):
         self.myjob = job
@@ -33,14 +33,6 @@ class EnglishLoop:
 
         window = self._window('| |')
         is_stop = False
-
-        # wd = web_driver.driver()
-        # if wd is None:
-        #     com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-        #     return
-        #
-        # wd.get(cst.ENGLISH_USE_URL)
-        subprocess.Popen(['open', '/Applications/Google Chrome.app', cst.ENGLISH_USE_URL])
 
         # イベントループ
         while True:

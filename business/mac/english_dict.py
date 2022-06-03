@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import math
+
 from common import com
 from const import cst
 
@@ -7,6 +9,7 @@ from common import web_driver
 
 import ast
 import json
+import pykakasi
 import pandas as pd
 import PySimpleGUI as sg
 import urllib.parse
@@ -15,8 +18,10 @@ IS_HEADLESS = True
 
 FUNCTIONS = [
     ['基本マスタ', '_create_master', 'Master', 'csv'],
-    ['コンテンツ', '_get_contents', 'Content', 'json'],
-    ['イメージ', '_get_images', 'Image', 'json']
+    ['Weblio', '_get_weblio', 'Weblio', 'json'],
+    ['Longman', '_get_longman', 'Longman', 'json'],
+    ['イメージ', '_get_images', 'Image', 'json'],
+    ['辞書', '_merge_content', 'Content', 'json']
 ]
 
 
@@ -26,10 +31,13 @@ class EnglishDict:
         self.myjob = job
 
     def do(self):
+        layout = [[FUNCTIONS[i][0] + '_' + str(k) if i in [0, 1, 2, 3] else None
+                   for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)] +
+                  [FUNCTIONS[i][0] + '_追加' if i in [1, 2] else None] +
+                  [FUNCTIONS[i][0] + '_マージ' if i in [0, 3, 4] else None]
+                  for i in range(0, len(FUNCTIONS))]
 
-        selects = com.dialog_cols('不要なものは外してください。',
-                                  [[FUNCTIONS[i][0] + '_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)] +
-                                   [FUNCTIONS[i][0] + '_マージ'] for i in range(0, len(FUNCTIONS))],
+        selects = com.dialog_cols('不要なものは外してください。', layout,
                                   ['l' for _ in range(0, len(FUNCTIONS))], '工程選択', obj='check')
         if 0 == len(selects):
             return
@@ -76,7 +84,6 @@ class EnglishDict:
 
                 lv = int(select.split('_')[1])
 
-                index = 1
                 data = {}
                 words = []
                 total_time = 0
@@ -97,13 +104,13 @@ class EnglishDict:
                             return None
 
                         window['lv'].update('Lv ' + str(lv) + '/' + str(cst.ENGLISH_MASTER_LEVEL) +
-                                            ' - ' + str(index) + ' [' + str(i + 1) + ', wd' + str(wd_error) + ']')
+                                            ' [' + str(i + 1) + ', wd' + str(wd_error) + ']')
                         window['lv_'].update(lv - 1)
 
                         try:
-                            wd.get(cst.ENGLISH_MASTER_URL + str(lv) + '/' + str(index))
+                            wd.get(cst.ENGLISH_MASTER_URL % (('' if 10 <= lv else '0') + str(lv)))
                             html = wd.page_source
-                            html = html[html.find('を表示しています'): html.find('掲載しています。')]
+                            html = html[html.find('<font') + 1:]
                             is_html = True
                             break
                         except:
@@ -115,34 +122,17 @@ class EnglishDict:
                             com.sleep(1)
 
                     if not is_html:
-                        com.log('HTML取得ミス: Lv' + str(lv) + ' - ' + str(index), lv='W')
-                        com.dialog('HTMLを取得ミスしました。\n　Lv' + str(lv) + ' - ' + str(index),
+                        com.log('HTML取得ミス: Lv' + str(lv), lv='W')
+                        com.dialog('HTMLを取得ミスしました。\n　Lv' + str(lv),
                                    title='TML取得ミス', lv='W')
                         return False
 
-                    html = html[html.find('</table'): html.rfind('<div')]
-                    html = html[html.find('</tr'): html.rfind('<td ')]
+                    html = html[html.find('<font'):]
+                    html = html[html.find('>') + 1: html.find('</font>')].split('<br>')
 
-                    # 全体でimgタグがない場合は不在ページ、ループを抜けて次レベルへ
-                    if html.find('<img') < 0:
-                        break
-
-                    html = html[html.find('<tr>') + 4:].replace('\n', '').split('<hr>')
                     for row in html:
-
-                        # imgタグ(品詞)がなくなったら、ループを抜けて次50語リストへ
-                        if row.find('<img') < 0:
-                            break
-
-                        row = row[row.find('<a '): row.rfind('</tr>')]
-                        row = row[row.find('>') + 1: row.rfind('</td>')]
-
-                        word = row[: row.find('</a>')]
-                        img = row[row.find('<img '): row.find('.gif')]
-                        img = img[img.rfind('/') + 1:]
-                        jpn = row[row.rfind('>') + 1:]
-
-                        words.append(str(lv) + ',' + word + ',' + cst.ENGLISH_NOUNS[img] + ',' + jpn)
+                        if 0 < len(row):
+                            words.append(str(lv) + ',' + row.strip())
 
                     # 中断イベント
                     if _is_interrupt(window, event):
@@ -151,9 +141,8 @@ class EnglishDict:
                     run_time = com.time_end(start_time)
                     total_time += run_time
 
-                    com.log('Master(' + com.conv_time_str(run_time) + '): Lv' + str(lv) + ' - ' +
-                            str(index) + ' (' + str(len(words)) + ')')
-                    index += 1
+                    com.log('Master(' + com.conv_time_str(run_time) + '): Lv' + str(lv) + '(' + str(len(words)) + ')')
+                    break
 
                 com.log('Master(' + com.conv_time_str(total_time) + '): Lv' + str(lv))
                 data[lv] = words
@@ -175,11 +164,46 @@ class EnglishDict:
 
         # マージを実行する場合
         if is_merge:
-            self._merge_file(0)
+            self._merge_master(0)
 
         return True
 
-    def _get_contents(self, selects, insert=None):
+    # Master.csv作成
+    def _merge_master(self, fnc):
+
+        merge_file = cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[fnc][2] + '.' + FUNCTIONS[fnc][3]
+        datas = []
+
+        for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
+            data = pd.read_csv(merge_file.replace(
+                FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), header=None)
+
+            # data = data.drop(data.columns[[2, 3]], axis=1)
+            rows = []
+            for i in range(0, len(data)):
+                phrase = data.at[i, 1]
+
+                # if 0 <= phrase.find(' '):
+                #     phrase = phrase.split(' ')
+                #
+                # elif 0 <= phrase.find('-'):
+                #     phrase = phrase.split('-')
+                # else:
+                #     phrase = [phrase]
+
+                for txt in [phrase]:
+                    rows.append(txt)
+
+            # rows.sort()
+            datas.append(pd.DataFrame(data=[[str(lv), row] for row in rows]))
+
+        datas = pd.concat(datas)
+        datas = datas.drop_duplicates(datas.columns[[1]]).copy()
+
+        datas.to_csv(merge_file, header=False, index=False)
+        return True
+
+    def _get_weblio(self, selects):
 
         wd = web_driver.driver(headless=IS_HEADLESS)
         if wd is None:
@@ -187,17 +211,16 @@ class EnglishDict:
             return False
 
         wd_error = 0
-        is_merge = False
+        insert = '追加' == selects[0].split('_')[1]
 
         try:
             datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
-                         ('Master' if insert is None else 'Insert') + '.csv', 'r').read().split('\n')
+                         ('Weblio' if insert else 'Master') + '.csv', 'r').read().split('\n')
+            if insert:
+                selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL / 2 + 1)]
+            insert_datas = []
 
             for select in selects:
-
-                if 0 <= select.find('マージ'):
-                    is_merge = True
-                    continue
 
                 lv = int(select.split('_')[1])
                 rows = [row for row in datas if str(lv) == row.split(',')[0]]
@@ -217,15 +240,16 @@ class EnglishDict:
                     targets = cols[1].split('-' if 0 <= cols[1].find('-') else ' ')
                     start_time = com.time_start()
 
-                    # # 部分検証用
-                    # if count < 260:
-                    #     count += 1
-                    #     continue
-                    # if 265 < count:
-                    #     break
-
                     # 単語個別のHTML取得を、1分まで実施
                     for target in targets:
+
+                        # # 部分検証用
+                        # if 5 < count < 113:
+                        #     count += 1
+                        #     continue
+                        # if 120 < count:
+                        #     break
+
                         is_html = False
                         for i in range(0, 60):
 
@@ -233,8 +257,9 @@ class EnglishDict:
                             if _is_interrupt(window, event):
                                 return None
 
-                            window['lv'].update('Lv ' + str(lv) + '/' + str(cst.ENGLISH_MASTER_LEVEL) +
-                                                ' [' + str(i + 1) + ', wd' + str(wd_error) + ']')
+                            window['lv'].update(('追加: ' if insert else '') + 'Lv ' + str(lv) + '/' +
+                                                str(cst.ENGLISH_MASTER_LEVEL) + ' [' + str(i + 1) +
+                                                ', wd' + str(wd_error) + ']')
                             window['lv_'].update(lv - 1)
                             window['target'].update(target + ' ' + str(count + 1) + '/' + str(len(rows)))
                             window['target_'].update(count)
@@ -354,8 +379,6 @@ class EnglishDict:
 
                                 examples.append(eng + ' | ' + jpn)
 
-                        up_name = target[:1].upper() + target[1:]
-                        target = (up_name if 0 <= html.find('title="' + up_name + '"') else target)
                         word[target] = {
                             'pronounce': pronounce, 'meaning': meaning, 'partspeech': partspeech,
                             'changes': changes, 'examples': examples}
@@ -368,17 +391,25 @@ class EnglishDict:
                         count += 1
                         run_time = com.time_end(start_time)
                         total_times += run_time
-                        com.log('Content(' + com.conv_time_str(run_time) + '): Lv' +
+                        com.log('Weblio(' + com.conv_time_str(run_time) + '): Lv' +
                                 str(lv) + ', ' + target + '(' + str(count) + ')')
 
-                com.log('Content(' + com.conv_time_str(total_times) + '): Lv' + str(lv))
+                if 0 < len(words):
+                    insert_datas.append(words)
+                else:
+                    insert_datas.append('')
+
+                com.log('Weblio(' + com.conv_time_str(total_times) + '): Lv' + str(lv))
                 window.close()
 
-                if insert is None:
-                    with open(cst.TEMP_PATH[cst.PC] + 'English/Content_' + str(lv) + '.json', 'w') as out_file:
+                if not insert:
+                    with open(cst.TEMP_PATH[cst.PC] + 'English/dict/Weblio_' + str(lv) + '.json', 'w') as out_file:
                         json.dump({lv: words}, out_file, ensure_ascii=False, indent=4)
-                else:
-                    return words
+
+            if insert:
+                with open(cst.TEMP_PATH[cst.PC] + 'English/dict/Weblio_0.json', 'w') as out_file:
+                    json.dump({lv: insert_datas[lv - 1] for lv in range(1, len(insert_datas) + 1)
+                               if 0 < len(insert_datas[lv - 1])}, out_file, ensure_ascii=False, indent=4)
 
         except Exception as e:
             com.log(self.myjob + ' コンテンツ作成 エラー発生: [Lv' + str(lv) + ', ' + target + '] ' + str(e), lv='W')
@@ -392,13 +423,364 @@ class EnglishDict:
             try: wd.quit()
             except: pass
 
-        # マージを実行する場合
-        if is_merge:
-            self._merge_file(1)
-
         return True
 
-    def _get_images(self, selects):
+    # Weblio.json作成
+    def _merge_content_(self, _):
+        fnc = 1
+        merge_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[fnc][2] + '.' + FUNCTIONS[fnc][3]
+
+        out_count = 0
+        merges = {}
+
+        insert_file = open(merge_file.replace(
+            FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_0.'), 'r', encoding='utf8').read()
+        insert_file = json.loads(insert_file)
+
+        rows = []
+        merge = []
+
+        for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
+
+            file = pd.read_json(merge_file.replace(
+                FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), encoding='utf8')
+            for key in file:
+                rows.append(file[key])
+
+            if 0 == lv % 2:
+                merge.append(rows)
+                rows = []
+        for lv in range(1, len(merge) + 1):
+
+            old_keys = []
+            new_keys = []
+            old_datas = []
+            new_datas = []
+
+            try:
+                insert = insert_file[str(lv)]
+            except:
+                insert = []
+
+            if 0 < len(insert):
+
+                datas = pd.DataFrame(pd.Series(insert), columns=[1])
+                for i in datas:
+                    for data in datas[i]:
+                        for key in data:
+
+                            old_keys.append(key)
+                            new_keys.append(key.lower())
+                            old_datas.append({key: data[key]})
+
+            for words in merge[lv - 1]:
+                for word in words:
+                    for key in word:
+
+                        old_keys.append(key)
+                        new_keys.append(key.lower())
+                        old_datas.append({key: word[key]})
+
+            new_keys.sort()
+            for key1 in new_keys:
+
+                is_append = False
+                for data in old_datas:
+
+                    for key2 in data:
+                        if key1 == key2.lower():
+
+                            try:
+                                if new_datas[len(new_datas) - 1][key2] is not None:
+                                    continue
+                            except: pass
+
+                            new_datas.append({key2: data[key2]})
+                            is_append = True
+                            break
+
+                    if is_append:
+                        break
+
+                merges[lv] = new_datas
+
+            rows = []
+
+            for words in merges[lv]:
+                word = {}
+
+                for key in words:
+
+                    if len(key) < 2:
+                        continue
+
+                    if 0 == len(words[key]['pronounce']):
+                        com.log('発声なし(pronounce)除外: ' + str(lv) + ', ' + key)
+
+                    meaning = words[key]['meaning']
+                    meaning_kana = []
+                    if (meaning.find('。') < 0 <= meaning.find('の')
+                            and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
+                                 or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))):
+
+                        com.log('変化形(meanibg)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
+                        out_count += 1
+                        continue
+
+                    # 意味の編集
+                    if 0 <= meaning.find('対訳は、'):
+                        meaning = meaning.split('対訳は、')[1]
+
+                    meanings = []
+                    for txt in meaning.replace('；', '、').split('、'):
+
+                        if txt.find('）') < 0 <= txt.find('（'):
+                            txt = txt.split('（')[0].strip()
+                        elif txt.find('（') < 0 <= txt.find('）') \
+                                or 0 <= txt.find('表記)') or 0 <= txt.find('などです。'):
+                            continue
+
+                        txt = txt.replace('(通例', '(').replace('通例 ', '')
+                        txt = txt.replace('…', '〜').replace('・', '．')
+                        for check in ['(〜を)', '(〜の)', '(〜に)', '(〜へ)', '(〜と)',
+                                      '(〜は)', '(〜が)', '(〜で)', '(へ)', '(〜ない)']:
+
+                            if 0 <= txt.find(check):
+                                txt = txt.replace(check, '[' + check[1: -1] + ']')
+
+                        meanings.append(txt)
+                    meaning = "、".join(txt for txt in meanings)
+
+                    # (())
+                    while 0 <= meaning.find('('):
+
+                        # 1 ( 2 ) 3
+                        txt1 = meaning[: meaning.find('(')]
+                        txt2 = meaning[meaning.find('(') + 1:]
+                        txt3 = txt2[txt2.find(')') + 1:]
+
+                        txt = txt2[: txt2.find(')')]
+                        next_no = meaning.find(')') + txt3.find('、')
+
+                        # ()通常、中に"、"あり、次の和訳あり (、)、
+                        if meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')') <= \
+                                next_no:
+                            meaning = txt1 + '{' + txt.replace('、', '．') + '}'
+                            meaning += txt3
+
+                        # ()通常、中に"、"なし、次の和訳あり ()、
+                        elif meaning.find('(') < meaning.find(')') <= next_no:
+                            meaning = txt1 + '{' + txt + '}'
+                            meaning += txt3
+
+                        # ()通常、中に"、"あり、次の和訳なし (、)
+                        elif next_no < 0 < \
+                                meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')'):
+                            meaning = txt1 + '{' + txt.replace('、', '．') + '}'
+
+                        # ()通常、中に"、"なし、次の和訳なし ()
+                        elif next_no < 0 < meaning.find('(') < meaning.find(')'):
+                            meaning = txt1 + '{' + txt + '}'
+
+                        # )なしの場合
+                        else:
+                            # 次の和訳あり (、
+                            if 0 <= meaning.find('、'):
+                                meaning = txt1 + '{' + txt2[: txt2.find('、')].replace(')', '}')
+                                meaning += txt2[txt2.find('、'):]
+
+                            # 次の和訳なし (
+                            else:
+                                meaning = txt1 + '{' + txt2.replace(')', '}')
+
+                    meanings = meaning.replace('{', '(').replace('}', ')').split('、')
+                    meaning = []
+                    for i in range(0, len(meanings)):
+
+                        is_meaning = True
+                        for k in range(0, len(meaning)):
+
+                            if 0 <= meaning[k].find(meanings[i].split('(')[0]) \
+                                    or meaning[k].replace('「', '').replace('」', '') == \
+                                    meanings[i].replace('「', '').replace('」', '') \
+                                    or meaning[k].replace(meaning[k][meaning[k].find('['): meaning[k].rfind(']')], '') == \
+                                    meanings[i].replace(meanings[i][meanings[i].find('['): meanings[i].rfind(']')], ''):
+                                is_meaning = False
+                                break
+
+                        if is_meaning:
+                            txt = meanings[i].split('。')[1]\
+                                if 0 <= meanings[i].find('。') else meanings[i]
+                            meaning.append(txt)
+                            kks = pykakasi.kakasi()
+                            kks.setMode('J', 'H')
+                            meaning_kana.append(kks.getConverter().do(txt))
+
+                    words[key]['meaning'] = meaning
+                    # words[key]['meaning_kana'] = meaning_kana
+
+                    partspeeches = []
+                    txts = []
+
+                    if 0 == len(words[key]['partspeech']):
+                        words[key]['partspeech'] = ['名詞']
+
+                    for txt in words[key]['partspeech']:
+
+                        # 形容詞の単一化
+                        txt = txt.replace('(限定用法の形容詞)', '').replace('(叙述的用法の形容詞)', '')
+
+                        # 動詞の編集
+                        if txt.startswith('自動詞'):
+                            txt = txt.replace('自動詞', '動詞(自)')
+                        if txt.startswith('他動詞'):
+                            txt = txt.replace('他動詞', '動詞(他)')
+                        if txt.startswith('動詞(自動詞)'):
+                            txt = txt.replace('自動詞', '自')
+                        if txt.startswith('動詞(他動詞)'):
+                            txt = txt.replace('他動詞', '他')
+
+                        # 名詞の編集
+                        if 0 <= txt.find('可算名詞'):
+                            txt = txt.replace('名詞)', ')')
+
+                        txts.append(txt)
+                    txts = list(set(txts))
+
+                    # 動詞と名詞は、2種類あればひとまとめ
+                    v_count = 0
+                    n_count = 0
+                    for txt in txts:
+                        if 0 <= txt.find('自') or 0 <= txt.find('他'):
+                            v_count += 1
+                        elif 0 <= txt.find('可算'):
+                            n_count += 1
+                        else:
+                            partspeeches.append(txt)
+
+                    for txt in txts:
+                        if 0 <= txt.find('動詞(') and 2 == v_count:
+                            partspeeches.append('動詞(自・他)')
+                        elif 0 <= txt.find('名詞(') and 2 == n_count:
+                            partspeeches.append('名詞(可算・不可算)')
+                        elif 0 <= txt.find('可算名詞(不可算)') or 0 <= txt.find('不可算名詞(可算)'):
+                            partspeeches.append('名詞(可算・不可算)')
+                        else:
+                            partspeeches.append(txt)
+
+                    # 品詞の重複を削除
+                    words[key]['partspeech'] = list(set(partspeeches))
+
+                    # 品詞の「動詞」「名詞」を編集
+                    partspeeches = []
+                    for txt in words[key]['partspeech']:
+                        is_txt = True
+
+                        if txt in ['動詞', '名詞']:
+                            is_txt = True
+
+                            for txt2 in words[key]['partspeech']:
+                                if txt != txt2 and txt2.startswith(txt):
+                                    is_txt = False
+                        if is_txt:
+                            partspeeches.append(txt)
+
+                    words[key]['partspeech'] = partspeeches
+
+                    # 変化形の「●詞：」を除去
+                    changes = []
+                    for txt in words[key]['changes']:
+
+                        if 0 <= txt.find('(原形)'):
+                            continue
+
+                        elif 0 <= txt.find(','):
+                            txt = txt.split(',')[1].strip()
+
+                        changes.append(txt.split('：')[1] if 0 <= txt.find('：') else txt)
+                    words[key]['changes'] = changes
+
+                    # 品詞が存在しない場合
+                    if 0 == len(words[key]['partspeech'][0]):
+                        if key.endswith('ly'):
+                            words[key]['partspeech'] = ['副詞']
+                        elif 0 <= str(changes).find('複数形'):
+                            words[key]['partspeech'] = ['名詞']
+                        else:
+                            com.log('品詞(partspeech)除外: ' + str(lv) + ', ' + key)
+                            out_count += 1
+                            continue
+
+                    # 例文編集
+                    examples = words[key]['examples']
+                    example = []
+                    for i in range(0, len(examples)):
+
+                        eng = examples[i].split('|')[0]
+                        jpn = examples[i].split('|')[1]
+
+                        if 0 <= eng.find(key.upper()) or 0 <= examples[i].find('＜') \
+                                or key == eng.strip() or 0 <= examples[i].find('年−') \
+                                or 0 <= examples[i].find('also called') < examples[i].find('とも呼ばれる。'):
+                            continue
+
+                        eng = eng.replace('（を略して通例）', ' ')
+
+                        if eng[2:].find('\"') < eng.find('\"') == 0:
+                            eng = eng.replace('\"', '')
+                            jpn = jpn.replace('「', '')
+
+                        # 細かい整形
+                        eng = eng.replace('＝', ' = ').replace('；', ' = ').replace('()', '')
+                        eng = eng.replace(eng[eng.find('〈'): eng.rfind('〉')], '')
+                        eng = eng.replace(eng[eng.find('《'): eng.rfind('》')], '').strip()
+                        if eng.endswith('.') or eng.endswith(','):
+                            eng = eng[:-1]
+
+                        jpn = jpn.replace('()', '')
+                        jpn = jpn.replace(jpn[jpn.find('《'): jpn.rfind('》')], '').strip()
+                        if jpn.endswith('.') or jpn.endswith('；') or jpn.endswith('：') or jpn.endswith('。'):
+                            jpn = jpn[:-1]
+
+                        # 同一例文の複数和訳まとめ
+                        is_example = True
+                        for k in range(0, len(example)):
+
+                            texts = example[k].split(' | ')
+                            if texts[0].replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower() == \
+                                    eng.replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower():
+                                is_example = False
+                                break
+
+                        if is_example:
+                            example.append(eng + ' | ' + jpn)
+                        elif texts[1].find(jpn) < 0:
+                            example[k] += '・' + jpn
+
+                    words[key]['examples'] = example
+
+                    # 例外処理
+                    if 'be' == key:
+                        words[key]['changes'] = ['']
+
+                    reg_key = key
+                    if 'TRUE' == key:
+                        reg_key = key.lower()
+
+                    # 単語に格納
+                    word[reg_key] = words[key]
+
+                if 0 < len(word):
+                    rows.append(word)
+            merges[lv] = rows
+
+        with open(cst.TEMP_PATH[cst.PC] + 'English/Content.js', 'w') as out_file:
+            out_file.write('const CONTENTS =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
+
+        com.log('除外件数: ' + str(out_count))
+        return True
+
+    def _get_longman(self, selects):
 
         wd = web_driver.driver(headless=IS_HEADLESS)
         if wd is None:
@@ -406,149 +788,398 @@ class EnglishDict:
             return False
 
         wd_error = 0
-        is_merge = False
+        insert = '追加' == selects[0].split('_')[1]
 
         try:
+            datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
+                         ('Longman' if insert else 'Master') + '.csv', 'r').read().split('\n')
+            if insert:
+                selects = ['追加_' + str(k) for k in range(1, int(cst.ENGLISH_MASTER_LEVEL / 2) + 1)]
+            insert_datas = []
+
             for select in selects:
 
-                if 0 <= select.find('マージ'):
-                    is_merge = True
-                    continue
-
                 lv = int(select.split('_')[1])
+                rows = [row for row in datas if str(lv) == row.split(',')[0]]
 
-                wd.get(urllib.parse.quote(cst.ENGLISH_IMAGES_URL, 'utf8'))
-                com.sleep(5)
+                words = []
+                total_times = 0
+                count = 0
 
-                target = ''
+                window = com.progress(self.myjob, ['lv', cst.ENGLISH_MASTER_LEVEL],
+                                      ['target', len(rows)], interrupt=True)
+                event, values = window.read(timeout=0)
+
+                for row in rows:
+
+                    word = {}
+                    cols = row.split(',')
+                    targets = cols[1].split('-' if 0 <= cols[1].find('-') else ' ')
+                    start_time = com.time_start()
+
+                    # 単語個別のHTML取得を、1分まで実施
+                    for target in targets:
+
+                        # # 部分検証用
+                        # if 5 < count < 113:
+                        #     count += 1
+                        #     continue
+                        # if 120 < count:
+                        #     break
+
+                        is_html = False
+                        for i in range(0, 60):
+
+                            # 中断イベント
+                            if _is_interrupt(window, event):
+                                return None
+
+                            window['lv'].update(('追加: ' if insert else '') + 'Lv ' + str(lv) + '/' +
+                                                str(cst.ENGLISH_MASTER_LEVEL) + ' [' + str(i + 1) +
+                                                ', wd' + str(wd_error) + ']')
+                            window['lv_'].update(lv - 1)
+                            window['target'].update(target + ' ' + str(count + 1) + '/' + str(len(rows)))
+                            window['target_'].update(count)
+
+                            try:
+                                wd.get(cst.ENGLISH_DICT_URL['英ナビ'] + target)
+                                html = wd.page_source
+                                html = html[html.find('<!-- word_head -->'):]
+
+                                is_html = True
+                                break
+                            except:
+                                wd_error += 1
+                                try: wd.quit()
+                                except: pass
+                                try: wd = web_driver.driver(headless=IS_HEADLESS)
+                                except: pass
+                                com.sleep(1)
+
+                        if not is_html:
+                            com.log('HTML取得ミス: Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target, lv='W')
+                            com.dialog('HTMLを取得ミスしました。\n　Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target,
+                                       title='TML取得ミス', lv='W')
+                            return False
+
+                        if 0 == len(html):
+                            com.log('対象なし' + str(lv) + ' - ' + str(count + 1) + ' ' + target)
+
+                        htmls = html.split('WordNet')
+                        html = htmls[0][htmls[0].find('detail_area'):]
+
+                        if 0 <= html.find('class="entry_group"'):
+                            text = htmls[0]
+                        else:
+                            try:
+                                html = htmls[1][: htmls[1].find('<div class="dic_copyright">')]
+                                text = html[html.find('<div class="muted_wrap">'): html.find('word_detail')]
+                                text = text[: text.rfind('</div>')]
+                            except:
+                                com.log('Web検索なし: ' + str(lv) + ' - ' + str(count + 1) + ' ' + target)
+
+                        texts = text.split('<div class="muted_wrap">')
+
+                        # 品詞、和訳
+                        partspeeches = []
+                        meaning = ''
+                        for k in range(1, len(texts)):
+
+                            text = texts[k]
+                            text = text[:text.find('</div>')]
+                            text = text.split('<span>')
+
+                            partspeech = ''
+                            for m in range(1, len(text)):
+                                partspeech += ('' if 0 == len(partspeech) else ',') + text[m][: text[m].find('</span>')]
+
+                            partspeeches.append(partspeech)
+
+                            # 和訳
+                            text = texts[k]
+                            text = text[text.find('</div>'):]
+                            text = text[text.find('<a'):]
+                            text = text[text.find('>') + 1: text.find('</a>')]
+
+                            meaning += ('' if 0 == len(text) else '、') + text
+
+                        # 発音表記
+                        pronounce = html[html.find('<h3'):]
+                        pronounce = pronounce[pronounce.find('pronunciation-ipa'):]
+                        pronounce = pronounce[pronounce.find('>') + 1: pronounce.find('</small>')]
+                        pronounce = pronounce.replace('/', '').strip()
+
+                        # 変化形
+                        texts1 = html.split('<h3 class="list-group-item-heading">')
+
+                        changes = []
+                        for k in range(1, len(texts1)):
+
+                            text = texts1[k]
+                            text = text[: text.find('<section>')]
+                            texts2 = text.split('</li>')
+
+                            for m in range(0, len(texts2)):
+
+                                text = texts2[m]
+                                text = text[text.find('<li'):]
+                                text = text[text.find('>') + 1:]
+
+                                if 0 <= text.find('<span>'):
+                                    text = text[text.find('<span>'):].replace('&nbsp;', '')
+                                    texts3 = text[text.find('>') + 1:].split('</span>')
+
+                                    if 1 < len(texts3[1]):
+                                        if 0 <= texts3[1].find('pronunciation-ipa'):
+                                            texts3[1] = texts3[1].split('/')[0]
+
+                                        if 0 < len(texts3[1].replace('\n', '').replace('\t', '')):
+                                            changes.append(texts3[1] + '(' + texts3[0] + ')')
+
+                        # その他
+                        texts1 = html.split('related_words')
+
+                        others = []
+                        for k in range(1, len(texts1)):
+
+                            text = texts1[k]
+                            text = text[: text.find('</div>')]
+
+                            jpn = text[text.find('<dt>'):].replace('&nbsp;', '')
+                            jpn = jpn[jpn.find('>') + 1: jpn.find('</dt>')]
+
+                            if 0 <= jpn.find('<span>'):
+                                jpn = jpn[jpn.find('<span>'):]
+                                jpn = jpn[jpn.find('>') + 1: jpn.find('</span>')]
+
+                            if 0 == len(jpn):
+                                continue
+
+                            eng = ''
+                            texts2 = text.split('</a>')
+                            for m in range(0, len(texts2)):
+
+                                text = texts2[m]
+                                text = text[text.find('<a'):]
+                                text = text[text.find('>') + 1:].replace('\t', '')
+
+                                if 0 < len(text):
+                                    eng += ('' if 0 == len(eng) else ', ') + text
+
+                            others.append(jpn + '(' + eng + ')')
+
+                        # 例文
+                        text = html[html.find('<div class="example_wrap"'):]
+                        texts = text.split('</ul>')
+
+                        examples = []
+                        for k in range(0, len(texts)):
+                            text = texts[k]
+
+                            eng = text[text.find('<li class="en">'):]
+                            eng = eng[: eng.find('</li>')]
+                            eng = eng[eng.find('>') + 1:].replace('<span>', '').replace('</span>', '')
+                            while 0 <= eng.find('<'):
+                                eng = eng.replace(eng[eng.find('<'): eng.find('>') + 1], '')
+
+                            jpn = text[text.find('<li class="ja">'):]
+                            jpn = jpn[: jpn.find('</li>')]
+                            jpn = jpn[jpn.find('>') + 1:].replace('<span>', '').replace('</span>', '')
+                            while 0 <= jpn.find('<'):
+                                jpn = jpn.replace(jpn[jpn.find('<'): jpn.find('>') + 1], '')
+
+                            if 0 < len(eng):
+                                examples.append(eng + ' | ' + jpn)
+
+                        if 0 == len(examples):
+                            text = html[html.find('<span class="dict-sp-sentence-pattern">'):]
+                            texts = text.split('</blockquote>')
+
+                            for k in range(0, len(texts)):
+                                text = texts[k]
+                                text = text[text.find('<blockquote class="dict-sp-example">'):]
+
+                                eng = text[text.find('<p'):]
+                                eng = eng[eng.find('>') + 1: eng.find('</p>')]
+                                while 0 <= eng.find('<'):
+                                    eng = eng.replace(eng[eng.find('<'): eng.find('>') + 1], '')
+                                eng = eng.split('tatoeba.org')[0].strip()
+
+                                jpn = text[text.find('<p') + 1:]
+                                jpn = jpn[jpn.find('<p'):]
+                                jpn = jpn[jpn.find('>') + 1: jpn.find('</p>')]
+                                while 0 <= jpn.find('<'):
+                                    jpn = jpn.replace(jpn[jpn.find('<'): jpn.find('>') + 1], '')
+                                jpn = jpn.split('tatoeba.org')[0].strip()
+
+                                if 0 < len(eng):
+                                    examples.append(eng + ' | ' + jpn)
+
+                        word[target] = {
+                            'pronounce': pronounce, 'meaning': meaning, 'partspeech': partspeeches,
+                            'changes': changes, 'examples': examples, 'others': others}
+                        words.append(word)
+
+                        # 中断イベント
+                        if _is_interrupt(window, event):
+                            return None
+
+                        count += 1
+                        run_time = com.time_end(start_time)
+                        total_times += run_time
+                        com.log('Longman(' + com.conv_time_str(run_time) + '): Lv' +
+                                str(lv) + ', ' + target + '(' + str(count) + ') ' + pronounce +
+                                (' :' + str(partspeeches) + str(changes) + str(examples) + str(others)
+                                 if 0 == len(examples) else ''))
+
+                if 0 < len(words):
+                    insert_datas.append(words)
+                else:
+                    insert_datas.append('')
+
+                com.log('Longman(' + com.conv_time_str(total_times) + '): Lv' + str(lv))
+                window.close()
+
+                if not insert:
+                    with open(cst.TEMP_PATH[cst.PC] + 'English/dict/Longman_' + str(lv) + '.json', 'w') as out_file:
+                        json.dump({lv: words}, out_file, ensure_ascii=False, indent=4)
+
+            if insert:
+                with open(cst.TEMP_PATH[cst.PC] + 'English/dict/Longman_0.json', 'w') as out_file:
+                    json.dump({lv: insert_datas[lv - 1] for lv in range(1, len(insert_datas) + 1)
+                               if 0 < len(insert_datas[lv - 1])}, out_file, ensure_ascii=False, indent=4)
 
         except Exception as e:
-            com.log(self.myjob + ' イメージ作成 エラー発生: [Lv' + str(lv) + ', ' + target + '] ' + str(e), lv='W')
-            com.dialog(self.myjob + ' イメージ作成 でエラーが発生しました。\n[Lv' +
+            com.log(self.myjob + ' コンテンツ作成 エラー発生: [Lv' + str(lv) + ', ' + target + '] ' + str(e), lv='W')
+            com.dialog(self.myjob + ' コンテンツ作成 でエラーが発生しました。\n[Lv' +
                        str(lv) + ', ' + target + ']\n' + str(e), title='エラー発生', lv='W')
             return False
 
-        # finally:
-        #     try: window.close()
-        #     except: pass
-        #     try: wd.quit()
-        #     except: pass
-
-        # マージを実行する場合
-        if is_merge:
-            self._merge_file(2)
+        finally:
+            try: window.close()
+            except: pass
+            try: wd.quit()
+            except: pass
 
         return True
 
-    def _merge_file(self, fnc):
+    # Content.json作成
+    def _merge_content(self, _):
 
-        merge_file = cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[fnc][2] + '.' + FUNCTIONS[fnc][3]
+        base_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[2][2] + '.' + FUNCTIONS[2][3]
+        plus_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[1][2] + '.' + FUNCTIONS[1][3]
 
-        # Master.csv作成
-        if 0 == fnc:
-            datas = []
+        out_counts = [0 for _ in range(0, int(cst.ENGLISH_MASTER_LEVEL / 2))]
 
-            for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
-                data = pd.read_csv(merge_file.replace(
-                    FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), header=None)
+        plus = {}
+        for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
+            file = pd.read_json(plus_file.replace(
+                FUNCTIONS[1][2] + '.', FUNCTIONS[1][2] + '_' + str(lv) + '.'), encoding='utf8')
 
-                data = data.drop(data.columns[[2, 3]], axis=1)
+            for col in file:
+                for i in range(0, len(file[col])):
+                    for key in file[col][i]:
+                        plus[key] = file[col][i][key]
+
+        insert_file = open(base_file.replace(
+            FUNCTIONS[2][2] + '.', FUNCTIONS[2][2] + '_0.'), 'r', encoding='utf8').read()
+        insert_file = json.loads(insert_file)
+
+        rows = []
+        merge = []
+        merges = {}
+
+        for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
+
+            file = pd.read_json(base_file.replace(
+                FUNCTIONS[2][2] + '.', FUNCTIONS[2][2] + '_' + str(lv) + '.'), encoding='utf8')
+            for key in file:
+                rows.append(file[key])
+
+            if 0 == lv % 2:
+                merge.append(rows)
                 rows = []
 
-                for i in range(0, len(data)):
-                    phrase = data.at[i, 1]
+        for lv in range(1, len(merge) + 1):
 
-                    if 0 <= phrase.find(' '):
-                        phrase = phrase.split(' ')
+            old_keys = []
+            new_keys = []
+            old_datas = []
+            new_datas = []
 
-                    elif 0 <= phrase.find('-'):
-                        phrase = phrase.split('-')
-                    else:
-                        phrase = [phrase]
+            try:
+                insert = insert_file[str(lv)]
+            except:
+                insert = []
 
-                    for txt in phrase:
-                        rows.append(txt.lower())
+            if 0 < len(insert):
 
-                rows.sort()
-                datas.append(pd.DataFrame(data=[[str(lv), row] for row in rows]))
+                datas = pd.DataFrame(pd.Series(insert), columns=[1])
+                for i in datas:
+                    for data in datas[i]:
+                        for key in data:
 
-            datas = pd.concat(datas)
-            datas = datas.drop_duplicates(datas.columns[[1]]).copy()
-
-            datas.to_csv(merge_file, header=False, index=False)
-
-        # Content.json作成
-        if 1 == fnc:
-
-            # inserts = []
-            # inserts.append(self._get_contents({'インサート_1': True}, insert=True))
-
-            out_count = 0
-            merges = {}
-
-            for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
-                merge = pd.read_json(merge_file.replace(
-                            FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), encoding='utf8')
-
-                insert = self._get_contents({'インサート_' + str(lv): True}, insert=True)
-                if 0 < len(insert):
-
-                    datas = pd.DataFrame(pd.Series(insert), columns=[1])
-                    old_keys = []
-                    new_keys = []
-                    old_datas = []
-                    new_datas = []
-
-                    for words in merge[lv]:
-                        for key in words:
                             old_keys.append(key)
                             new_keys.append(key.lower())
-                            old_datas.append({key: words[key]})
+                            old_datas.append({key: data[key]})
 
-                    for i in datas:
-                        for data in datas[i]:
-                            for key in data:
-                                old_keys.append(key)
-                                new_keys.append(key.lower())
-                                old_datas.append({key: data[key]})
+            for words in merge[lv - 1]:
+                for word in words:
+                    for key in word:
 
-                    new_keys.sort()
-                    for key1 in new_keys:
-                        is_append = False
-                        for data in old_datas:
-                            for key2 in data:
-                                if key1 == key2.lower():
-                                    new_datas.append({key1 if key1 in old_keys else key2: data[key2]})
-                                    is_append = True
-                                    break
-                            if is_append:
-                                break
+                        old_keys.append(key)
+                        new_keys.append(key.lower())
+                        old_datas.append({key: word[key]})
 
-                    merge = {lv: new_datas}
+            new_keys.sort()
+            for key1 in new_keys:
 
-                rows = []
-                for words in merge[lv]:
+                is_append = False
+                for data in old_datas:
 
-                    word = {}
-                    for key in words:
+                    for key2 in data:
+                        if key1 == key2.lower():
 
-                        if 0 == len(words[key]['pronounce']):
-                            com.log('発声なし(pronounce)除外: ' + str(lv) + ', ' + key)
-                            out_count += 1
-                            continue
+                            try:
+                                if new_datas[len(new_datas) - 1][key2] is not None:
+                                    continue
+                            except: pass
 
-                        if 0 == len(words[key]['partspeech']):
-                            com.log('品詞なし(partspeech)除外: ' + str(lv) + ', ' + key)
-                            out_count += 1
-                            continue
+                            new_datas.append({key2: data[key2]})
+                            is_append = True
+                            break
 
-                        meaning = words[key]['meaning']
-                        if 0 <= meaning.find('；') \
-                                or (0 <= meaning.find('の')
-                                    and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
-                                         or 0 <= meaning.find('三人称単数現在') or 0 <= meaning.find('複数形'))):
+                    if is_append:
+                        break
+
+                merges[lv] = new_datas
+
+            rows = []
+
+            for words in merges[lv]:
+                word = {}
+
+                for key in words:
+
+                    if len(key) < 2:
+                        continue
+
+                    # 発音表記がない場合、Weblio使用
+                    if 0 == len(words[key]['pronounce']):
+                        words[key]['pronounce'] = plus[key]['pronounce']
+                    words[key]['pronounce'] = words[key]['pronounce'].replace('&nbsp;', ' ')
+
+                    # 品詞がない場合、Weblio使用
+                    if 0 == len(words[key]['partspeech']):
+
+                        meaning = plus[key]['meaning']
+                        meaning_kana = []
+                        if (0 <= meaning.find('の')
+                                and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
+                                     or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))):
+
                             com.log('変化形(meanibg)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
-                            out_count += 1
+                            out_counts[lv - 1] += 1
                             continue
 
                         # 意味の編集
@@ -556,11 +1187,13 @@ class EnglishDict:
                             meaning = meaning.split('対訳は、')[1]
 
                         meanings = []
-                        for txt in meaning.split('、'):
+                        for txt in meaning.replace('；', '、').split('、'):
 
-                            if txt.find('）') < 0 <= txt.find('（'):
-                                txt = txt.split('（')[0].strip()
-                            elif txt.find('（') < 0 <= txt.find('）') or 0 <= txt.find('表記)'):
+                            txt = txt.replace('（', '(').replace('）', ')')
+                            if txt.find(')') < 0 <= txt.find('('):
+                                txt = txt.split('(')[0].strip()
+                            elif txt.find('(') < 0 <= txt.find(')') \
+                                    or 0 <= txt.find('表記)') or 0 <= txt.find('などです。'):
                                 continue
 
                             txt = txt.replace('(通例', '(').replace('通例 ', '')
@@ -623,18 +1256,32 @@ class EnglishDict:
                             is_meaning = True
                             for k in range(0, len(meaning)):
 
-                                if 0 <= meaning[k].find(meanings[i].split('(')[0]):
+                                if 0 <= meaning[k].find(meanings[i].split('(')[0]) \
+                                        or meaning[k].replace('「', '').replace('」', '') == \
+                                        meanings[i].replace('「', '').replace('」', '') \
+                                        or meaning[k].replace(meaning[k][meaning[k].find('['): meaning[k].rfind(']')], '') == \
+                                        meanings[i].replace(meanings[i][meanings[i].find('['): meanings[i].rfind(']')], ''):
                                     is_meaning = False
                                     break
 
                             if is_meaning:
-                                meaning.append(meanings[i])
+                                txt = meanings[i].split('。')[1] \
+                                    if 0 <= meanings[i].find('。') else meanings[i]
+                                meaning.append(txt)
+                                kks = pykakasi.kakasi()
+                                kks.setMode('J', 'H')
+                                meaning_kana.append(kks.getConverter().do(txt))
 
-                        words[key]['meaning'] = meaning
+                        text = [text.replace('}', ')') for text in meaning]
+                        words[key]['meaning'] = list(set(text))
 
                         partspeeches = []
                         txts = []
-                        for txt in words[key]['partspeech']:
+
+                        if 0 == len(plus[key]['partspeech']):
+                            plus[key]['partspeech'] = ['名詞']
+
+                        for txt in plus[key]['partspeech']:
 
                             # 形容詞の単一化
                             txt = txt.replace('(限定用法の形容詞)', '').replace('(叙述的用法の形容詞)', '')
@@ -678,17 +1325,17 @@ class EnglishDict:
                                 partspeeches.append(txt)
 
                         # 品詞の重複を削除
-                        words[key]['partspeech'] = list(set(partspeeches))
+                        plus[key]['partspeech'] = list(set(partspeeches))
 
                         # 品詞の「動詞」「名詞」を編集
                         partspeeches = []
-                        for txt in words[key]['partspeech']:
+                        for txt in plus[key]['partspeech']:
                             is_txt = True
 
                             if txt in ['動詞', '名詞']:
                                 is_txt = True
 
-                                for txt2 in words[key]['partspeech']:
+                                for txt2 in plus[key]['partspeech']:
                                     if txt != txt2 and txt2.startswith(txt):
                                         is_txt = False
                             if is_txt:
@@ -696,9 +1343,122 @@ class EnglishDict:
 
                         words[key]['partspeech'] = partspeeches
 
+                    # 品詞がある場合は編集
+                    else:
+                        meaning = words[key]['meaning'].replace('（', '(').replace('）', ')')
+
+                        # (())
+                        while 0 <= meaning.find('('):
+
+                            # 1 ( 2 ) 3
+                            txt1 = meaning[: meaning.find('(')]
+                            txt2 = meaning[meaning.find('(') + 1:]
+                            txt3 = txt2[txt2.find(')') + 1:]
+
+                            txt = txt2[: txt2.find(')')]
+                            next_no = meaning.find(')') + txt3.find('、')
+
+                            # ()通常、中に"、"あり、次の和訳あり (、)、
+                            if meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')') <= \
+                                    next_no:
+                                meaning = txt1 + '{' + txt.replace('、', '．') + '}'
+                                meaning += txt3
+
+                            # ()通常、中に"、"なし、次の和訳あり ()、
+                            elif meaning.find('(') < meaning.find(')') <= next_no:
+                                meaning = txt1 + '{' + txt + '}'
+                                meaning += txt3
+
+                            # ()通常、中に"、"あり、次の和訳なし (、)
+                            elif next_no < 0 < \
+                                    meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')'):
+                                meaning = txt1 + '{' + txt.replace('、', '．') + '}'
+
+                            # ()通常、中に"、"なし、次の和訳なし ()
+                            elif next_no < 0 < meaning.find('(') < meaning.find(')'):
+                                meaning = txt1 + '{' + txt + '}'
+
+                            # )なしの場合
+                            else:
+                                # 次の和訳あり (、
+                                if 0 <= meaning.find('、'):
+                                    meaning = txt1 + '{' + txt2[: txt2.find('、')].replace(')', '}')
+                                    meaning += txt2[txt2.find('、'):]
+
+                                # 次の和訳なし (
+                                else:
+                                    meaning = txt1 + '{' + txt2.replace(')', '}')
+
+                        # words[key]['meaning'] = list(set(words[key]['meaning']))
+                        meaning = meaning.replace('{', '(').replace('}', ')').replace('，', '、')
+                        words[key]['meaning'] = list(set(meaning.split('、')))[1:]
+
+                        partspeeches = []
+                        for i in range(0, len(words[key]['partspeech'])):
+
+                            texts = words[key]['partspeech'][i].split(',')
+                            text = ''
+
+                            for k in range(0, len(texts)):
+                                if texts[k] in ['動', '名']:
+
+                                    char = ''
+                                    for txt in plus[key]['partspeech']:
+
+                                        if 0 <= txt.find('自動詞'):
+                                            char += '自,'
+                                        elif 0 <= txt.find('他動詞'):
+                                            char += '他,'
+                                        elif 0 <= txt.find('不可算名詞'):
+                                            char += 'U,'
+                                        elif 0 <= txt.find('可算名詞'):
+                                            char += 'C,'
+                                        elif 0 <= txt.find('形容詞'):
+                                            char += ('形容詞,' if char.find('形容詞') < 0 else '')
+                                        elif 0 < len(txt):
+                                            char += (txt + ',' if char.find(txt) < 0 else '')
+                                        else:
+                                            char += ('名詞,' if char.find('名詞') < 0 else '')
+
+                                    if 0 <= char.find('自') or 0 <= char.find('他'):
+                                        text += ('' if 0 == len(text) else ',') + '動詞(自・他)'
+                                    elif 0 <= char.find('自'):
+                                        text += ('' if 0 == len(text) else ',') + '動詞(自)'
+                                    elif 0 <= char.find('他'):
+                                        text += ('' if 0 == len(text) else ',') + '動詞(他)'
+
+                                    if 0 <= char.find('U') or 0 <= char.find('C'):
+                                        text += ('' if 0 == len(text) else ',') + '名詞(可算・不可算)'
+                                    elif 0 <= char.find('U'):
+                                        text += ('' if 0 == len(text) else ',') + '名詞(可算)'
+                                    elif 0 <= char.find('C'):
+                                        text += ('' if 0 == len(text) else ',') + '名詞(不可算)'
+
+                                    text += ('' if 0 == len(text) else ',')
+                                    text += char.replace('自,', '').replace('他,', '').replace('U,', '').replace('C,', '')
+                                    text = text[: -1]
+
+                                # 動詞と名詞以外
+                                else:
+                                    text += ('' if 0 == len(text) else ',')
+                                    text += cst.LONGMAN_PARTSPEECH[texts[k]]
+
+                            text = '名詞' if 0 == len(text) else text.split(',')
+                            partspeeches.append(text)
+
+                        texts = []
+                        for lists in partspeeches:
+                            for text in lists:
+                                texts.append(text)
+
+                        words[key]['partspeech'] = list(set(texts))
+
+                    # 変化形がない場合、Weblio使用
+                    if 0 == len(words[key]['changes']):
+
                         # 変化形の「●詞：」を除去
                         changes = []
-                        for txt in words[key]['changes']:
+                        for txt in plus[key]['changes']:
 
                             if 0 <= txt.find('(原形)'):
                                 continue
@@ -709,26 +1469,42 @@ class EnglishDict:
                             changes.append(txt.split('：')[1] if 0 <= txt.find('：') else txt)
                         words[key]['changes'] = changes
 
-                        # 品詞が存在しない場合
-                        if 0 == len(words[key]['partspeech'][0]):
-                            if key.endswith('ly'):
-                                words[key]['partspeech'] = ['副詞']
-                            elif 0 <= str(changes).find('複数形'):
-                                words[key]['partspeech'] = ['名詞']
-                            else:
-                                com.log('品詞(partspeech)除外: ' + str(lv) + ', ' + key)
-                                out_count += 1
-                                continue
+                    # 変化形がある場合の編集
+                    else:
+                        words[key]['changes'] = list(set(
+                            [change.replace('分詞形', '分詞').replace('現在形', '現在')
+                             for change in words[key]['changes'] if change.find('〜') < 0]))
 
-                        # 例文編集
+                    example = []
+
+                    # 例文がある場合は編集
+                    if 0 < len(words[key]['examples']):
                         examples = words[key]['examples']
-                        example = []
                         for i in range(0, len(examples)):
 
                             eng = examples[i].split('|')[0]
                             jpn = examples[i].split('|')[1]
 
+                        if 100 < len(eng):
+                            continue
+
+                        jpn = jpn.replace('（', '(').replace('）', ')')
+                        example.append(eng + '|' + jpn)
+
+                    # 例文が少ない場合、Weblioの例文を連結
+                    if len(example) <= 5:
+
+                        examples = plus[key]['examples']
+                        for i in range(0, len(examples)):
+
+                            eng = examples[i].split('|')[0]
+                            jpn = examples[i].split('|')[1]
+
+                            if 100 < len(eng) or 0 <= examples[i].find('://'):
+                                continue
+
                             if 0 <= eng.find(key.upper()) or 0 <= examples[i].find('＜') \
+                                    or key == eng.strip() or 0 <= examples[i].find('年−') \
                                     or 0 <= examples[i].find('also called') < examples[i].find('とも呼ばれる。'):
                                 continue
 
@@ -738,31 +1514,163 @@ class EnglishDict:
                                 eng = eng.replace('\"', '')
                                 jpn = jpn.replace('「', '')
 
+                            # 細かい整形
+                            eng = eng.replace('＝', ' = ').replace('；', ' = ').replace('()', '')
+                            eng = eng.replace(eng[eng.find('〈'): eng.rfind('〉')], '')
+                            eng = eng.replace(eng[eng.find('《'): eng.rfind('》')], '')
+
+                            eng = eng.replace('（', '(').replace('）', ')')
+                            eng = eng.replace('&amp;amp;', '＆').replace('&amp;', '＆').replace('&nbsp;', ' ')
+                            eng = eng.replace('&gt;', ' ')
+                            eng = eng.replace('+-', '').replace('-+', '').replace('---', '')
+                            eng = eng.replace('[', '').replace(']', '').replace('(', '').replace(')', '')
+                            eng = eng.replace('{', '').replace('}', '').replace('__', '')
+                            eng = eng.replace('》', '').replace('〉', '').strip()
+
+                            if eng.endswith('.') or eng.endswith(','):
+                                eng = eng[:-1]
+
+                            jpn = jpn.replace('()', '')
+                            jpn = jpn.replace(jpn[jpn.find('《'): jpn.rfind('》')], '')
+
+                            jpn = jpn.replace('（', '(').replace('）', ')')
+                            jpn = jpn.replace('&amp;amp;', '＆').replace('&amp;', '＆').replace('&nbsp;', ' ')
+                            jpn = jpn.replace('<b>', '').replace('</b>', '').replace('》', '').strip()
+
+                            if jpn.endswith('.') or jpn.endswith('；') or jpn.endswith('：') or jpn.endswith('。'):
+                                jpn = jpn[:-1]
+
                             # 同一例文の複数和訳まとめ
                             is_example = True
                             for k in range(0, len(example)):
 
-                                if example[k].split('|')[0] == eng:
+                                texts = example[k].split(' | ')
+                                if texts[0].replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower() == \
+                                        eng.replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower():
                                     is_example = False
                                     break
 
                             if is_example:
-                                example.append(eng + '|' + jpn)
-                            else:
-                                example[k] = example[k] + '・' + jpn
+                                example.append(eng + ' | ' + jpn)
+                            elif texts[1].find(jpn) < 0:
+                                example[k] += '・' + jpn
 
-                        words[key]['examples'] = example
+                    words[key]['examples'] = example
 
-                        word[key] = words[key]
+                    # その他の編集
+                    others = []
+                    other = words[key]['others']
 
-                    if 0 < len(word):
-                        rows.append(word)
-                merges[lv] = rows
+                    if 0 < len(other):
+                        for i in range(0, len(other)):
 
-            with open(merge_file.replace('.json', '.js'), 'w') as out_file:
-                out_file.write('const CONTENTS =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
+                            if len(other) <= i:
+                                break
 
-        com.log('除外件数: ' + str(out_count))
+                            other1 = other[i].replace(')', '')
+                            text = other1.split('(')[1]
+
+                            for k in reversed(range(i + 1, len(other))):
+                                other2 = other[k].replace(')', '')
+
+                                if other1.split('(')[0] == other2.split('(')[0]:
+                                    text += ',' + other2.split('(')[1]
+                                    del words[key]['others'][k]
+
+                            text = text.replace('&amp;#039;', '\'')
+                            text = list(set([other.strip() for other in text.split(',')]))
+                            others.append(other1.split('(')[0] + '(' + ", ".join([other for other in text]) + ')')
+
+                        words[key]['others'] = others
+
+                    partspeech = words[key]['partspeech']
+                    checks = ['動詞', '名詞']
+
+                    for i in reversed(range(0, len(partspeech))):
+                        for check in checks:
+
+                            if len(partspeech) <= i:
+                                break
+
+                            if partspeech[i] in check:
+                                for k in range(0, len(partspeech)):
+                                    if 0 <= partspeech[k].find(check + '('):
+                                        del partspeech[i]
+                                        break
+
+                    words[key]['partspeech'] = partspeech
+
+                    meanings = words[key]['meaning']
+
+                    meanings = [meaning.replace('．', '、') for meaning in meanings
+                                if not (meaning.find(')') < 0 <= meaning.find('(')
+                                        or meaning.find('(') < 0 <= meaning.find(')'))]
+
+                    words[key]['meaning'] = list(set(meanings))
+
+                    # # 例外処理
+                    # if 'be' == key:
+                    #     words[key]['changes'] = ['']
+                    #
+                    reg_key = key
+                    if 'TRUE' == key:
+                        reg_key = key.lower()
+
+                    # 単語に格納
+                    word[reg_key] = words[key]
+
+                if 0 < len(word):
+                    rows.append(word)
+
+            merges[lv] = rows
+
+        with open(cst.TEMP_PATH[cst.PC] + 'English/Content.js', 'w') as out_file:
+            out_file.write('const CONTENTS =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
+
+        com.log('除外件数: ' + str([str(i + 1) + '(' + str(out_counts[i]) + ')'
+                                for i in range(0, len(out_counts))]))
+        return True
+
+    def _get_images(self, selects):
+
+        wd = web_driver.driver(headless=IS_HEADLESS)
+        if wd is None:
+            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+            return False
+
+        wd_error = 0
+        is_merge = False
+
+        try:
+            for select in selects:
+
+                if 0 <= select.find('マージ'):
+                    is_merge = True
+                    continue
+
+                lv = int(select.split('_')[1])
+
+                wd.get(urllib.parse.quote(cst.ENGLISH_IMAGES_URL, 'utf8'))
+                com.sleep(5)
+
+                target = ''
+
+        except Exception as e:
+            com.log(self.myjob + ' イメージ作成 エラー発生: [Lv' + str(lv) + ', ' + target + '] ' + str(e), lv='W')
+            com.dialog(self.myjob + ' イメージ作成 でエラーが発生しました。\n[Lv' +
+                       str(lv) + ', ' + target + ']\n' + str(e), title='エラー発生', lv='W')
+            return False
+
+        # finally:
+        #     try: window.close()
+        #     except: pass
+        #     try: wd.quit()
+        #     except: pass
+
+        # マージを実行する場合
+        if is_merge:
+            self._merge_content(3)
+
         return True
 
 

@@ -34,7 +34,7 @@ BTNS = {cst.DEV_IP: {
     '英単語辞書': 'mac.english_dict',
     'Pochi': 'multiple.blog_pochi',
     '資産': 'mac.my_asset',
-    'ループ再生': 'mac.english_loop',
+    '画面キープ': 'mac.keep_display',
     }}
 EA_MENU = {
     'EA連続テスト': 'windows.ea_auto_test',

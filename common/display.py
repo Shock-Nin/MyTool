@@ -73,6 +73,7 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
     if 'check' == obj:
         center = [
             sg.Column([[
+                sg.Text('', key='', background_color=color) if row is None else
                 sg.Checkbox(row, True, key=row, checkbox_color='#FFFFFF', background_color=color,
                             text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))] for row in cols[i]],
                       element_justification=aligns[i], background_color=color, vertical_alignment='bottom')
@@ -102,7 +103,7 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
 
         # 全チェック外し
         if 'check_out' == event:
-            [[window[row].update(False) for row in cols[i]] for i in range(0, len(cols))]
+            [[window[row].update(False) for row in cols[i] if row is not None] for i in range(0, len(cols))]
 
         elif event in ['Start']:
 
@@ -110,13 +111,16 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
             is_check = False
             for i in range(0, len(cols)):
                 for k in range(0, len(cols[i])):
-                    if values[cols[i][k]]:
-                        is_check = True
+                    try:
+                        if values[cols[i][k]]:
+                            is_check = True
+                    except: pass
+
             if not is_check:
                 continue
 
             window.close()
-            return [[row for row in cols[i] if values[row]] for i in range(0, len(cols))]
+            return [[row for row in cols[i] if row is not None and values[row]] for i in range(0, len(cols))]
 
         if event in [sg.WIN_CLOSED, 'OK', 'Cancel']:
             break
