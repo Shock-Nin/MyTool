@@ -46,9 +46,8 @@ class Function:
             self.log_delete(fnc)
 
         elif 'ヒストリカル編集' == fnc:
-            self.edit_history(
-                fnc, in_path=['processing/old/', ''], out_path='processing/'
-            )
+            self.edit_history(fnc)
+
         elif 'ヒストリカルコピー' == fnc:
             self.copy_history(
                 fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_TEST/Test2', 'MT4_RATE/MyFx'],
@@ -277,14 +276,14 @@ class Function:
                                                             for row in msg])), fnc + ' 完了')
 
     # TickstoryのCSVファイル編集
-    def edit_history(self, fnc, in_path, out_path):
+    def edit_history(self, fnc):
         if self.ip == cst.DEV_IP:
 
             is_interrupt = False
             total_time = 0
 
-            out_path = cst.HST_PATH[cst.PC] + out_path
-            files = os.listdir(cst.HST_PATH[cst.PC] + in_path[0])
+            out_path = cst.HST_PATH[cst.PC]
+            files = os.listdir(cst.HST_PATH[cst.PC] + '_old')
             files = [file for file in files if 0 <= file.find('.csv')]
 
             err_msg = ''
@@ -303,10 +302,10 @@ class Function:
                         window[files[0]].update(files[i] + '(' + str(i) + ' / ' + str(len(files)) + ')')
                         window[files[0] + '_'].update(i)
 
-                        for k in range(0, len(in_path)):
+                        for in_path in ['old', 'new']:
 
-                            com.log('読み込み中: ' + in_path[k] + files[i])
-                            in_file = cst.HST_PATH[cst.PC] + in_path[k] + files[i]
+                            com.log('読み込み中: ' + in_path + '/' + files[i])
+                            in_file = cst.HST_PATH[cst.PC] + '_' + in_path + '/' + files[i]
                             merge_file.append(pd.read_csv(in_file, encoding='cp932'))
 
                             # 中断イベント
@@ -325,7 +324,7 @@ class Function:
 
                     result = pd.concat(merge_file)
                     result['Volume'] = 10.0
-                    result.to_csv(out_path + files[i], index=False)
+                    result.to_csv(out_path + '/' + files[i], index=False)
 
                     run_time = com.time_end(start_time)
                     total_time += run_time

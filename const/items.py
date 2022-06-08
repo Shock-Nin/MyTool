@@ -72,22 +72,20 @@ DAY_WEEK = ['月', '火', '水', '木', '金']
 # 英単語辞書URL(%s)
 ENGLISH_USE_URL = 'https://free-liberty.com:1980/login'
 ENGLISH_MASTER_URL = 'http://web.archive.org/web/20081219085629/http://www.alc.co.jp/goi/svl_l%s_list.htm'
-# ENGLISH_MASTER_URL = 'https://tokoton-eitango.com/eitango/levelindex/'
-ENGLISH_CONTENTS_URL = 'https://ejje.weblio.jp/content/%s?erl=true'
 ENGLISH_IMAGES_URL = 'https://www.google.com/search?q=%s+イメージ'
 ENGLISH_MASTER_LEVEL = 12
-# ENGLISH_MASTER_LEVEL = 4
 ENGLISH_NOUNS = {'doushi': '動詞', 'meishi': '名詞', 'keiyoshi': '形容詞', 'fukushi': '副詞', 'zenchishi': '前置詞'}
 # ENGLISH_IMAGES_URL = 'https://www.google.com/search?q=consequence+%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8'
 
 ENGLISH_DICT_URL = {
-    'Weblio': 'https://ejje.weblio.jp/content/',
-    '英ナビ': 'https://www.ei-navi.jp/dictionary/content/',
-    '英辞郎': 'https://eow.alc.co.jp/search?q=',
-    'LONGMAN': 'https://www.ldoceonline.com/jp/dictionary/english-japanese/'
+    'Google': 'https://translate.google.co.jp/?hl=ja&sl=en&tl=ja&text=%s&op=translate',
+    'Weblio': 'https://ejje.weblio.jp/content/%s',
+    '英ナビ': 'https://www.ei-navi.jp/dictionary/content/%s',
+    '英辞郎': 'https://eow.alc.co.jp/search?q=%s',
+    'LONGMAN': 'https://www.ldoceonline.com/jp/dictionary/english-japanese/%s'
 }
 
-LONGMAN_PARTSPEECH = {
+EINAVI_PARTSPEECH = {
     '動': '動詞', '助': '助動詞', '名': '名詞', '代': '代名詞', '疑': '疑問詞',
     '形': '形容詞', '副': '副詞', '前': '前置詞', '接': '接続詞', '限': '限定詞', '特': '限定詞'
 }
