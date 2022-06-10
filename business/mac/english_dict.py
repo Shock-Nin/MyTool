@@ -180,23 +180,13 @@ class EnglishDict:
             data = pd.read_csv(merge_file.replace(
                 FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), header=None)
 
-            # data = data.drop(data.columns[[2, 3]], axis=1)
             rows = []
             for i in range(0, len(data)):
                 phrase = data.at[i, 1]
 
-                # if 0 <= phrase.find(' '):
-                #     phrase = phrase.split(' ')
-                #
-                # elif 0 <= phrase.find('-'):
-                #     phrase = phrase.split('-')
-                # else:
-                #     phrase = [phrase]
-
                 for txt in [phrase]:
                     rows.append(txt)
 
-            # rows.sort()
             datas.append(pd.DataFrame(data=[[str(lv), row] for row in rows]))
 
         datas = pd.concat(datas)
@@ -220,7 +210,7 @@ class EnglishDict:
             datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
                          ('Weblio' if insert else 'Master') + '.csv', 'r').read().split('\n')
             if insert:
-                selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL / 2 + 1)]
+                selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)]
             insert_datas = []
 
             for select in selects:
@@ -245,13 +235,6 @@ class EnglishDict:
 
                     # 単語個別のHTML取得を、1分まで実施
                     for target in targets:
-
-                        # # 部分検証用
-                        # if 5 < count < 113:
-                        #     count += 1
-                        #     continue
-                        # if 120 < count:
-                        #     break
 
                         is_html = False
                         for i in range(0, 60):
@@ -443,7 +426,7 @@ class EnglishDict:
             datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
                          ('Einavi' if insert else 'Master') + '.csv', 'r').read().split('\n')
             if insert:
-                selects = ['追加_' + str(k) for k in range(1, int(cst.ENGLISH_MASTER_LEVEL / 2) + 1)]
+                selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)]
             insert_datas = []
 
             for select in selects:
@@ -720,7 +703,7 @@ class EnglishDict:
             datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
                          ('Google' if insert else 'Master') + '.csv', 'r').read().split('\n')
             if insert:
-                selects = ['追加_' + str(k) for k in range(1, int(cst.ENGLISH_MASTER_LEVEL / 2) + 1)]
+                selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)]
             insert_datas = []
 
             for select in selects:
@@ -750,7 +733,7 @@ class EnglishDict:
                         sec = 0
                         is_match = False
 
-                        while sec < 15:
+                        while sec < 5:
 
                             # 中断イベント
                             if _is_interrupt(window, event):
@@ -767,7 +750,7 @@ class EnglishDict:
                                 wd.get(cst.ENGLISH_DICT_URL['Google'] % target)
                                 com.sleep(1)
 
-                                while sec < 15:
+                                while sec < 5:
 
                                     shot, gray = com.shot_grab()
                                     x, y = com.match(shot, gray, cst.MATCH_PATH + 'english/google_trans.png', (0, 0, 255))
@@ -880,6 +863,7 @@ class EnglishDict:
 
         base_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[2][2] + '.' + FUNCTIONS[2][3]
         plus_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[1][2] + '.' + FUNCTIONS[1][3]
+        google_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[3][2] + '.' + FUNCTIONS[3][3]
 
         out_counts = [0 for _ in range(0, int(cst.ENGLISH_MASTER_LEVEL / 2))]
 
@@ -892,6 +876,16 @@ class EnglishDict:
                 for i in range(0, len(file[col])):
                     for key in file[col][i]:
                         plus[key] = file[col][i][key]
+
+        google = {}
+        for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
+            file = pd.read_json(google_file.replace(
+                FUNCTIONS[3][2] + '.', FUNCTIONS[3][2] + '_' + str(lv) + '.'), encoding='utf8')
+
+            for col in file:
+                for i in range(0, len(file[col])):
+                    for key in file[col][i]:
+                        google[key] = file[col][i][key]
 
         insert_file = open(base_file.replace(
             FUNCTIONS[2][2] + '.', FUNCTIONS[2][2] + '_0.'), 'r', encoding='utf8').read()
@@ -976,117 +970,204 @@ class EnglishDict:
                     if len(key) < 2:
                         continue
 
+                    # 発音表記がGoogleにあった場合、優先使用
+                    try:
+                        if re.match(r'\ˈ', google[key]['pronounce']) \
+                                or re.match(r'([a-z])', google[key]['pronounce']) \
+                                or re.match(r'([A-Z])', google[key]['pronounce']):
+                            words[key]['pronounce'] = google[key]['pronounce']
+                    except: pass
+
                     # 発音表記がない場合、Weblio使用
                     if 0 == len(words[key]['pronounce']):
                         words[key]['pronounce'] = plus[key]['pronounce']
+
                     words[key]['pronounce'] = words[key]['pronounce'].replace('&nbsp;', ' ')
+
+                    # 品詞がある場合は編集
+                    if 0 < len(words[key]['partspeech']):
+                        texts = words[key]['meaning'].replace('（', '(').replace('）', ')')
+                        texts = texts.replace('，', '、').split('、')
+                        meanings = []
+
+                        for text in texts:
+                            meanings.append(text)
+
+                        words[key]['meaning'] = list(set(meanings))[1:]
+
+                        partspeeches = []
+                        for i in range(0, len(words[key]['partspeech'])):
+
+                            texts = words[key]['partspeech'][i].split(',')
+                            text = ''
+
+                            for k in range(0, len(texts)):
+                                if texts[k] in ['動', '名']:
+
+                                    char = ''
+                                    for txt in plus[key]['partspeech']:
+
+                                        if 0 <= txt.find('自動詞'):
+                                            char += '自,'
+                                        elif 0 <= txt.find('他動詞'):
+                                            char += '他,'
+                                        elif 0 <= txt.find('不可算名詞'):
+                                            char += 'U,'
+                                        elif 0 <= txt.find('可算名詞'):
+                                            char += 'C,'
+                                        elif 0 <= txt.find('形容詞'):
+                                            char += ('形容詞,' if char.find('形容詞') < 0 else '')
+                                        elif 0 < len(txt):
+                                            char += (txt + ',' if char.find(txt) < 0 else '')
+                                        else:
+                                            char += ('名詞,' if char.find('名詞') < 0 else '')
+
+                                    if 0 <= char.find('自') or 0 <= char.find('他'):
+                                        text += ('' if 0 == len(text) else ',') + '動詞(自・他)'
+                                    elif 0 <= char.find('自'):
+                                        text += ('' if 0 == len(text) else ',') + '動詞(自)'
+                                    elif 0 <= char.find('他'):
+                                        text += ('' if 0 == len(text) else ',') + '動詞(他)'
+
+                                    if 0 <= char.find('U') or 0 <= char.find('C'):
+                                        text += ('' if 0 == len(text) else ',') + '名詞(可算・不可算)'
+                                    elif 0 <= char.find('U'):
+                                        text += ('' if 0 == len(text) else ',') + '名詞(可算)'
+                                    elif 0 <= char.find('C'):
+                                        text += ('' if 0 == len(text) else ',') + '名詞(不可算)'
+
+                                    text += ('' if 0 == len(text) else ',')
+                                    text += char.replace('自,', '').replace('他,', '').replace('U,', '').replace('C,', '')
+                                    text = text[: -1]
+
+                                # 動詞と名詞以外
+                                else:
+                                    text += ('' if 0 == len(text) else ',')
+                                    text += cst.EINAVI_PARTSPEECH[texts[k]]
+
+                            text = '名詞' if 0 == len(text) else text.split(',')
+                            partspeeches.append(text)
+
+                        texts = []
+                        for lists in partspeeches:
+                            for text in lists:
+                                texts.append(text)
+
+                        words[key]['partspeech'] = list(set(texts))
+
+                    # 和訳にWeblio追記
+                    meaning = plus[key]['meaning']
+                    meaning_kana = []
+                    if (0 <= meaning.find('の')
+                            and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
+                                 or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))):
+
+                        com.log('変化形(meanibg)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
+                        out_counts[lv - 1] += 1
+                        continue
+
+                    # 意味の編集
+                    if 0 <= meaning.find('対訳は、'):
+                        meaning = meaning.split('対訳は、')[1]
+
+                    meanings = []
+                    for txt in meaning.replace('；', '、').split('、'):
+
+                        txt = txt.replace('（', '(').replace('）', ')')
+                        if txt.find(')') < 0 <= txt.find('('):
+                            txt = txt.split('(')[0].strip()
+                        elif txt.find('(') < 0 <= txt.find(')') \
+                                or 0 <= txt.find('表記)') or 0 <= txt.find('などです。'):
+                            continue
+
+                        txt = txt.replace('(通例', '(').replace('通例 ', '')
+                        txt = txt.replace('…', '〜').replace('・', '．')
+                        for check in ['(〜を)', '(〜の)', '(〜に)', '(〜へ)', '(〜と)',
+                                      '(〜は)', '(〜が)', '(〜で)', '(へ)', '(〜ない)']:
+
+                            if 0 <= txt.find(check):
+                                txt = txt.replace(check, '[' + check[1: -1] + ']')
+
+                        meanings.append(txt)
+                    meaning = "、".join(txt for txt in meanings)
+
+                    # (())
+                    while 0 <= meaning.find('('):
+
+                        # 1 ( 2 ) 3
+                        txt1 = meaning[: meaning.find('(')]
+                        txt2 = meaning[meaning.find('(') + 1:]
+                        txt3 = txt2[txt2.find(')') + 1:]
+
+                        txt = txt2[: txt2.find(')')]
+                        next_no = meaning.find(')') + txt3.find('、')
+
+                        # ()通常、中に"、"あり、次の和訳あり (、)、
+                        if meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')') <= \
+                                next_no:
+                            meaning = txt1 + '{' + txt.replace('、', '．') + '}'
+                            meaning += txt3
+
+                        # ()通常、中に"、"なし、次の和訳あり ()、
+                        elif meaning.find('(') < meaning.find(')') <= next_no:
+                            meaning = txt1 + '{' + txt + '}'
+                            meaning += txt3
+
+                        # ()通常、中に"、"あり、次の和訳なし (、)
+                        elif next_no < 0 < \
+                                meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')'):
+                            meaning = txt1 + '{' + txt.replace('、', '．') + '}'
+
+                        # ()通常、中に"、"なし、次の和訳なし ()
+                        elif next_no < 0 < meaning.find('(') < meaning.find(')'):
+                            meaning = txt1 + '{' + txt + '}'
+
+                        # )なしの場合
+                        else:
+                            # 次の和訳あり (、
+                            if 0 <= meaning.find('、'):
+                                meaning = txt1 + '{' + txt2[: txt2.find('、')].replace(')', '}')
+                                meaning += txt2[txt2.find('、'):]
+
+                            # 次の和訳なし (
+                            else:
+                                meaning = txt1 + '{' + txt2.replace(')', '}')
+
+                    meanings = meaning.replace('{', '(').replace('}', ')').split('、')
+                    meaning = []
+                    for i in range(0, len(meanings)):
+
+                        is_meaning = True
+                        for k in range(0, len(meaning)):
+
+                            if 0 <= meaning[k].find(meanings[i].split('(')[0]) \
+                                    or meaning[k].replace('「', '').replace('」', '') == \
+                                    meanings[i].replace('「', '').replace('」', '') \
+                                    or meaning[k].replace(meaning[k][meaning[k].find('['): meaning[k].rfind(']')], '') == \
+                                    meanings[i].replace(meanings[i][meanings[i].find('['): meanings[i].rfind(']')], ''):
+                                is_meaning = False
+                                break
+
+                        if is_meaning:
+                            txt = meanings[i].split('。')[1] \
+                                if 0 <= meanings[i].find('。') else meanings[i]
+                            meaning.append(txt)
+                            kks = pykakasi.kakasi()
+                            kks.setMode('J', 'H')
+                            meaning_kana.append(kks.getConverter().do(txt))
+
+                    texts = [text.replace('}', ')') for text in meaning if text.find('《1') < 0]
+                    meanings = words[key]['meaning']
+                    meanings = ([] if 0 == len(meanings) else meanings)
+
+                    for text in texts:
+                        if 0 < len(text):
+                            meanings.append(text)
+
+                    words[key]['meaning'] = list(set(meanings))
 
                     # 品詞がない場合、Weblio使用
                     if 0 == len(words[key]['partspeech']):
-
-                        meaning = plus[key]['meaning']
-                        meaning_kana = []
-                        if (0 <= meaning.find('の')
-                                and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
-                                     or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))):
-
-                            com.log('変化形(meanibg)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
-                            out_counts[lv - 1] += 1
-                            continue
-
-                        # 意味の編集
-                        if 0 <= meaning.find('対訳は、'):
-                            meaning = meaning.split('対訳は、')[1]
-
-                        meanings = []
-                        for txt in meaning.replace('；', '、').split('、'):
-
-                            txt = txt.replace('（', '(').replace('）', ')')
-                            if txt.find(')') < 0 <= txt.find('('):
-                                txt = txt.split('(')[0].strip()
-                            elif txt.find('(') < 0 <= txt.find(')') \
-                                    or 0 <= txt.find('表記)') or 0 <= txt.find('などです。'):
-                                continue
-
-                            txt = txt.replace('(通例', '(').replace('通例 ', '')
-                            txt = txt.replace('…', '〜').replace('・', '．')
-                            for check in ['(〜を)', '(〜の)', '(〜に)', '(〜へ)', '(〜と)',
-                                          '(〜は)', '(〜が)', '(〜で)', '(へ)', '(〜ない)']:
-
-                                if 0 <= txt.find(check):
-                                    txt = txt.replace(check, '[' + check[1: -1] + ']')
-
-                            meanings.append(txt)
-                        meaning = "、".join(txt for txt in meanings)
-
-                        # (())
-                        while 0 <= meaning.find('('):
-
-                            # 1 ( 2 ) 3
-                            txt1 = meaning[: meaning.find('(')]
-                            txt2 = meaning[meaning.find('(') + 1:]
-                            txt3 = txt2[txt2.find(')') + 1:]
-
-                            txt = txt2[: txt2.find(')')]
-                            next_no = meaning.find(')') + txt3.find('、')
-
-                            # ()通常、中に"、"あり、次の和訳あり (、)、
-                            if meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')') <= \
-                                    next_no:
-                                meaning = txt1 + '{' + txt.replace('、', '．') + '}'
-                                meaning += txt3
-
-                            # ()通常、中に"、"なし、次の和訳あり ()、
-                            elif meaning.find('(') < meaning.find(')') <= next_no:
-                                meaning = txt1 + '{' + txt + '}'
-                                meaning += txt3
-
-                            # ()通常、中に"、"あり、次の和訳なし (、)
-                            elif next_no < 0 < \
-                                    meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')'):
-                                meaning = txt1 + '{' + txt.replace('、', '．') + '}'
-
-                            # ()通常、中に"、"なし、次の和訳なし ()
-                            elif next_no < 0 < meaning.find('(') < meaning.find(')'):
-                                meaning = txt1 + '{' + txt + '}'
-
-                            # )なしの場合
-                            else:
-                                # 次の和訳あり (、
-                                if 0 <= meaning.find('、'):
-                                    meaning = txt1 + '{' + txt2[: txt2.find('、')].replace(')', '}')
-                                    meaning += txt2[txt2.find('、'):]
-
-                                # 次の和訳なし (
-                                else:
-                                    meaning = txt1 + '{' + txt2.replace(')', '}')
-
-                        meanings = meaning.replace('{', '(').replace('}', ')').split('、')
-                        meaning = []
-                        for i in range(0, len(meanings)):
-
-                            is_meaning = True
-                            for k in range(0, len(meaning)):
-
-                                if 0 <= meaning[k].find(meanings[i].split('(')[0]) \
-                                        or meaning[k].replace('「', '').replace('」', '') == \
-                                        meanings[i].replace('「', '').replace('」', '') \
-                                        or meaning[k].replace(meaning[k][meaning[k].find('['): meaning[k].rfind(']')], '') == \
-                                        meanings[i].replace(meanings[i][meanings[i].find('['): meanings[i].rfind(']')], ''):
-                                    is_meaning = False
-                                    break
-
-                            if is_meaning:
-                                txt = meanings[i].split('。')[1] \
-                                    if 0 <= meanings[i].find('。') else meanings[i]
-                                meaning.append(txt)
-                                kks = pykakasi.kakasi()
-                                kks.setMode('J', 'H')
-                                meaning_kana.append(kks.getConverter().do(txt))
-
-                        text = [text.replace('}', ')') for text in meaning]
-                        words[key]['meaning'] = list(set(text))
-
                         partspeeches = []
                         txts = []
 
@@ -1155,116 +1236,6 @@ class EnglishDict:
 
                         words[key]['partspeech'] = partspeeches
 
-                    # 品詞がある場合は編集
-                    else:
-                        meaning = words[key]['meaning'].replace('（', '(').replace('）', ')')
-
-                        # (())
-                        while 0 <= meaning.find('('):
-
-                            # 1 ( 2 ) 3
-                            txt1 = meaning[: meaning.find('(')]
-                            txt2 = meaning[meaning.find('(') + 1:]
-                            txt3 = txt2[txt2.find(')') + 1:]
-
-                            txt = txt2[: txt2.find(')')]
-                            next_no = meaning.find(')') + txt3.find('、')
-
-                            # ()通常、中に"、"あり、次の和訳あり (、)、
-                            if meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')') <= \
-                                    next_no:
-                                meaning = txt1 + '{' + txt.replace('、', '．') + '}'
-                                meaning += txt3
-
-                            # ()通常、中に"、"なし、次の和訳あり ()、
-                            elif meaning.find('(') < meaning.find(')') <= next_no:
-                                meaning = txt1 + '{' + txt + '}'
-                                meaning += txt3
-
-                            # ()通常、中に"、"あり、次の和訳なし (、)
-                            elif next_no < 0 < \
-                                    meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')'):
-                                meaning = txt1 + '{' + txt.replace('、', '．') + '}'
-
-                            # ()通常、中に"、"なし、次の和訳なし ()
-                            elif next_no < 0 < meaning.find('(') < meaning.find(')'):
-                                meaning = txt1 + '{' + txt + '}'
-
-                            # )なしの場合
-                            else:
-                                # 次の和訳あり (、
-                                if 0 <= meaning.find('、'):
-                                    meaning = txt1 + '{' + txt2[: txt2.find('、')].replace(')', '}')
-                                    meaning += txt2[txt2.find('、'):]
-
-                                # 次の和訳なし (
-                                else:
-                                    meaning = txt1 + '{' + txt2.replace(')', '}')
-
-                        # words[key]['meaning'] = list(set(words[key]['meaning']))
-                        meaning = meaning.replace('{', '(').replace('}', ')').replace('，', '、')
-                        words[key]['meaning'] = list(set(meaning.split('、')))[1:]
-
-                        partspeeches = []
-                        for i in range(0, len(words[key]['partspeech'])):
-
-                            texts = words[key]['partspeech'][i].split(',')
-                            text = ''
-
-                            for k in range(0, len(texts)):
-                                if texts[k] in ['動', '名']:
-
-                                    char = ''
-                                    for txt in plus[key]['partspeech']:
-
-                                        if 0 <= txt.find('自動詞'):
-                                            char += '自,'
-                                        elif 0 <= txt.find('他動詞'):
-                                            char += '他,'
-                                        elif 0 <= txt.find('不可算名詞'):
-                                            char += 'U,'
-                                        elif 0 <= txt.find('可算名詞'):
-                                            char += 'C,'
-                                        elif 0 <= txt.find('形容詞'):
-                                            char += ('形容詞,' if char.find('形容詞') < 0 else '')
-                                        elif 0 < len(txt):
-                                            char += (txt + ',' if char.find(txt) < 0 else '')
-                                        else:
-                                            char += ('名詞,' if char.find('名詞') < 0 else '')
-
-                                    if 0 <= char.find('自') or 0 <= char.find('他'):
-                                        text += ('' if 0 == len(text) else ',') + '動詞(自・他)'
-                                    elif 0 <= char.find('自'):
-                                        text += ('' if 0 == len(text) else ',') + '動詞(自)'
-                                    elif 0 <= char.find('他'):
-                                        text += ('' if 0 == len(text) else ',') + '動詞(他)'
-
-                                    if 0 <= char.find('U') or 0 <= char.find('C'):
-                                        text += ('' if 0 == len(text) else ',') + '名詞(可算・不可算)'
-                                    elif 0 <= char.find('U'):
-                                        text += ('' if 0 == len(text) else ',') + '名詞(可算)'
-                                    elif 0 <= char.find('C'):
-                                        text += ('' if 0 == len(text) else ',') + '名詞(不可算)'
-
-                                    text += ('' if 0 == len(text) else ',')
-                                    text += char.replace('自,', '').replace('他,', '').replace('U,', '').replace('C,', '')
-                                    text = text[: -1]
-
-                                # 動詞と名詞以外
-                                else:
-                                    text += ('' if 0 == len(text) else ',')
-                                    text += cst.EINAVI_PARTSPEECH[texts[k]]
-
-                            text = '名詞' if 0 == len(text) else text.split(',')
-                            partspeeches.append(text)
-
-                        texts = []
-                        for lists in partspeeches:
-                            for text in lists:
-                                texts.append(text)
-
-                        words[key]['partspeech'] = list(set(texts))
-
                     # 変化形がない場合、Weblio使用
                     if 0 == len(words[key]['changes']):
 
@@ -1278,7 +1249,11 @@ class EnglishDict:
                             elif 0 <= txt.find(','):
                                 txt = txt.split(',')[1].strip()
 
-                            changes.append(txt.split('：')[1] if 0 <= txt.find('：') else txt)
+                            txt = txt.split('：')[1] if 0 <= txt.find('：') else txt
+
+                            if 0 < len(txt):
+                                changes.append(txt)
+
                         words[key]['changes'] = changes
 
                     # 変化形がある場合の編集
@@ -1300,8 +1275,11 @@ class EnglishDict:
                         if 100 < len(eng):
                             continue
 
-                        jpn = jpn.replace('（', '(').replace('）', ')')
-                        example.append(eng + '|' + jpn)
+                        eng = eng.replace('\"', '').strip()
+                        jpn = jpn.replace('（', '(').replace('）', ')').replace('\"', '').strip()
+
+                        if 0 < len(eng) and 0 < len(jpn):
+                            example.append(eng + ' | ' + jpn)
 
                     # 例文が少ない場合、Weblioの例文を連結
                     if len(example) <= 5:
@@ -1314,6 +1292,9 @@ class EnglishDict:
 
                             if 100 < len(eng) or 0 <= examples[i].find('://'):
                                 continue
+                            if re.match(r'([a-z])', jpn.strip()) or re.match(r'([A-Z])', jpn.strip()) \
+                                    or re.match(r'/', jpn.strip()) or 0 <= jpn.find('年生まれ'):
+                                continue
 
                             if 0 <= eng.find(key.upper()) or key == eng.strip() \
                                     or 0 <= examples[i].find('＜') or 0 <= examples[i].find('年−') \
@@ -1324,17 +1305,16 @@ class EnglishDict:
                             eng = eng.replace('（を略して通例）', ' ')
 
                             if eng[2:].find('\"') < eng.find('\"') == 0:
-                                eng = eng.replace('\"', '')
                                 jpn = jpn.replace('「', '')
 
                             # 細かい整形
-                            eng = eng.replace('＝', ' = ').replace('；', ' = ').replace('()', '')
+                            eng = eng.replace('＝', ' / ').replace('；', ' / ').replace('()', '')
                             eng = eng.replace(eng[eng.find('〈'): eng.rfind('〉')], '')
                             eng = eng.replace(eng[eng.find('《'): eng.rfind('》')], '')
 
                             eng = eng.replace('（', '(').replace('）', ')')
                             eng = eng.replace('&amp;amp;', '＆').replace('&amp;', '＆').replace('&nbsp;', ' ')
-                            eng = eng.replace('&gt;', ' ')
+                            eng = eng.replace('&gt;', ' ').replace('\"', '')
                             eng = eng.replace('+-', '').replace('-+', '').replace('---', '')
                             eng = eng.replace('[', '').replace(']', '').replace('(', '').replace(')', '')
                             eng = eng.replace('{', '').replace('}', '').replace('__', '')
@@ -1342,8 +1322,10 @@ class EnglishDict:
 
                             if eng.endswith('.') or eng.endswith(','):
                                 eng = eng[:-1]
+                            if eng.startswith(','):
+                                eng = eng[1:].strip()
 
-                            jpn = jpn.replace('()', '')
+                            jpn = jpn.replace('()', '').replace('\"', '')
                             jpn = jpn.replace(jpn[jpn.find('《'): jpn.rfind('》')], '')
 
                             jpn = jpn.replace('（', '(').replace('）', ')')
@@ -1351,7 +1333,9 @@ class EnglishDict:
                             jpn = jpn.replace('<b>', '').replace('</b>', '').replace('》', '').strip()
 
                             if jpn.endswith('.') or jpn.endswith('；') or jpn.endswith('：') or jpn.endswith('。'):
-                                jpn = jpn[:-1]
+                                jpn = jpn[:-1].strip()
+                            if jpn.startswith('、'):
+                                jpn = jpn[1:].strip()
 
                             # 同一例文の複数和訳まとめ
                             is_example = True
@@ -1363,10 +1347,11 @@ class EnglishDict:
                                     is_example = False
                                     break
 
-                            if is_example:
-                                example.append(eng + ' | ' + jpn)
-                            elif texts[1].find(jpn) < 0:
-                                example[k] += '・' + jpn
+                            if 0 < len(eng) and 0 < len(jpn):
+                                if is_example:
+                                    example.append(eng + ' | ' + jpn)
+                                elif texts[1].find(jpn) < 0:
+                                    example[k] += ' / ' + jpn
 
                     words[key]['examples'] = example
 
@@ -1396,6 +1381,7 @@ class EnglishDict:
 
                         words[key]['others'] = others
 
+                    # 最終チェック
                     partspeech = words[key]['partspeech']
                     checks = ['動詞', '名詞']
 
@@ -1407,30 +1393,71 @@ class EnglishDict:
 
                             if partspeech[i] in check:
                                 for k in range(0, len(partspeech)):
+
                                     if 0 <= partspeech[k].find(check + '('):
                                         del partspeech[i]
                                         break
 
                     words[key]['partspeech'] = partspeech
 
-                    meanings = words[key]['meaning']
+                    texts = words[key]['meaning']
+                    meanings = []
+                    count = 0
 
-                    meanings = [meaning.replace('．', '、') for meaning in meanings
-                                if not (meaning.find(')') < 0 <= meaning.find('(')
-                                        or meaning.find('(') < 0 <= meaning.find(')'))]
+                    for text in texts:
 
-                    words[key]['meaning'] = list(set(meanings))
+                        if not (text.find(')') < 0 <= text.find('(')
+                                or text.find('(') < 0 <= text.find(')')):
 
-                    # # 例外処理
-                    # if 'be' == key:
-                    #     words[key]['changes'] = ['']
-                    #
+                            text = text.replace('．', '、').strip()
+                            meanings.append(text)
+
+                            if not re.match(r'([ア-ン])', text):
+                                count += 1
+
+                    texts = meanings
+                    if 1 <= count:
+                        meanings = []
+
+                        for text in texts:
+                            if not re.match(r'([ア-ン])', text):
+                                meanings.append(text)
+
+                    texts = meanings
+                    if 2 < len(texts):
+
+                        meanings = []
+                        for i in reversed(range(1, len(texts))):
+
+                            is_meaning = True
+                            if 1 < len(texts[i]):
+                                for k in range(0, i - 1):
+
+                                    if 1 < len(texts[k]):
+                                        if texts[k].startswith(texts[i]) or texts[k].endswith(texts[i]):
+                                            is_meaning = False
+
+                                        if (5 < len(texts) and 10 < len(texts[i])) \
+                                                or (2 < len(texts) and 13 < len(texts[i])):
+                                            is_meaning = False
+
+                            if is_meaning:
+                                meanings.append(texts[i])
+
+                    meanings = list(set(meanings))
+                    words[key]['meaning'] = meanings
+
+                    # 例外処理
                     reg_key = key
                     if 'TRUE' == key:
                         reg_key = key.lower()
 
                     # 単語に格納
-                    word[reg_key] = words[key]
+                    if 0 < len(words[key]['partspeech'][0]):
+                        word[reg_key] = words[key]
+                    else:
+                        com.log('partspeechなし: ' + str(lv) + ', ' + key)
+                        out_counts[lv - 1] += 1
 
                 if 0 < len(word):
                     rows.append(word)
@@ -1493,359 +1520,3 @@ def _is_interrupt(window, event):
         window.close()
         return True
     return False
-
-
-    # # Weblio.json作成
-    # def _merge_content_(self, _):
-    #     fnc = 1
-    #     merge_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[fnc][2] + '.' + FUNCTIONS[fnc][3]
-    #
-    #     out_count = 0
-    #     merges = {}
-    #
-    #     insert_file = open(merge_file.replace(
-    #         FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_0.'), 'r', encoding='utf8').read()
-    #     insert_file = json.loads(insert_file)
-    #
-    #     rows = []
-    #     merge = []
-    #
-    #     for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
-    #
-    #         file = pd.read_json(merge_file.replace(
-    #             FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), encoding='utf8')
-    #         for key in file:
-    #             rows.append(file[key])
-    #
-    #         if 0 == lv % 2:
-    #             merge.append(rows)
-    #             rows = []
-    #     for lv in range(1, len(merge) + 1):
-    #
-    #         old_keys = []
-    #         new_keys = []
-    #         old_datas = []
-    #         new_datas = []
-    #
-    #         try:
-    #             insert = insert_file[str(lv)]
-    #         except:
-    #             insert = []
-    #
-    #         if 0 < len(insert):
-    #
-    #             datas = pd.DataFrame(pd.Series(insert), columns=[1])
-    #             for i in datas:
-    #                 for data in datas[i]:
-    #                     for key in data:
-    #
-    #                         old_keys.append(key)
-    #                         new_keys.append(key.lower())
-    #                         old_datas.append({key: data[key]})
-    #
-    #         for words in merge[lv - 1]:
-    #             for word in words:
-    #                 for key in word:
-    #
-    #                     old_keys.append(key)
-    #                     new_keys.append(key.lower())
-    #                     old_datas.append({key: word[key]})
-    #
-    #         new_keys.sort()
-    #         for key1 in new_keys:
-    #
-    #             is_append = False
-    #             for data in old_datas:
-    #
-    #                 for key2 in data:
-    #                     if key1 == key2.lower():
-    #
-    #                         try:
-    #                             if new_datas[len(new_datas) - 1][key2] is not None:
-    #                                 continue
-    #                         except: pass
-    #
-    #                         new_datas.append({key2: data[key2]})
-    #                         is_append = True
-    #                         break
-    #
-    #                 if is_append:
-    #                     break
-    #
-    #             merges[lv] = new_datas
-    #
-    #         rows = []
-    #
-    #         for words in merges[lv]:
-    #             word = {}
-    #
-    #             for key in words:
-    #
-    #                 if len(key) < 2:
-    #                     continue
-    #
-    #                 if 0 == len(words[key]['pronounce']):
-    #                     com.log('発声なし(pronounce)除外: ' + str(lv) + ', ' + key)
-    #
-    #                 meaning = words[key]['meaning']
-    #                 meaning_kana = []
-    #                 if (meaning.find('。') < 0 <= meaning.find('の')
-    #                         and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
-    #                              or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))):
-    #
-    #                     com.log('変化形(meanibg)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
-    #                     out_count += 1
-    #                     continue
-    #
-    #                 # 意味の編集
-    #                 if 0 <= meaning.find('対訳は、'):
-    #                     meaning = meaning.split('対訳は、')[1]
-    #
-    #                 meanings = []
-    #                 for txt in meaning.replace('；', '、').split('、'):
-    #
-    #                     if txt.find('）') < 0 <= txt.find('（'):
-    #                         txt = txt.split('（')[0].strip()
-    #                     elif txt.find('（') < 0 <= txt.find('）') \
-    #                             or 0 <= txt.find('表記)') or 0 <= txt.find('などです。'):
-    #                         continue
-    #
-    #                     txt = txt.replace('(通例', '(').replace('通例 ', '')
-    #                     txt = txt.replace('…', '〜').replace('・', '．')
-    #                     for check in ['(〜を)', '(〜の)', '(〜に)', '(〜へ)', '(〜と)',
-    #                                   '(〜は)', '(〜が)', '(〜で)', '(へ)', '(〜ない)']:
-    #
-    #                         if 0 <= txt.find(check):
-    #                             txt = txt.replace(check, '[' + check[1: -1] + ']')
-    #
-    #                     meanings.append(txt)
-    #                 meaning = "、".join(txt for txt in meanings)
-    #
-    #                 # (())
-    #                 while 0 <= meaning.find('('):
-    #
-    #                     # 1 ( 2 ) 3
-    #                     txt1 = meaning[: meaning.find('(')]
-    #                     txt2 = meaning[meaning.find('(') + 1:]
-    #                     txt3 = txt2[txt2.find(')') + 1:]
-    #
-    #                     txt = txt2[: txt2.find(')')]
-    #                     next_no = meaning.find(')') + txt3.find('、')
-    #
-    #                     # ()通常、中に"、"あり、次の和訳あり (、)、
-    #                     if meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')') <= \
-    #                             next_no:
-    #                         meaning = txt1 + '{' + txt.replace('、', '．') + '}'
-    #                         meaning += txt3
-    #
-    #                     # ()通常、中に"、"なし、次の和訳あり ()、
-    #                     elif meaning.find('(') < meaning.find(')') <= next_no:
-    #                         meaning = txt1 + '{' + txt + '}'
-    #                         meaning += txt3
-    #
-    #                     # ()通常、中に"、"あり、次の和訳なし (、)
-    #                     elif next_no < 0 < \
-    #                             meaning.find('(') < meaning.find('(') + txt.find('、') < meaning.find(')'):
-    #                         meaning = txt1 + '{' + txt.replace('、', '．') + '}'
-    #
-    #                     # ()通常、中に"、"なし、次の和訳なし ()
-    #                     elif next_no < 0 < meaning.find('(') < meaning.find(')'):
-    #                         meaning = txt1 + '{' + txt + '}'
-    #
-    #                     # )なしの場合
-    #                     else:
-    #                         # 次の和訳あり (、
-    #                         if 0 <= meaning.find('、'):
-    #                             meaning = txt1 + '{' + txt2[: txt2.find('、')].replace(')', '}')
-    #                             meaning += txt2[txt2.find('、'):]
-    #
-    #                         # 次の和訳なし (
-    #                         else:
-    #                             meaning = txt1 + '{' + txt2.replace(')', '}')
-    #
-    #                 meanings = meaning.replace('{', '(').replace('}', ')').split('、')
-    #                 meaning = []
-    #                 for i in range(0, len(meanings)):
-    #
-    #                     is_meaning = True
-    #                     for k in range(0, len(meaning)):
-    #
-    #                         if 0 <= meaning[k].find(meanings[i].split('(')[0]) \
-    #                                 or meaning[k].replace('「', '').replace('」', '') == \
-    #                                 meanings[i].replace('「', '').replace('」', '') \
-    #                                 or meaning[k].replace(meaning[k][meaning[k].find('['): meaning[k].rfind(']')], '') == \
-    #                                 meanings[i].replace(meanings[i][meanings[i].find('['): meanings[i].rfind(']')], ''):
-    #                             is_meaning = False
-    #                             break
-    #
-    #                     if is_meaning:
-    #                         txt = meanings[i].split('。')[1]\
-    #                             if 0 <= meanings[i].find('。') else meanings[i]
-    #                         meaning.append(txt)
-    #                         kks = pykakasi.kakasi()
-    #                         kks.setMode('J', 'H')
-    #                         meaning_kana.append(kks.getConverter().do(txt))
-    #
-    #                 words[key]['meaning'] = meaning
-    #                 # words[key]['meaning_kana'] = meaning_kana
-    #
-    #                 partspeeches = []
-    #                 txts = []
-    #
-    #                 if 0 == len(words[key]['partspeech']):
-    #                     words[key]['partspeech'] = ['名詞']
-    #
-    #                 for txt in words[key]['partspeech']:
-    #
-    #                     # 形容詞の単一化
-    #                     txt = txt.replace('(限定用法の形容詞)', '').replace('(叙述的用法の形容詞)', '')
-    #
-    #                     # 動詞の編集
-    #                     if txt.startswith('自動詞'):
-    #                         txt = txt.replace('自動詞', '動詞(自)')
-    #                     if txt.startswith('他動詞'):
-    #                         txt = txt.replace('他動詞', '動詞(他)')
-    #                     if txt.startswith('動詞(自動詞)'):
-    #                         txt = txt.replace('自動詞', '自')
-    #                     if txt.startswith('動詞(他動詞)'):
-    #                         txt = txt.replace('他動詞', '他')
-    #
-    #                     # 名詞の編集
-    #                     if 0 <= txt.find('可算名詞'):
-    #                         txt = txt.replace('名詞)', ')')
-    #
-    #                     txts.append(txt)
-    #                 txts = list(set(txts))
-    #
-    #                 # 動詞と名詞は、2種類あればひとまとめ
-    #                 v_count = 0
-    #                 n_count = 0
-    #                 for txt in txts:
-    #                     if 0 <= txt.find('自') or 0 <= txt.find('他'):
-    #                         v_count += 1
-    #                     elif 0 <= txt.find('可算'):
-    #                         n_count += 1
-    #                     else:
-    #                         partspeeches.append(txt)
-    #
-    #                 for txt in txts:
-    #                     if 0 <= txt.find('動詞(') and 2 == v_count:
-    #                         partspeeches.append('動詞(自・他)')
-    #                     elif 0 <= txt.find('名詞(') and 2 == n_count:
-    #                         partspeeches.append('名詞(可算・不可算)')
-    #                     elif 0 <= txt.find('可算名詞(不可算)') or 0 <= txt.find('不可算名詞(可算)'):
-    #                         partspeeches.append('名詞(可算・不可算)')
-    #                     else:
-    #                         partspeeches.append(txt)
-    #
-    #                 # 品詞の重複を削除
-    #                 words[key]['partspeech'] = list(set(partspeeches))
-    #
-    #                 # 品詞の「動詞」「名詞」を編集
-    #                 partspeeches = []
-    #                 for txt in words[key]['partspeech']:
-    #                     is_txt = True
-    #
-    #                     if txt in ['動詞', '名詞']:
-    #                         is_txt = True
-    #
-    #                         for txt2 in words[key]['partspeech']:
-    #                             if txt != txt2 and txt2.startswith(txt):
-    #                                 is_txt = False
-    #                     if is_txt:
-    #                         partspeeches.append(txt)
-    #
-    #                 words[key]['partspeech'] = partspeeches
-    #
-    #                 # 変化形の「●詞：」を除去
-    #                 changes = []
-    #                 for txt in words[key]['changes']:
-    #
-    #                     if 0 <= txt.find('(原形)'):
-    #                         continue
-    #
-    #                     elif 0 <= txt.find(','):
-    #                         txt = txt.split(',')[1].strip()
-    #
-    #                     changes.append(txt.split('：')[1] if 0 <= txt.find('：') else txt)
-    #                 words[key]['changes'] = changes
-    #
-    #                 # 品詞が存在しない場合
-    #                 if 0 == len(words[key]['partspeech'][0]):
-    #                     if key.endswith('ly'):
-    #                         words[key]['partspeech'] = ['副詞']
-    #                     elif 0 <= str(changes).find('複数形'):
-    #                         words[key]['partspeech'] = ['名詞']
-    #                     else:
-    #                         com.log('品詞(partspeech)除外: ' + str(lv) + ', ' + key)
-    #                         out_count += 1
-    #                         continue
-    #
-    #                 # 例文編集
-    #                 examples = words[key]['examples']
-    #                 example = []
-    #                 for i in range(0, len(examples)):
-    #
-    #                     eng = examples[i].split('|')[0]
-    #                     jpn = examples[i].split('|')[1]
-    #
-    #                     if 0 <= eng.find(key.upper()) or 0 <= examples[i].find('＜') \
-    #                             or key == eng.strip() or 0 <= examples[i].find('年−') \
-    #                             or 0 <= examples[i].find('also called') < examples[i].find('とも呼ばれる。'):
-    #                         continue
-    #
-    #                     eng = eng.replace('（を略して通例）', ' ')
-    #
-    #                     if eng[2:].find('\"') < eng.find('\"') == 0:
-    #                         eng = eng.replace('\"', '')
-    #                         jpn = jpn.replace('「', '')
-    #
-    #                     # 細かい整形
-    #                     eng = eng.replace('＝', ' = ').replace('；', ' = ').replace('()', '')
-    #                     eng = eng.replace(eng[eng.find('〈'): eng.rfind('〉')], '')
-    #                     eng = eng.replace(eng[eng.find('《'): eng.rfind('》')], '').strip()
-    #                     if eng.endswith('.') or eng.endswith(','):
-    #                         eng = eng[:-1]
-    #
-    #                     jpn = jpn.replace('()', '')
-    #                     jpn = jpn.replace(jpn[jpn.find('《'): jpn.rfind('》')], '').strip()
-    #                     if jpn.endswith('.') or jpn.endswith('；') or jpn.endswith('：') or jpn.endswith('。'):
-    #                         jpn = jpn[:-1]
-    #
-    #                     # 同一例文の複数和訳まとめ
-    #                     is_example = True
-    #                     for k in range(0, len(example)):
-    #
-    #                         texts = example[k].split(' | ')
-    #                         if texts[0].replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower() == \
-    #                                 eng.replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower():
-    #                             is_example = False
-    #                             break
-    #
-    #                     if is_example:
-    #                         example.append(eng + ' | ' + jpn)
-    #                     elif texts[1].find(jpn) < 0:
-    #                         example[k] += '・' + jpn
-    #
-    #                 words[key]['examples'] = example
-    #
-    #                 # 例外処理
-    #                 if 'be' == key:
-    #                     words[key]['changes'] = ['']
-    #
-    #                 reg_key = key
-    #                 if 'TRUE' == key:
-    #                     reg_key = key.lower()
-    #
-    #                 # 単語に格納
-    #                 word[reg_key] = words[key]
-    #
-    #             if 0 < len(word):
-    #                 rows.append(word)
-    #         merges[lv] = rows
-    #
-    #     with open(cst.TEMP_PATH[cst.PC] + 'English/Content.js', 'w') as out_file:
-    #         out_file.write('const CONTENTS =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
-    #
-    #     com.log('除外件数: ' + str(out_count))
-    #     return True

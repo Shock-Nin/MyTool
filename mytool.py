@@ -51,7 +51,8 @@ FUNC_MENU = {
     '週間レート': 'DEV',
     'Winアップデート': 'ALL',
     'ヒストリカル編集': 'DEV',
-    'ヒストリカルコピー': 'DEV',
+    'hstコピー(テスト)': 'DEV',
+    'hst転送(Web)': 'DEV',
     'Tickstory': 'DEV',
 }
 WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])

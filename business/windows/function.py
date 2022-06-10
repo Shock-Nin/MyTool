@@ -19,7 +19,7 @@ class Function:
 
     def do(self, fnc):
 
-        if fnc in ['ヒストリカル編集', 'ヒストリカルコピー']:
+        if fnc in ['ヒストリカル編集', 'hstコピー(テスト)', 'hst転送(Web)']:
             if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
                 return
 
@@ -48,12 +48,14 @@ class Function:
         elif 'ヒストリカル編集' == fnc:
             self.edit_history(fnc)
 
-        elif 'ヒストリカルコピー' == fnc:
-            self.copy_history(
+        elif 'hstコピー(テスト)' == fnc:
+            self.copy_history_test(
                 fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_TEST/Test2', 'MT4_RATE/MyFx'],
                 out_path=['Test1', 'Test1_2', 'Test1_3', 'Test2_2', 'Test3'],
                 hst_name=['Demo', 'Demo', 'Demo', 'Demo', 'Live']
             )
+        elif 'hst転送(Web)' == fnc:
+            self.copy_history_web(fnc, in_path='MT4_DEV/OANDA', hst_name='Demo')
         else:
             target = ''
             if 'MQL編集' == fnc:
@@ -322,6 +324,7 @@ class Function:
                     if is_interrupt:
                         break
 
+                    com.log('マージ編集中: ' + files[i])
                     result = pd.concat(merge_file)
                     result['Volume'] = 10.0
                     result.to_csv(out_path + '/' + files[i], index=False)
@@ -345,8 +348,8 @@ class Function:
 
         return True
 
-    # hstファイルのコピー
-    def copy_history(self, fnc, in_path, out_path, hst_name):
+    # hstファイルのコピー(テスト用)
+    def copy_history_test(self, fnc, in_path, out_path, hst_name):
         if cst.IP == cst.DEV_IP:
 
             is_interrupt = False
@@ -400,6 +403,70 @@ class Function:
                     com.log('コピー完了(' + com.conv_time_str(run_time) + ')  [' + cst.MT4_PATH[:-1] + '] ' +
                             in_path[i] + ' → MT4_TEST/' + out_path[i])
 
+            finally:
+                try: window.close()
+                except: pass
+
+            com.log(fnc + ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')')
+            com.dialog(('中断' if is_interrupt else '完了') + 'しました。(' + com.conv_time_str(total_time) + ')', fnc)
+
+        else:
+            com.log(fnc + ': 端末対象外 ' + cst.IPS[cst.IP])
+
+        return True
+
+    # hstファイルのコピー(Web用)
+    def copy_history_web(self, fnc, in_path, hst_name):
+        if cst.IP == cst.DEV_IP:
+
+            is_interrupt = False
+            total_time = 0
+            try:
+                while True:
+                    start_time = com.time_start()
+
+                    hst_paths = os.listdir(cst.MT4_PATH + in_path + '/history')
+                    out_path = cst.GDRIVE_PATH['Win'] + '受け渡し/history'
+
+                    # ヒストリカルデータの対象サーバー名を検索
+                    if not os.path.exists(out_path):
+                        os.mkdir(out_path)
+
+                    # ヒストリカルデータの対象サーバー名を検索
+                    for hst_path in hst_paths:
+                        if 0 <= hst_path.find(hst_name):
+                            break
+
+                    files = os.listdir(cst.MT4_PATH + in_path + '/history/' + hst_path)
+                    files = [file for file in files if 0 <= file.find('240.hst') or 0 <= file.find('1440.hst')]
+
+                    # 進捗表示
+                    window = com.progress('ヒストリカルデータコピー中', [files[0], len(files)], interrupt=True)
+                    event, values = window.read(timeout=0)
+
+                    for k in range(0, len(files)):
+
+                        window[files[0]].update(files[k] + '(' + str(k) + ' / ' + str(len(files)) + ')')
+
+                        shutil.copy2(cst.MT4_PATH + in_path + '/history/' + hst_path + '/' + files[k], out_path)
+                        com.log('コピー中: ' + hst_path + '/' + files[k] + ' | ' + out_path)
+
+                        # 中断イベント
+                        if _is_interrupt(window, event):
+                            is_interrupt = True
+                            break
+
+                    # 中断
+                    if is_interrupt:
+                        break
+                    window.close()
+
+                    run_time = com.time_end(start_time)
+                    total_time += run_time
+                    com.log('コピー完了(' + com.conv_time_str(run_time) + ')  ' + cst.MT4_PATH[:-1] +
+                            in_path + ' → ' + out_path + '/history')
+
+                    break
             finally:
                 try: window.close()
                 except: pass
