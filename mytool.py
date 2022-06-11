@@ -141,7 +141,7 @@ def main():
                                     font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (0, 5)))])
 
         location = (None, None) if 0 == DP[0] + DP[1] else (
-            win_x - DP[0] if 0 < DP[0] else 0, win_y - DP[1] if 0 < DP[1] else 0)
+            win_x - DP[0] if 0 < DP[0] else 15, win_y - DP[1] if 0 < DP[1] else 0)
 
         window = sg.Window(cst.PC, modal=True, keep_on_top=True, element_justification='c',
                            icon=(os.getcwd() + cst.ICON_FILE),
