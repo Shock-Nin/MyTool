@@ -143,8 +143,11 @@ class Function:
                     # 最適化チェック
                     opt_x, opt_y = com.match(shot, gray, cst.MATCH_PATH + 'auto_test/' +
                                              cst.MATCH_IMG_MT4['最適化OFF'], (255, 0, 255))
-
-                    com.click_pos(read_x + 5, read_y + 5)
+                    try:
+                        com.click_pos(read_x + 5, read_y + 5)
+                    except:
+                        com.dialog('メニュー位置をスタート横に変更してください。', title='メニュー位置エラー', lv='w')
+                        return False
                     com.sleep(2)
 
                     com.clip_copy((cst.GDRIVE_PATH['Win'] + 'FX/Presets/開発用.set').replace('/', '\\'), True)
