@@ -29,7 +29,7 @@ class Function:
                 affinity=['F', '2', '4', '8'],
                 dev_path={'MT4起動': 'MT4_INVEST', '週間レート': 'MT4_RATE'},
                 web_path=['Web_MT4'],
-                my_path=['FxPro', 'OANDA'],  # 'MyFx', 'XM'
+                my_path=['OANDA'],  # 'FxPro', 'MyFx', 'XM'
             )
         elif 'EX4コピー' == fnc:
             # コピー(target)はワイルドカード、削除(remove)は完全一致
@@ -121,21 +121,16 @@ class Function:
                 if shot is None:
                     return False
 
-                # エキスパート設定のマッチングが失敗の場合、エラー終了
-                expert_x, expert_y = com.match(shot, gray, cst.MATCH_PATH + 'auto_test/' +
-                                               cst.MATCH_IMG_MT4['エキスパート'], (0, 0, 255))
-                if expert_x is None:
-                    return False
-
                 for i in range(1, len(commands)):
                     subprocess.Popen(commands[i])
-                    com.sleep(3)
+                    com.sleep(5)
 
                     com.click_pos(expert_x + 5, expert_y + 5)
-                    com.sleep(2)
+                    com.sleep(3)
 
                     # 全体画面の撮影
                     shot, gray = com.shot_grab()
+                    com.sleep(2)
 
                     # 読み込みボタン
                     read_x, read_y = com.match(shot, gray, cst.MATCH_PATH + 'auto_test/' +
@@ -143,17 +138,18 @@ class Function:
                     # 最適化チェック
                     opt_x, opt_y = com.match(shot, gray, cst.MATCH_PATH + 'auto_test/' +
                                              cst.MATCH_IMG_MT4['最適化OFF'], (255, 0, 255))
+
                     try:
                         com.click_pos(read_x + 5, read_y + 5)
                     except:
                         com.dialog('メニュー位置をスタート横に変更してください。', title='メニュー位置エラー', lv='w')
                         return False
-                    com.sleep(2)
+                    com.sleep(3)
 
                     com.clip_copy((cst.GDRIVE_PATH['Win'] + 'FX/Presets/開発用.set').replace('/', '\\'), True)
-                    com.sleep(2)
+                    com.sleep(3)
                     com.click_pos(read_x + 5, read_y + 40)
-                    com.sleep(2)
+                    com.sleep(3)
 
                     # 最適化チェック
                     if opt_x is not None:
@@ -270,9 +266,14 @@ class Function:
                     files = [file for file in files if 0 <= file.find(deletes[i][1])]
 
                     for file in files:
-                        msg.append(path + '/' + deletes[i][0] + '/' + file)
-                        com.log('MT4ログ削除: ' + path + '/' + deletes[i][0] + '/' + file)
-                        os.remove(path + '/' + deletes[i][0] + '/' + file)
+                        target = path + '/' + deletes[i][0] + '/' + file
+                        try:
+                            os.remove(target)
+                            msg.append('　エラー: ' + target)
+                            com.log('MT4ログ削除: ' + target)
+                        except:
+                            msg.append(target)
+                            com.log('MT4ログ削除エラー: ' + target)
 
             com.log(fnc + '完了(' + str(len(msg)) + ')')
             com.dialog(fnc + '完了しました(' + str(len(msg)) + ')\n' +
