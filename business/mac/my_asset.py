@@ -224,8 +224,9 @@ class MyAsset:
         # 金額取得
         try:
             com.sleep(1)
-            result = web_driver.find_element(wd, '//*[@id="BALANCEINQUIRYBODYPERSONAL:FORM_HEAD:_idJsp233"]/span[2]') \
-                .text.replace(',', '').replace('円', '')
+            result = web_driver.find_element(
+                wd, '//*[@id="lyt-deposit"]/div/div[2]/div/div[3]/div[1]/table/tbody/tr/td/span[1]') \
+                .text.replace(',', '')
         except Exception as e:
             com.log('WebDriverエラー: 楽天銀行, ' + str(e), 'E')
             com.dialog('楽天銀行で、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')

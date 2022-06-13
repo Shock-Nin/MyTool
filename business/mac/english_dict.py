@@ -987,13 +987,14 @@ class EnglishDict:
                     # 品詞がある場合は編集
                     if 0 < len(words[key]['partspeech']):
                         texts = words[key]['meaning'].replace('（', '(').replace('）', ')')
-                        texts = texts.replace('，', '、').split('、')
+                        texts = texts.replace('，', '、').strip().split('、')
                         meanings = []
 
                         for text in texts:
-                            meanings.append(text)
+                            if 0 < len(text):
+                                meanings.append(text)
 
-                        words[key]['meaning'] = list(set(meanings))[1:]
+                        words[key]['meaning'] = meanings
 
                         partspeeches = []
                         for i in range(0, len(words[key]['partspeech'])):
@@ -1162,9 +1163,9 @@ class EnglishDict:
 
                     for text in texts:
                         if 0 < len(text):
-                            meanings.append(text)
+                            meanings.append(text.replace('，', '、').strip())
 
-                    words[key]['meaning'] = list(set(meanings))
+                    words[key]['meaning'] = meanings
 
                     # 品詞がない場合、Weblio使用
                     if 0 == len(words[key]['partspeech']):
@@ -1350,6 +1351,7 @@ class EnglishDict:
                             if 0 < len(eng) and 0 < len(jpn):
                                 if is_example:
                                     example.append(eng + ' | ' + jpn)
+
                                 elif texts[1].find(jpn) < 0:
                                     example[k] += ' / ' + jpn
 
@@ -1400,52 +1402,53 @@ class EnglishDict:
 
                     words[key]['partspeech'] = partspeech
 
-                    texts = words[key]['meaning']
-                    meanings = []
+                    for i in reversed(range(0, len(words[key]['meaning']))):
+                        text = words[key]['meaning'][i]
+
+                        if 17 < len(text) and 2 < len(words[key]['meaning']):
+                            words[key]['meaning'].remove(text)
+                            continue
+
+                        for k in range(0, i):
+                            if words[key]['meaning'][k] == text:
+                                words[key]['meaning'].remove(text)
+                                break
+
                     count = 0
 
-                    for text in texts:
+                    for i in reversed(range(1, len(words[key]['meaning']))):
+                        text = words[key]['meaning'][i]
 
-                        if not (text.find(')') < 0 <= text.find('(')
+                        if (text.find(')') < 0 <= text.find('(')
                                 or text.find('(') < 0 <= text.find(')')):
 
-                            text = text.replace('．', '、').strip()
-                            meanings.append(text)
-
+                            words[key]['meaning'].remove(text)
+                        else:
                             if not re.match(r'([ア-ン])', text):
                                 count += 1
 
-                    texts = meanings
                     if 1 <= count:
-                        meanings = []
 
-                        for text in texts:
-                            if not re.match(r'([ア-ン])', text):
-                                meanings.append(text)
+                        for i in reversed(range(1, len(words[key]['meaning']))):
+                            text = words[key]['meaning'][i]
 
-                    texts = meanings
-                    if 2 < len(texts):
+                            if re.match(r'([ア-ン])', text):
+                                words[key]['meaning'].remove(text)
 
-                        meanings = []
-                        for i in reversed(range(1, len(texts))):
+                    if 2 < len(words[key]['meaning']):
+                        for i in reversed(range(0, len(words[key]['meaning']))):
+                            text = words[key]['meaning'][i]
 
-                            is_meaning = True
-                            if 1 < len(texts[i]):
-                                for k in range(0, i - 1):
+                            if (1 == len(text) or 10 < len(text)) and 5 < len(words[key]['meaning']):
+                                words[key]['meaning'].remove(text)
+                                continue
 
-                                    if 1 < len(texts[k]):
-                                        if texts[k].startswith(texts[i]) or texts[k].endswith(texts[i]):
-                                            is_meaning = False
+                            for k in range(0, i):
+                                if words[key]['meaning'][k].startswith(text) or words[key]['meaning'][k].endswith(text) \
+                                        or text.startswith(words[key]['meaning'][k]) or text.endswith(words[key]['meaning'][k]):
 
-                                        if (5 < len(texts) and 10 < len(texts[i])) \
-                                                or (2 < len(texts) and 13 < len(texts[i])):
-                                            is_meaning = False
-
-                            if is_meaning:
-                                meanings.append(texts[i])
-
-                    meanings = list(set(meanings))
-                    words[key]['meaning'] = meanings
+                                    words[key]['meaning'].remove(text)
+                                    break
 
                     # 例外処理
                     reg_key = key
