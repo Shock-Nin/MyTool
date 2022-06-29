@@ -34,9 +34,9 @@ class Function:
         elif 'EX4コピー' == fnc:
             # コピー(target)はワイルドカード、削除(remove)は完全一致
             self.copy_ex4(
-                fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2', 'Test3', 'Test4'],
+                fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2', 'Test3'],
                 web_path=['Web_MT4'],
-                my_path=['FxPro', 'OANDA', 'Rakuten', 'MyFx', 'XM'],
+                my_path=['FxPro', 'OANDA', 'Rakuten', 'MyFx'],
                 target_ea=['AnomalyShocknin', 'AnomalyGoToBe'],
                 target_ind=['AnomalyShocknin', 'AnomalyGoToBe', 'sts', 'JikanDeGo', 'WheSitaDoch'],
                 remove_ea=[],
@@ -269,10 +269,10 @@ class Function:
                         target = path + '/' + deletes[i][0] + '/' + file
                         try:
                             os.remove(target)
-                            msg.append('　エラー: ' + target)
+                            msg.append(target)
                             com.log('MT4ログ削除: ' + target)
                         except:
-                            msg.append(target)
+                            msg.append('エラー: ' + target)
                             com.log('MT4ログ削除エラー: ' + target)
 
             com.log(fnc + '完了(' + str(len(msg)) + ')')

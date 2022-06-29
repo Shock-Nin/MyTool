@@ -37,9 +37,9 @@ BTNS = {cst.DEV_IP: {
     '画面キープ': 'mac.keep_display',
     }}
 EA_MENU = {
+    'EAデータ編集': 'windows.ea_edits',
     'EA連続テスト': 'windows.ea_auto_test',
     'EAテスト結合': 'windows.ea_merge_test',
-    'EAデータ編集': 'windows.ea_edits',
 }
 FUNC_MENU = {
     '最適化セット': 'DEV',

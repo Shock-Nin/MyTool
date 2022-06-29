@@ -99,24 +99,28 @@ for i in range(0, len(files) - cst.KEEP_LOG):
 # メール送信(デフォルトアカウントはブログ)
 def send_mail(subject, body, to, account=cst.BLOG_MAIL, password=cst.BLOG_MAIL_PW):
 
-    # MIMETextを作成
-    msg = MIMEText(body, 'html')
-    msg['Subject'] = subject
-    msg['To'] = to
-    msg['From'] = account
+    try:
+        # MIMETextを作成
+        msg = MIMEText(body, 'html')
+        msg['Subject'] = subject
+        msg['To'] = to
+        msg['From'] = account
 
-    # サーバを指定する
-    server = smtplib.SMTP('smtp.gmail.com', 587)
-    server.starttls()
-    server.login(account, password)
+        # サーバを指定する
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(account, password)
 
-    # メールを送信する
-    server.send_message(msg)
+        # メールを送信する
+        server.send_message(msg)
 
-    # 閉じる
-    server.quit()
+        # 閉じる
+        server.quit()
 
-    log('メール送信: [' + to + '] ' + subject)
+        log('メール送信: [' + to + '] ' + subject)
+
+    except:
+        log('メール送信失敗: [' + to + '] ' + subject)
 
 
 # メニュー系CSV読み込み

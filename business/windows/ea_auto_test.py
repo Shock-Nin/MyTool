@@ -153,7 +153,8 @@ class EaAutoTest:
                         break
 
                     if not is_start:
-                        com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
+                        for m in range(1, 3):
+                            com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + (m * 5))
                         com.sleep(3)
 
                         # 全体画面の撮影
@@ -178,7 +179,8 @@ class EaAutoTest:
                             return
 
                         # 何もせずに閉じる
-                        com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 40)
+                        com.sleep(1)
+                        pgui.hotkey('esc')
 
                         # マッチングのマーキングimg出力
                         cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
@@ -300,48 +302,64 @@ class EaAutoTest:
         return [x, y]
 
     # MT4起動時の設定
-    def _set_mt4start(self, ea_count, currency, time_frame='H1', start_ym='2005.01', end_ym=com.str_time()[:4] + '.01'):
+    def _set_mt4start(self, ea_count, currency, time_frame='H1', end_ym=str(int(com.str_time()[:4]) + 1) + '.01'):
 
         try:
             # EA選択
-            com.click_pos(self.pos_xy['エキスパート'][0] - 100, self.pos_xy['エキスパート'][1] + 5)
-            [pgui.hotkey('up') for _ in range(10)]
-            [pgui.hotkey('down') for _ in range(0, ea_count)]
-            pgui.hotkey('enter')
+            for i in range(1, 3):
+                com.click_pos(self.pos_xy['エキスパート'][0] - 200, self.pos_xy['エキスパート'][1] + (5 * i))
+                com.sleep(1)
+                [pgui.hotkey('up') for _ in range(10)]
+                [pgui.hotkey('down') for _ in range(0, ea_count)]
+                pgui.hotkey('enter')
+            com.sleep(2)
 
             # 開始日～終了日
-            com.click_pos(self.pos_xy['開始日'][0] + 50, self.pos_xy['開始日'][1] + 5)
-            pgui.write(start_ym[:4])
-            pgui.hotkey('right')
-            pgui.write(start_ym[5:])
-            com.click_pos(self.pos_xy['終了日'][0] + 50, self.pos_xy['終了日'][1] + 5)
-            pgui.write(end_ym[:4])
-            pgui.hotkey('right')
-            pgui.write(end_ym[5:])
+            for i in range(1, 3):
+                com.click_pos(self.pos_xy['開始日'][0] + 60, self.pos_xy['開始日'][1] + (5 * i))
+                pgui.write(cst.EA_START_YM[:4])
+                pgui.hotkey('right')
+                pgui.write(cst.EA_START_YM[5:])
+                com.sleep(2)
+                com.click_pos(self.pos_xy['終了日'][0] + 60, self.pos_xy['終了日'][1] + (5 * i))
+                pgui.write(end_ym[:4])
+                pgui.hotkey('right')
+                pgui.write(end_ym[5:])
+                com.sleep(2)
 
             # 通貨ペア
-            com.click_pos(self.pos_xy['通貨'][0] + 70, self.pos_xy['通貨'][1] + 5)
-            pgui.hotkey('home')
-            [pgui.hotkey('down') for _ in range(0, cst.CURRNCYS_EA[0].index(currency))]
-            pgui.hotkey('enter')
+            for i in range(1, 3):
+                com.click_pos(self.pos_xy['通貨'][0] + 100, self.pos_xy['通貨'][1] + (5 * i))
+                com.sleep(1)
+                pgui.hotkey('home')
+                [pgui.hotkey('down') for _ in range(0, cst.CURRNCYS_EA[0].index(currency))]
+                pgui.hotkey('enter')
+            com.sleep(2)
 
             # スプレッド
             spread = "".join([cst.CURRNCYS_EA[1][n] for n in range(0, len(cst.CURRNCYS_EA[0]))
                               if currency == cst.CURRNCYS_EA[0][n]])
-            com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 30)
-            pgui.write(spread)
+
+            for i in range(1, 3):
+                com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 25 + (5 * i))
+                [pgui.hotkey('backspace') for _ in range(0, 5)]
+                pgui.write(spread)
+            com.sleep(1)
 
             # 期間
-            com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 5)
-            pgui.hotkey('home')
-            [pgui.hotkey('down') for _ in range(0, ['M1', 'M5', 'M15', 'M30', 'H1', 'H4'].index(time_frame))]
-            pgui.hotkey('enter')
+            for i in range(1, 3):
+                com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + (5 * i))
+                pgui.hotkey('home')
+                [pgui.hotkey('down') for _ in range(0, ['M1', 'M5', 'M15', 'M30', 'H1', 'H4'].index(time_frame))]
+                pgui.hotkey('enter')
+            com.sleep(2)
 
             # 最適化外し
             if self.pos_xy['最適化ON'][0] is not None:
                 com.click_pos(self.pos_xy['最適化ON'][0] + 5, self.pos_xy['最適化ON'][1] + 5)
+                com.sleep(2)
 
-            com.log('MT4設定: ' + currency + '(' + start_ym + ' 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
+            com.log('MT4設定: ' + currency + '(' + cst.EA_START_YM + ' 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
         except Exception as e:
             com.log('MT4初期設定エラー: ' + str(e), 'E')
             com.dialog('MT4初期設定で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
@@ -354,31 +372,39 @@ class EaAutoTest:
         try:
             target = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH + path + '/' + file + '.set'
 
-            com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
-            com.sleep(3)
-            com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 5)
-            com.sleep(3)
+            for i in range(1, 3):
+                com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + (i * 5))
+            com.sleep(5)
+            pgui.hotkey('alt', 'l')
+            com.sleep(5)
 
             com.clip_copy(target.replace('/', '\\'), True)
+            com.sleep(5)
 
             # パラメータの変更がある場合
             if prm is not None:
 
-                com.sleep(3)
-                if prm[0] not in ['Best', 'Full']:
-                    com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Logics'][1] + 5, click=2)
-                    com.clip_copy(prm[0], True)
+                for i in range(1, 3):
+                    if prm[0] not in ['Best', 'Full']:
+                        com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Logics'][1] + (i * 5), click=2)
+                        com.sleep(1)
+                        com.clip_copy(prm[0], True)
+                        com.sleep(2)
+
+                    com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Risk'][1] + (i * 5), click=2)
                     com.sleep(1)
+                    com.clip_copy(prm[1], True)
+                    com.sleep(2)
 
-                com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Risk'][1] + 5, click=2)
-                com.clip_copy(prm[1], True)
-                com.sleep(1)
-
-            com.click_pos(self.pos_xy['読み込み'][0] + 5, self.pos_xy['読み込み'][1] + 40)
-            com.sleep(3)
+            [pgui.hotkey('tab') for _ in range(0, 3)]
+            pgui.hotkey('enter')
+            com.sleep(5)
 
             com.log('テスト開始: ' + target + ', ' + str(prm))
-            com.click_pos(self.pos_xy['スタート'][0] + 5, self.pos_xy['スタート'][1] + 5)
+            com.click_pos(self.pos_xy['スタート'][0] - 300, self.pos_xy['スタート'][1] - 100)
+            com.sleep(1)
+            com.click_pos(self.pos_xy['スタート'][0] + 5, self.pos_xy['スタート'][1] + 8)
+
         except Exception as e:
             com.log('パラメータ設定エラー: ' + str(e), 'E')
             com.dialog('パラメータ設定で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
@@ -442,21 +468,32 @@ class EaAutoTest:
             # レポート保存
             report = self._get_position(shot, gray, cst.MATCH_IMG_MT4['レポート'], (0, 255, 0))
 
-            com.click_pos(report[0] + 5, report[1] + 5)
-            com.sleep(2)
-            pgui.rightClick(report[0] + 5, report[1] - 100)
-            com.sleep(1)
-            pgui.hotkey('s')
-            com.sleep(3)
-            com.clip_copy(target.replace('/', '\\'), True)
-            com.sleep(1)
-            pgui.hotkey('y')
-            com.sleep(3)
-            com.click_pos(30, report[1] + 5)
+            if report[0] is None:
+                com.log('レポートマッチングエラー: ' + file, 'E')
+                com.dialog('レポートマッチングエラーが発生しました。\n' + file, 'エラー発生', 'E')
+                return False
+            else:
 
-            # マッチングのマーキングimg出力
-            cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
-            com.log('テストデータ保存: ' + target)
+                for i in range(1, 3):
+                    com.click_pos(report[0] + 5, report[1] + (i * 5))
+                    com.sleep(2)
+
+                pgui.rightClick(report[0] + 5, report[1] - 100)
+                com.sleep(1)
+                pgui.hotkey('s')
+                com.sleep(3)
+                com.clip_copy(target.replace('/', '\\'), True)
+                com.sleep(1)
+                pgui.hotkey('y')
+                com.sleep(3)
+
+                for i in range(1, 3):
+                    com.click_pos(40, report[1] + (i * 5))
+                    com.sleep(2)
+
+                # マッチングのマーキングimg出力
+                cv2.imwrite(cst.TEMP_PATH[cst.PC] + 'out.png', shot)
+                com.log('テストデータ保存: ' + target)
 
         except Exception as e:
             com.log('テスト保存エラー: ' + str(e), 'E')
