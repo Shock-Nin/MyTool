@@ -76,16 +76,11 @@ def _slim_html():
                                 if 0 <= data.find('modify'):
                                     continue
 
-                                # # パラメータから「Logic*」を除外
-                                # while 0 <= data.find('Logic'):
-                                #     data = data[:data.find('Logic')] + \
-                                #            data[data.find('Logic') + data[data.find('Logic'):].find(';') + 1:]
-
                                 # 必要な箇所のみ書き出し
                                 outfile.write(data + '\n')
 
-                    # 画像をコピー
-                    shutil.copy2(tests[i][k].replace('.htm', '.gif'), outpath.replace('.htm', '.gif'))
+                        # 画像をコピー
+                        shutil.copy2(tests[i][k].replace('.htm', '.gif'),outpath.replace('.htm', '.gif').lower())
 
                 except Exception as e:
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
