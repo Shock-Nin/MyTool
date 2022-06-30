@@ -5,7 +5,7 @@ import math
 from common import com
 from const import cst
 
-from business. windows import ea_edits as inheritance
+from business. windows import ea_edits as instance
 
 import shutil
 import pandas as pd
@@ -36,7 +36,7 @@ class EaEditUnit:
 # 個別テストのHTMLスリム化
 def _slim_html():
 
-    tests = inheritance.sort_paths(False)
+    tests = instance.sort_paths(False)
 
     # HTMLを整形して、公開パスに出力
     err_msg = ''
@@ -58,17 +58,18 @@ def _slim_html():
                 window[bar2 + '_'].update(k)
 
                 try:
+                    outpath = cst.TEST_OUT_PATH[cst.PC] + targets[-2] + '/' + targets[-1].lower()
+
                     # テストHTMLを開く
                     with open(tests[i][k], 'r', encoding='cp932') as infile:
-                        outpath = cst.TEST_OUT_PATH[cst.PC] + targets[-2] + '/' + targets[-1].lower()
+                        infile = infile.read()
+
+                        # 余計な区切り文字を除去
+                        infile = infile.replace('===', '').replace('---', '').replace('___', '')
+                        # パラメータの列幅調整
+                        infile = infile.replace('>Comments', ' width="300">Comments')
 
                         with open(outpath, 'w') as outfile:
-                            infile = infile.read()
-
-                            # 余計な区切り文字を除去
-                            infile = infile.replace('===', '').replace('---', '').replace('___', '')
-                            # パラメータの列幅調整
-                            infile = infile.replace('>Comments', ' width="300">Comments')
 
                             for data in infile.split('\n'):
 
@@ -79,8 +80,8 @@ def _slim_html():
                                 # 必要な箇所のみ書き出し
                                 outfile.write(data + '\n')
 
-                        # 画像をコピー
-                        shutil.copy2(tests[i][k].replace('.htm', '.gif'),outpath.replace('.htm', '.gif').lower())
+                    # 画像をコピー
+                    shutil.copy2(tests[i][k].replace('.htm', '.gif'), outpath.replace('.htm', '.gif').lower())
 
                 except Exception as e:
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
@@ -99,7 +100,7 @@ def _slim_html():
 # 個別テストの集計リスト作成
 def _edit_unit_list():
 
-    tests = inheritance.sort_paths(True)
+    tests = instance.sort_paths(True)
 
     # HTMLの時系列データから集計
     html_data = ''
