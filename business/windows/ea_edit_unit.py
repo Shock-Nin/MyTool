@@ -76,10 +76,10 @@ def _slim_html():
                                 if 0 <= data.find('modify'):
                                     continue
 
-                                # パラメータから「Logic*」を除外
-                                while 0 <= data.find('Logic'):
-                                    data = data[:data.find('Logic')] + \
-                                           data[data.find('Logic') + data[data.find('Logic'):].find(';') + 1:]
+                                # # パラメータから「Logic*」を除外
+                                # while 0 <= data.find('Logic'):
+                                #     data = data[:data.find('Logic')] + \
+                                #            data[data.find('Logic') + data[data.find('Logic'):].find(';') + 1:]
 
                                 # 必要な箇所のみ書き出し
                                 outfile.write(data + '\n')

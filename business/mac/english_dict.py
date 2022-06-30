@@ -865,7 +865,16 @@ class EnglishDict:
         plus_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[1][2] + '.' + FUNCTIONS[1][3]
         google_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[3][2] + '.' + FUNCTIONS[3][3]
 
+        merges = {}
         out_counts = [0 for _ in range(0, int(cst.ENGLISH_MASTER_LEVEL / 2))]
+
+        phrases = []
+        file = pd.read_csv(cst.TEMP_PATH[cst.PC] + 'English/Phrase.csv', header=None, encoding='utf8')
+        for key in file:
+            for phrase in file[key]:
+                phrase = phrase.split(' | ')
+                phrases.append({phrase[0]: {'meaning': phrase[1].split(' / ')}})
+        merges[0] = phrases
 
         plus = {}
         for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
@@ -893,7 +902,6 @@ class EnglishDict:
 
         rows = []
         merge = []
-        merges = {}
 
         for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
 
@@ -1378,8 +1386,12 @@ class EnglishDict:
                                     del words[key]['others'][k]
 
                             text = text.replace('&amp;#039;', '\'')
-                            text = list(set([other.strip() for other in text.split(',')]))
+                            text = list(set([other.strip() for other in text.split(',') if other.strip() != key]))
                             others.append(other1.split('(')[0] + '(' + ", ".join([other for other in text]) + ')')
+
+                        for k in reversed(range(0, len(others))):
+                            if 0 <= others[k].find('()'):
+                                others.remove(others[k])
 
                         words[key]['others'] = others
 
@@ -1461,6 +1473,14 @@ class EnglishDict:
                     else:
                         com.log('partspeechなし: ' + str(lv) + ', ' + key)
                         out_counts[lv - 1] += 1
+
+                    # 変化形の整理
+                    for i in reversed(range(0, len(words[key]['changes']))):
+                        change = words[key]['changes'][i]
+
+                        if 0 <= change.find('比較級') or 0 <= change.find('最上級'):
+                            words[key]['changes'].remove(change)
+                            words[key]['others'].append(change)
 
                 if 0 < len(word):
                     rows.append(word)
