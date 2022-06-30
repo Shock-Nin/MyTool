@@ -101,9 +101,9 @@ class EaAutoTest:
                 window = com.progress(self.myjob + '(' + com.str_time().split(' ')[1] + ')',
                                       [checks[i][0].split('_')[0], len(checks)],
                                       [checks[i][0], len(checks[0])], interrupt=True)
-                window[checks[i][0] + '_'].update(0)
 
                 event, values = window.read(timeout=0)
+                window[checks[i][0] + '_'].update(0)
 
                 for k in range(0, len(checks[i])):
                     mt4_start = com.time_start()
