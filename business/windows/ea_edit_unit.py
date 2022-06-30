@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import math
+import os
 
 from common import com
 from const import cst
@@ -81,6 +82,7 @@ def _slim_html():
                                 outfile.write(data + '\n')
 
                     # 画像をコピー
+                    os.remove(outpath.replace('.htm', '.gif').lower())
                     shutil.copy2(tests[i][k].replace('.htm', '.gif'), outpath.replace('.htm', '.gif').lower())
 
                 except Exception as e:
