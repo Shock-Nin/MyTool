@@ -975,7 +975,7 @@ class EnglishDict:
 
                 for key in words:
 
-                    if len(key) < 2:
+                    if len(key) < 2 or key.endswith('tieth') or key.endswith('teenth'):
                         continue
 
                     # 発音表記がGoogleにあった場合、優先使用
