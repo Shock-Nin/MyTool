@@ -82,12 +82,12 @@ def _slim_html():
                                 outfile.write(data + '\n')
 
                     # 画像をコピー
-                    os.remove(outpath.replace('.htm', '.gif').lower())
-                    shutil.copy2(tests[i][k].replace('.htm', '.gif'), outpath.replace('.htm', '.gif').lower())
+                    shutil.copy2(tests[i][k].replace('.htm', '.gif').replace('/', '\\'),
+                                 outpath.replace('.htm', '.gif').replace('/', '\\').lower())
 
                 except Exception as e:
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
-                    com.log(str(e))
+                    com.log('スリム化エラー: ' + targets[-2] + '/' + targets[-1] + ': ' + str(e))
     finally:
         try: window.close()
         except: pass
@@ -328,7 +328,7 @@ def _edit_unit_list():
 
                 except Exception as e:
                     err_msg += '\n　' + targets[-2] + '/' + targets[-1] + '\n　　' + str(e)
-                    com.log(str(e))
+                    com.log('データ書き出しエラー: ' + targets[-2] + '/' + targets[-1] + ': ' + str(e))
 
             html_data += html_row + '</tr>'
             window.close()

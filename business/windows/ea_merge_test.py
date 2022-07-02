@@ -108,7 +108,7 @@ class EaMergeTest:
                         self.pos_xy[key] = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
                                                      cst.MATCH_IMG_RM[key], (0, 0, 255))
 
-                    # エキスパート設定のマッチングが失敗の場合、エラー終了
+                    # マッチングが失敗の場合、エラー終了
                     if self.pos_xy['マージ'][0] is None or self.pos_xy['保存'][0] is None:
                         com.log('マッチングエラー: ' + str(self.pos_xy))
                         com.dialog('マッチングエラー\n　' + "\n　".join([key + ' = ' + str(self.pos_xy[key])
@@ -137,6 +137,7 @@ class EaMergeTest:
                         window[bar2 + '_'].update(i - count)
 
                         target_ea = targets[count][0].split('_')[0]
+                        com.sleep(5)
 
                         # 中断イベント
                         if _is_interrupt(window, event):
@@ -220,16 +221,18 @@ class EaMergeTest:
     # 読み込みの選択
     def _select_report(self, path, files, is_all):
         try:
+            com.sleep(5)
             if cst.IP == cst.DEV_IP:
 
                 # ダイヤログを開く
                 com.click_pos(self.pos_xy['マージ'][0] - 20, self.pos_xy['マージ'][1] + 5)
-                pgui.hotkey('ctrl', 'o')
                 com.sleep(2)
+                pgui.hotkey('ctrl', 'o')
+                com.sleep(5)
 
                 # フォルダ選択
                 com.clip_copy((cst.TEST_UNIT[cst.PC] + path).replace('/', '\\'), True)
-                com.sleep(2)
+                com.sleep(5)
 
                 # 全結合の場合は、リスト全投入
                 if is_all:
@@ -246,7 +249,6 @@ class EaMergeTest:
                 else:
                     com.clip_copy(files, True)
 
-            com.sleep(1)
         except Exception as e:
             com.log('レポート読み込みエラー: ' + str(e), 'E')
             com.dialog('レポート読み込みで、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
@@ -260,20 +262,12 @@ class EaMergeTest:
             msg = ''
             if cst.IP == cst.DEV_IP:
 
-                # マージファイル出現まで待機
+                # マージファイル選択
+                com.sleep(5)
                 com.click_pos(self.pos_xy['マージ'][0] + 5, self.pos_xy['マージ'][1] + 5)
-                com.sleep(3)
-
-                while True:
-                    shot, gray = com.shot_grab()
-                    xy = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
-                                   cst.MATCH_IMG_RM['ファイル'], (255, 0, 255))
-
-                    pgui.hotkey('end')
-
-                    if xy[0] is not None:
-                        break
-                    com.sleep(2)
+                com.sleep(5)
+                pgui.hotkey('end')
+                com.sleep(5)
 
                 # データ行出現まで待機
                 while True:
@@ -293,18 +287,20 @@ class EaMergeTest:
 
                 # ダイヤログを開く
                 com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
-                com.sleep(2)
+                com.sleep(1)
+                com.click_pos(self.pos_xy['保存'][0] + 5, self.pos_xy['保存'][1] + 5)
+                com.sleep(5)
 
                 # フォルダ選択
-                com.clip_copy(path , True)
-                com.sleep(2)
+                com.clip_copy(path, True)
+                com.sleep(3)
 
                 # ファイル選択
                 com.clip_copy(file + '.htm', True)
-                com.sleep(1)
+                com.sleep(3)
 
                 pgui.hotkey('enter')
-                com.sleep(2)
+                com.sleep(3)
                 pgui.hotkey('y')
                 com.sleep(2)
 
