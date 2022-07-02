@@ -209,12 +209,14 @@ class LogAnaly:
                 continue
 
             val = [row[0]]
-
             for col in cols:
                 ary = col.replace('\"', '').split(':')
 
-                if ary[0] in ['ip', 'city', 'hostname', 'agent', 'browser']:
+                if ary[0] in ['ip', 'city', 'hostname', 'agent']:
                     val.append(ary[1])
+
+                elif 'browser' == ary[0]:
+                    val[len(val) - 1] += '(' + ary[0] + ')'
 
                 elif 'action' == ary[0]:
                     if ary[1] is None:

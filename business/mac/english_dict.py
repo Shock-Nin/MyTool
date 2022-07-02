@@ -117,10 +117,14 @@ class EnglishDict:
                             break
                         except:
                             wd_error += 1
-                            try: wd.quit()
-                            except: pass
-                            try: wd = web_driver.driver(headless=IS_HEADLESS)
-                            except: pass
+                            try:
+                                wd.quit()
+                            except:
+                                pass
+                            try:
+                                wd = web_driver.driver(headless=IS_HEADLESS)
+                            except:
+                                pass
                             com.sleep(1)
 
                     if not is_html:
@@ -150,7 +154,8 @@ class EnglishDict:
                 data[lv] = words
                 window.close()
 
-                with open(cst.TEMP_PATH[cst.PC] + 'English/Master_' + str(lv) + '.csv', 'w', encoding='utf8') as outfile:
+                with open(cst.TEMP_PATH[cst.PC] + 'English/Master_' + str(lv) + '.csv', 'w',
+                          encoding='utf8') as outfile:
                     [[outfile.write(row + '\n') for row in data[lv]] for lv in data]
 
         except Exception as e:
@@ -159,10 +164,14 @@ class EnglishDict:
             return False
 
         finally:
-            try: window.close()
-            except: pass
-            try: wd.quit()
-            except: pass
+            try:
+                window.close()
+            except:
+                pass
+            try:
+                wd.quit()
+            except:
+                pass
 
         # マージを実行する場合
         if is_merge:
@@ -258,10 +267,14 @@ class EnglishDict:
                                 break
                             except:
                                 wd_error += 1
-                                try: wd.quit()
-                                except: pass
-                                try: wd = web_driver.driver(headless=IS_HEADLESS)
-                                except: pass
+                                try:
+                                    wd.quit()
+                                except:
+                                    pass
+                                try:
+                                    wd = web_driver.driver(headless=IS_HEADLESS)
+                                except:
+                                    pass
                                 com.sleep(1)
 
                         if not is_html:
@@ -280,7 +293,8 @@ class EnglishDict:
 
                         pronounce = pronounce[pronounce.find('>') + 1: pronounce.rfind('</span>')]
                         while 0 <= pronounce.find('<'):
-                            pronounce = pronounce.replace(pronounce[pronounce.find('<'): pronounce.find('>') + 1], '').strip()
+                            pronounce = pronounce.replace(pronounce[pronounce.find('<'): pronounce.find('>') + 1],
+                                                          '').strip()
 
                         # 意味・対訳
                         meaning = html[html.find('>') + 1: html.find('</div>')]
@@ -404,10 +418,14 @@ class EnglishDict:
             return False
 
         finally:
-            try: window.close()
-            except: pass
-            try: wd.quit()
-            except: pass
+            try:
+                window.close()
+            except:
+                pass
+            try:
+                wd.quit()
+            except:
+                pass
 
         return True
 
@@ -475,10 +493,14 @@ class EnglishDict:
                                 break
                             except:
                                 wd_error += 1
-                                try: wd.quit()
-                                except: pass
-                                try: wd = web_driver.driver(headless=IS_HEADLESS)
-                                except: pass
+                                try:
+                                    wd.quit()
+                                except:
+                                    pass
+                                try:
+                                    wd = web_driver.driver(headless=IS_HEADLESS)
+                                except:
+                                    pass
                                 com.sleep(1)
 
                         if not is_html:
@@ -681,10 +703,14 @@ class EnglishDict:
             return False
 
         finally:
-            try: window.close()
-            except: pass
-            try: wd.quit()
-            except: pass
+            try:
+                window.close()
+            except:
+                pass
+            try:
+                wd.quit()
+            except:
+                pass
 
         return True
 
@@ -753,7 +779,8 @@ class EnglishDict:
                                 while sec < 5:
 
                                     shot, gray = com.shot_grab()
-                                    x, y = com.match(shot, gray, cst.MATCH_PATH + 'english/google_trans.png', (0, 0, 255))
+                                    x, y = com.match(shot, gray, cst.MATCH_PATH + 'english/google_trans.png',
+                                                     (0, 0, 255))
 
                                     if x is None:
                                         com.sleep(1)
@@ -766,10 +793,14 @@ class EnglishDict:
                                 break
                             except:
                                 wd_error += 1
-                                try: wd.quit()
-                                except: pass
-                                try: wd = web_driver.driver()
-                                except: pass
+                                try:
+                                    wd.quit()
+                                except:
+                                    pass
+                                try:
+                                    wd = web_driver.driver()
+                                except:
+                                    pass
                                 com.sleep(1)
                                 sec += 1
 
@@ -851,10 +882,14 @@ class EnglishDict:
             return False
 
         finally:
-            try: window.close()
-            except: pass
-            try: wd.quit()
-            except: pass
+            try:
+                window.close()
+            except:
+                pass
+            try:
+                wd.quit()
+            except:
+                pass
 
         return True
 
@@ -932,7 +967,6 @@ class EnglishDict:
                 for i in datas:
                     for data in datas[i]:
                         for key in data:
-
                             old_keys.append(key)
                             new_keys.append(key.lower())
                             old_datas.append({key: data[key]})
@@ -940,7 +974,6 @@ class EnglishDict:
             for words in merge[lv - 1]:
                 for word in words:
                     for key in word:
-
                         old_keys.append(key)
                         new_keys.append(key.lower())
                         old_datas.append({key: word[key]})
@@ -957,7 +990,8 @@ class EnglishDict:
                             try:
                                 if new_datas[len(new_datas) - 1][key2] is not None:
                                     continue
-                            except: pass
+                            except:
+                                pass
 
                             new_datas.append({key2: data[key2]})
                             is_append = True
@@ -984,7 +1018,8 @@ class EnglishDict:
                                 or re.match(r'([a-z])', google[key]['pronounce']) \
                                 or re.match(r'([A-Z])', google[key]['pronounce']):
                             words[key]['pronounce'] = google[key]['pronounce']
-                    except: pass
+                    except:
+                        pass
 
                     # 発音表記がない場合、Weblio使用
                     if 0 == len(words[key]['pronounce']):
@@ -1070,8 +1105,7 @@ class EnglishDict:
                     if (0 <= meaning.find('の')
                             and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
                                  or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))):
-
-                        com.log('変化形(meanibg)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
+                        com.log('変化形(meaning)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
                         out_counts[lv - 1] += 1
                         continue
 
@@ -1152,7 +1186,8 @@ class EnglishDict:
                             if 0 <= meaning[k].find(meanings[i].split('(')[0]) \
                                     or meaning[k].replace('「', '').replace('」', '') == \
                                     meanings[i].replace('「', '').replace('」', '') \
-                                    or meaning[k].replace(meaning[k][meaning[k].find('['): meaning[k].rfind(']')], '') == \
+                                    or meaning[k].replace(meaning[k][meaning[k].find('['): meaning[k].rfind(']')],
+                                                          '') == \
                                     meanings[i].replace(meanings[i][meanings[i].find('['): meanings[i].rfind(']')], ''):
                                 is_meaning = False
                                 break
@@ -1277,7 +1312,6 @@ class EnglishDict:
                     if 0 < len(words[key]['examples']):
                         examples = words[key]['examples']
                         for i in range(0, len(examples)):
-
                             eng = examples[i].split('|')[0]
                             jpn = examples[i].split('|')[1]
 
@@ -1351,7 +1385,8 @@ class EnglishDict:
                             for k in range(0, len(example)):
 
                                 texts = example[k].split(' | ')
-                                if texts[0].replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower() == \
+                                if texts[0].replace('.', '').replace(',', '').replace(';', '').replace(':',
+                                                                                                       '').lower() == \
                                         eng.replace('.', '').replace(',', '').replace(';', '').replace(':', '').lower():
                                     is_example = False
                                     break
@@ -1457,8 +1492,8 @@ class EnglishDict:
 
                             for k in range(0, i):
                                 if words[key]['meaning'][k].startswith(text) or words[key]['meaning'][k].endswith(text) \
-                                        or text.startswith(words[key]['meaning'][k]) or text.endswith(words[key]['meaning'][k]):
-
+                                        or text.startswith(words[key]['meaning'][k]) or text.endswith(
+                                    words[key]['meaning'][k]):
                                     words[key]['meaning'].remove(text)
                                     break
 
