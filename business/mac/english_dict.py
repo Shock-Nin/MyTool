@@ -21,9 +21,10 @@ FUNCTIONS = [
     ['Weblio', '_get_weblio', 'Weblio', 'json'],
     ['英ナビ', '_get_Einavi', 'Einavi', 'json'],
     ['Google', '_get_google', 'Google', 'json'],
-    ['イメージ', '_get_images', 'Image', 'json'],
-    ['辞書', '_merge_content', 'Content', 'json']
+    ['辞書', '_merge_content', 'Content', 'json'],
+    ['フレーズ集', '_get_phrases', 'Phrase', 'csv'],
 ]
+IGNORE_MEANINGS = ['関係代名詞', '現在完了', '過去完了', '未来完了']
 
 
 class EnglishDict:
@@ -32,17 +33,32 @@ class EnglishDict:
         self.myjob = job
 
     def do(self):
-        layout = [[FUNCTIONS[i][0] + '_' + str(k) if i in [0, 1, 2, 3, 4] else None
+        layout = [[FUNCTIONS[i][0] + '_' + str(k)
                    for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)] +
-                  [FUNCTIONS[i][0] + '_追加' if i in [1, 2, 3] else None] +
-                  [FUNCTIONS[i][0] + '_マージ' if i in [0, 4, 5] else None]
-                  for i in range(0, len(FUNCTIONS))]
+                  [FUNCTIONS[i][0] + '_追加' if i in [1, 2, 3] else
+                   FUNCTIONS[i][0] + '_マージ' if i in [0] else None]
+                  for i in range(0, len(FUNCTIONS) - 2)]
+        layout.append([FUNCTIONS[i][0] for i in range(4, len(FUNCTIONS))])
 
         selects = com.dialog_cols('不要なものは外してください。', layout,
                                   ['l' for _ in range(0, len(FUNCTIONS))], '工程選択', obj='check')
         if 0 == len(selects):
             return
         total_time = 0
+
+        if 1 == len(selects[len(selects) - 1]):
+            fnc = selects[len(selects) - 1][0]
+
+            if fnc == FUNCTIONS[len(FUNCTIONS) - 2][0]:
+                selects[len(selects) - 1] = [FUNCTIONS[len(FUNCTIONS) - 2][0]]
+                selects.append([])
+            else:
+                selects[len(selects) - 1] = []
+                selects.append([FUNCTIONS[len(FUNCTIONS) - 1][0]])
+
+        elif 2 == len(selects[len(selects) - 1]):
+            selects[len(selects) - 1] = [FUNCTIONS[len(FUNCTIONS) - 2][0]]
+            selects.append([FUNCTIONS[len(FUNCTIONS) - 1][0]])
 
         for i in range(0, len(FUNCTIONS)):
 
@@ -903,14 +919,6 @@ class EnglishDict:
         merges = {}
         out_counts = [0 for _ in range(0, int(cst.ENGLISH_MASTER_LEVEL / 2))]
 
-        phrases = []
-        file = pd.read_csv(cst.TEMP_PATH[cst.PC] + 'English/Phrase.csv', header=None, encoding='utf8')
-        for key in file:
-            for phrase in file[key]:
-                phrase = phrase.split(' | ')
-                phrases.append({phrase[0]: {'meaning': phrase[1].split(' / ')}})
-        merges[0] = phrases
-
         plus = {}
         for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
             file = pd.read_json(plus_file.replace(
@@ -1128,8 +1136,7 @@ class EnglishDict:
                         for check in ['(〜を)', '(〜の)', '(〜に)', '(〜へ)', '(〜と)',
                                       '(〜は)', '(〜が)', '(〜で)', '(へ)', '(〜ない)']:
 
-                            if 0 <= txt.find(check):
-                                txt = txt.replace(check, '[' + check[1: -1] + ']')
+                            txt = (txt.replace(check, '') if 0 <= txt.find(check) else txt)
 
                         meanings.append(txt)
                     meaning = "、".join(txt for txt in meanings)
@@ -1291,7 +1298,7 @@ class EnglishDict:
                                 continue
 
                             elif 0 <= txt.find(','):
-                                txt = txt.split(',')[1].strip()
+                                txt = txt.split(',')[len(txt.split(',')) - 1].strip()
 
                             txt = txt.split('：')[1] if 0 <= txt.find('：') else txt
 
@@ -1430,7 +1437,7 @@ class EnglishDict:
 
                         words[key]['others'] = others
 
-                    # 最終チェック
+                    # 最終チェック(partspeech)
                     partspeech = words[key]['partspeech']
                     checks = ['動詞', '名詞']
 
@@ -1449,20 +1456,33 @@ class EnglishDict:
 
                     words[key]['partspeech'] = partspeech
 
+                    # 最終チェック(meaning)
+                    words[key]['meaning'] = sorted(words[key]['meaning'], reverse=True)
                     for i in reversed(range(0, len(words[key]['meaning']))):
-                        text = words[key]['meaning'][i]
 
-                        if 17 < len(text) and 2 < len(words[key]['meaning']):
-                            words[key]['meaning'].remove(text)
+                        words[key]['meaning'][i] = words[key]['meaning'][i].replace(' ', '')
+                        meaning = words[key]['meaning'][i]
+
+                        if meaning in IGNORE_MEANINGS:
+                            words[key]['meaning'].remove(meaning)
+                            continue
+
+                        chk_text = meaning.translate(str.maketrans(
+                            {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
+
+                        if 1 < len(words[key]['meaning']) and(len(chk_text) < 2 or 17 < len(chk_text)):
+                            words[key]['meaning'].remove(meaning)
                             continue
 
                         for k in range(0, i):
-                            if words[key]['meaning'][k] == text:
-                                words[key]['meaning'].remove(text)
+                            text = words[key]['meaning'][k].translate(str.maketrans(
+                                {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
+
+                            if text == chk_text or text.startswith(chk_text + '(') or text.endswith(')' + chk_text):
+                                words[key]['meaning'].remove(meaning)
                                 break
 
                     count = 0
-
                     for i in reversed(range(1, len(words[key]['meaning']))):
                         text = words[key]['meaning'][i]
 
@@ -1490,13 +1510,6 @@ class EnglishDict:
                                 words[key]['meaning'].remove(text)
                                 continue
 
-                            for k in range(0, i):
-                                if words[key]['meaning'][k].startswith(text) or words[key]['meaning'][k].endswith(text) \
-                                        or text.startswith(words[key]['meaning'][k]) or text.endswith(
-                                    words[key]['meaning'][k]):
-                                    words[key]['meaning'].remove(text)
-                                    break
-
                     # 例外処理
                     reg_key = key
                     if 'TRUE' == key:
@@ -1509,13 +1522,48 @@ class EnglishDict:
                         com.log('partspeechなし: ' + str(lv) + ', ' + key)
                         out_counts[lv - 1] += 1
 
-                    # 変化形の整理
-                    for i in reversed(range(0, len(words[key]['changes']))):
-                        change = words[key]['changes'][i]
+                    # 発声のエラー文字除去
+                    words[key]['pronounce'] = words[key]['pronounce'].replace('͟', '').replace('͞', '').replace('͝', '')
 
-                        if 0 <= change.find('比較級') or 0 <= change.find('最上級'):
-                            words[key]['changes'].remove(change)
-                            words[key]['others'].append(change)
+                    # 変化形の整理
+                    if 0 < len(words[key]['changes']):
+
+                        compare = ''
+                        for i in reversed(range(0, len(words[key]['changes']))):
+                            change = words[key]['changes'][i]
+
+                            if 0 <= change.find('比較級') or 0 <= change.find('最上級'):
+                                words[key]['changes'].remove(change)
+                                compare += ', ' + change
+
+                        if 0 < len(compare):
+                            words[key]['others'].append(compare[2:])
+
+                        changes = []
+
+                        for i in range(0, len(words[key]['changes'])):
+                            if 0 <= words[key]['changes'][i].find(','):
+                                text = words[key]['changes'][i].split(',')
+                                words[key]['changes'][i] = text[len(text) - 1]
+
+                        for i in range(0, len(words[key]['changes'])):
+                            changes.append([words[key]['changes'][i].split('(')[0] ,
+                                            '(' + words[key]['changes'][i].split('(')[1]])
+
+                        changes = sorted(changes, key=lambda x: x[1], reverse=True)
+                        words[key]['changes'] = []
+                        countable = ''
+
+                        for i in range(0, len(changes)):
+                            change = "".join([text for text in changes[i]])
+
+                            if 0 <= change.find('複数形'):
+                                countable = change
+                            else:
+                                words[key]['changes'].append(change)
+
+                        if 0 < len(countable):
+                            words[key]['changes'].append(countable)
 
                 if 0 < len(word):
                     rows.append(word)
@@ -1529,46 +1577,27 @@ class EnglishDict:
                                 for i in range(0, len(out_counts))]))
         return True
 
-    def _get_images(self, selects):
+    def _get_phrases(self, _):
 
-        wd = web_driver.driver(headless=IS_HEADLESS)
-        if wd is None:
-            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return False
+        merges = {}
 
-        wd_error = 0
-        is_merge = False
+        with open(cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[5][2] + '.' + FUNCTIONS[5][3], 'r') as in_file:
+            for row in in_file.read().split('\n'):
 
-        try:
-            for select in selects:
-
-                if 0 <= select.find('マージ'):
-                    is_merge = True
+                if 0 == len(row):
                     continue
 
-                lv = int(select.split('_')[1])
+                cols = row.split(',')
 
-                wd.get(urllib.parse.quote(cst.ENGLISH_IMAGES_URL, 'utf8'))
-                com.sleep(5)
+                phrase = cols[1].split(' | ')
+                phrases= {phrase[0]: {'meaning': ([''] if 1 == len(phrase) else phrase[1].split(' / ') )}}
+                try:
+                    merges[cols[0]].append(phrases)
+                except:
+                    merges[cols[0]] = [phrases]
 
-                target = ''
-
-        except Exception as e:
-            com.log(self.myjob + ' イメージ作成 エラー発生: [Lv' + str(lv) + ', ' + target + '] ' + str(e), lv='W')
-            com.dialog(self.myjob + ' イメージ作成 でエラーが発生しました。\n[Lv' +
-                       str(lv) + ', ' + target + ']\n' + str(e), title='エラー発生', lv='W')
-            return False
-
-        # finally:
-        #     try: window.close()
-        #     except: pass
-        #     try: wd.quit()
-        #     except: pass
-
-        # マージを実行する場合
-        if is_merge:
-            self._merge_content(3)
-
+        with open(cst.TEMP_PATH[cst.PC] + 'English/Phrase.js', 'w') as out_file:
+            out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
         return True
 
 

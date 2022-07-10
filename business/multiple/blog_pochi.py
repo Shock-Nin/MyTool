@@ -111,7 +111,7 @@ class BlogPochi:
 
                 try:
                     wdRank.get('https://blog.with2.net/login')
-                    com.sleep(2)
+                    com.sleep(5)
 
                     web_driver.find_element(wdRank, 'i-id').send_keys(menu['ブログランキング' == menu['SITE']]['ID1'].values[0])
                     web_driver.find_element(wdRank, 'i-pswd').send_keys(menu['ブログランキング' == menu['SITE']]['PASS'].values[0])
