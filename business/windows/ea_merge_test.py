@@ -261,12 +261,22 @@ class EaMergeTest:
         try:
             msg = ''
             if cst.IP == cst.DEV_IP:
+                com.sleep(5)
 
-                # マージファイル選択
-                com.sleep(5)
-                com.click_pos(self.pos_xy['マージ'][0] + 5, self.pos_xy['マージ'][1] + 5)
-                com.sleep(5)
-                pgui.hotkey('end')
+                # マージファイル出現まで待機
+                while True:
+                    com.click_pos(self.pos_xy['マージ'][0] + 5, self.pos_xy['マージ'][1] + 5)
+                    com.sleep(10)
+
+                    shot, gray = com.shot_grab()
+                    xy = com.match(shot, gray, cst.MATCH_PATH + 'report_manager/' +
+                                   cst.MATCH_IMG_RM['ファイル'], (255, 0, 255))
+
+                    pgui.hotkey('end')
+
+                    if xy[0] is not None:
+                        break
+
                 com.sleep(5)
 
                 # データ行出現まで待機

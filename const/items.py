@@ -23,6 +23,8 @@ MATCH_IMG_MT4 = {
     '値': 'value.png',
     'Logics': 'logics.png',
     'Risk': 'risk.png',
+    'Logics選択': 'logics_select.png',
+    'Risk選択': 'risk_select.png',
     '読み込み': 'read.png',
 }
 # ReportManagerマッチング

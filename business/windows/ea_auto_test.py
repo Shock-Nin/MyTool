@@ -154,14 +154,28 @@ class EaAutoTest:
                         break
 
                     if not is_start:
-                        for m in range(1, 3):
-                            com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + (m * 5))
-                        com.sleep(3)
 
-                        # 全体画面の撮影
+                        # エキスパート選択するまでクリック
                         shot, gray = com.shot_grab()
-                        if shot is None:
-                            return
+                        xy = [None, None]
+
+                        while xy[0] is None:
+                            xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['読み込み'], (0, 255, 0))
+
+                            if xy[0] is None:
+                                com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
+                                com.sleep(2)
+                                shot, gray = com.shot_grab()
+                            else:
+                                break
+                        # for m in range(1, 3):
+                        #     com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + (m * 5))
+                        # com.sleep(3)
+                        #
+                        # # 全体画面の撮影
+                        # shot, gray = com.shot_grab()
+                        # if shot is None:
+                        #     return
 
                         com.sleep(3)
                         for key in cst.MATCH_IMG_MT4:
@@ -373,9 +387,21 @@ class EaAutoTest:
         try:
             target = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH + path + '/' + file + '.set'
 
-            for i in range(1, 3):
-                com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + (i * 5))
-            com.sleep(5)
+            # エキスパート選択するまでクリック
+            shot, gray = com.shot_grab()
+            xy = [None, None]
+
+            while xy[0] is None:
+                xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['読み込み'], (0, 255, 0))
+
+                if xy[0] is None:
+                    com.click_pos(self.pos_xy['エキスパート'][0] + 5, self.pos_xy['エキスパート'][1] + 5)
+                    com.sleep(2)
+                    shot, gray = com.shot_grab()
+                else:
+                    break
+
+            com.sleep(3)
             pgui.hotkey('alt', 'l')
             com.sleep(5)
 
@@ -385,26 +411,58 @@ class EaAutoTest:
             # パラメータの変更がある場合
             if prm is not None:
 
-                for i in range(1, 3):
-                    if prm[0] not in ['Best', 'Full']:
-                        com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Logics'][1] + (i * 5), click=2)
-                        com.sleep(1)
-                        com.clip_copy(prm[0], True)
-                        com.sleep(2)
+                # Logics選択するまでクリックして入力
+                if prm[0] not in ['Best', 'Full']:
+                    shot, gray = com.shot_grab()
+                    xy = [None, None]
 
-                    com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Risk'][1] + (i * 5), click=2)
-                    com.sleep(1)
-                    com.clip_copy(prm[1], True)
-                    com.sleep(2)
+                    while xy[0] is None:
+                        xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['Logics選択'], (0, 255, 0))
+
+                        if xy[0] is None:
+                            com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Logics'][1] + 5, click=2)
+                            com.sleep(2)
+                            shot, gray = com.shot_grab()
+                        else:
+                            com.clip_copy(prm[0], True)
+                            com.sleep(2)
+                            break
+
+                # Risk選択するまでクリックして入力
+                shot, gray = com.shot_grab()
+                xy = [None, None]
+
+                while xy[0] is None:
+                    xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['Risk選択'], (0, 255, 0))
+
+                    if xy[0] is None:
+                        com.click_pos(self.pos_xy['値'][0] - 70, self.pos_xy['Risk'][1] + 5, click=2)
+                        com.sleep(2)
+                        shot, gray = com.shot_grab()
+                    else:
+                        com.clip_copy(prm[1], True)
+                        com.sleep(2)
+                        break
 
             [pgui.hotkey('tab') for _ in range(0, 3)]
             pgui.hotkey('enter')
-            com.sleep(5)
+            com.sleep(3)
 
             com.log('テスト開始: ' + target + ', ' + str(prm))
-            com.click_pos(self.pos_xy['スタート'][0] - 300, self.pos_xy['スタート'][1] - 100)
-            com.sleep(1)
-            com.click_pos(self.pos_xy['スタート'][0] + 5, self.pos_xy['スタート'][1] + 8)
+
+            # ストップに変化するまでスタートボタン押下
+            shot, gray = com.shot_grab()
+            xy = [None, None]
+
+            while xy[0] is None:
+                xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['ストップ'], (0, 255, 0))
+
+                if xy[0] is None:
+                    com.click_pos(self.pos_xy['スタート'][0] + 5, self.pos_xy['スタート'][1] + 5)
+                    com.sleep(2)
+                    shot, gray = com.shot_grab()
+                else:
+                    break
 
         except Exception as e:
             com.log('パラメータ設定エラー: ' + str(e), 'E')
@@ -432,10 +490,6 @@ class EaAutoTest:
 
                 # 全体画面の撮影
                 shot, gray = com.shot_grab()
-                if shot is None:
-                    is_interrupt = True
-                    break
-
                 xy = self._get_position(shot, gray, cst.MATCH_IMG_MT4['スタート'], (0, 255, 0))
 
                 # MT4閉じた場合の中断
@@ -463,8 +517,6 @@ class EaAutoTest:
 
             # 全体画面の撮影
             shot, gray = com.shot_grab()
-            if shot is None:
-                return False
 
             # レポート保存
             report = self._get_position(shot, gray, cst.MATCH_IMG_MT4['レポート'], (0, 255, 0))
@@ -479,7 +531,9 @@ class EaAutoTest:
                     com.click_pos(report[0] + 5, report[1] + (i * 5))
                     com.sleep(2)
 
-                pgui.rightClick(report[0] + 5, report[1] - 100)
+                pgui.rightClick(report[0] - 100, report[1] - 100)
+                com.sleep(1)
+                pgui.rightClick(report[0] + 100, report[1] - 100)
                 com.sleep(1)
                 pgui.hotkey('s')
                 com.sleep(3)

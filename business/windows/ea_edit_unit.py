@@ -237,7 +237,7 @@ def _edit_unit_list():
                     winrate = win / (win + lose) * 100
                     ddown = dd_max / balance_start * 100
                     loss1 = loss_max / balance_start * 100
-                    best, win50, dd10, loss3 = _calucu_lot(lot, winrate, ddown, loss1)
+                    best, win50, dd10, loss3 = _calc_lot(lot, winrate, ddown, loss1)
 
                     # Fullは「Risk」100%
                     if 0 <= ea_name.find('Full'):
@@ -372,7 +372,7 @@ def _edit_unit_list():
 
 
 # 推奨ロットの計算
-def _calucu_lot(lot, winrate, ddown, loss1):
+def _calc_lot(lot, winrate, ddown, loss1):
 
     dd10 = math.floor(0.1 / (ddown / 100) * lot * 100) / 100
     loss3 = math.floor(0.03 / (loss1 / 100) * lot * 100) / 100
