@@ -10,6 +10,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 def driver(headless=False):
     options = Options()
     options.add_argument('--headless')
+    # options.add_argument('--no-sandbox')
 
     wd = None
     try:

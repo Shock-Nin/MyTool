@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from common import com
+import os
+
 from const import cst
 
 from common import web_driver
+from common import com, matching
 
 import re
 import json
@@ -12,7 +14,7 @@ import pandas as pd
 import PySimpleGUI as sg
 import pyautogui as pgui
 import pyperclip
-import urllib.parse
+import urllib.request
 
 IS_HEADLESS = True
 
@@ -22,9 +24,12 @@ FUNCTIONS = [
     ['英ナビ', '_get_Einavi', 'Einavi', 'json'],
     ['Google', '_get_google', 'Google', 'json'],
     ['辞書', '_merge_content', 'Content', 'json'],
-    ['フレーズ集', '_get_phrases', 'Phrase', 'csv'],
+    ['MP3取得', '_get_mp3', '', ''],
+    ['フレーズ集', '_create_phrases', 'Phrase', 'csv'],
 ]
+OTHER_START = 4
 IGNORE_MEANINGS = ['関係代名詞', '現在完了', '過去完了', '未来完了']
+MP3_DL = ['Weblio', 'LONGMAN', '英ナビ']
 
 
 class EnglishDict:
@@ -37,7 +42,7 @@ class EnglishDict:
                    for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)] +
                   [FUNCTIONS[i][0] + '_追加' if i in [1, 2, 3] else
                    FUNCTIONS[i][0] + '_マージ' if i in [0] else None]
-                  for i in range(0, len(FUNCTIONS) - 2)]
+                  for i in range(0, len(FUNCTIONS) - 3)]
         layout.append([FUNCTIONS[i][0] for i in range(4, len(FUNCTIONS))])
 
         selects = com.dialog_cols('不要なものは外してください。', layout,
@@ -46,22 +51,20 @@ class EnglishDict:
             return
         total_time = 0
 
-        if 1 == len(selects[len(selects) - 1]):
-            fnc = selects[len(selects) - 1][0]
+        others = selects[len(selects) - 1].copy()
+        selects[len(selects) - 1] = []
 
-            if fnc == FUNCTIONS[len(FUNCTIONS) - 2][0]:
-                selects[len(selects) - 1] = [FUNCTIONS[len(FUNCTIONS) - 2][0]]
+        for i in range(OTHER_START, len(FUNCTIONS)):
+            if FUNCTIONS[i][0] in others:
+
+                if OTHER_START == i:
+                    selects[len(selects) - 1] = [others[0]]
+                else:
+                    selects.append([FUNCTIONS[i][0]])
+            elif OTHER_START != i:
                 selects.append([])
-            else:
-                selects[len(selects) - 1] = []
-                selects.append([FUNCTIONS[len(FUNCTIONS) - 1][0]])
-
-        elif 2 == len(selects[len(selects) - 1]):
-            selects[len(selects) - 1] = [FUNCTIONS[len(FUNCTIONS) - 2][0]]
-            selects.append([FUNCTIONS[len(FUNCTIONS) - 1][0]])
 
         for i in range(0, len(FUNCTIONS)):
-
             if 0 == len(selects[i]):
                 continue
 
@@ -180,14 +183,10 @@ class EnglishDict:
             return False
 
         finally:
-            try:
-                window.close()
-            except:
-                pass
-            try:
-                wd.quit()
-            except:
-                pass
+            try: window.close()
+            except: pass
+            try: wd.quit()
+            except: pass
 
         # マージを実行する場合
         if is_merge:
@@ -276,27 +275,23 @@ class EnglishDict:
                             window['target_'].update(count)
 
                             try:
-                                wd.get(cst.ENGLISH_DICT_URL['Weblio'] % target)
+                                wd.get(cst.ENGLISH_DICT_URL['Weblio'][0] % target)
                                 html = wd.page_source
                                 html = html[html.find('意味・対訳'): html.find('例文の一覧を見る')].replace('\n', '')
                                 is_html = True
                                 break
                             except:
                                 wd_error += 1
-                                try:
-                                    wd.quit()
-                                except:
-                                    pass
-                                try:
-                                    wd = web_driver.driver(headless=IS_HEADLESS)
-                                except:
-                                    pass
+                                try: wd.quit()
+                                except: pass
+                                try: wd = web_driver.driver(headless=IS_HEADLESS)
+                                except: pass
                                 com.sleep(1)
 
                         if not is_html:
                             com.log('HTML取得ミス: Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target, lv='W')
                             com.dialog('HTMLを取得ミスしました。\n　Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target,
-                                       title='TML取得ミス', lv='W')
+                                       title='HTML取得ミス', lv='W')
                             return False
 
                         # 発音表記
@@ -434,14 +429,10 @@ class EnglishDict:
             return False
 
         finally:
-            try:
-                window.close()
-            except:
-                pass
-            try:
-                wd.quit()
-            except:
-                pass
+            try: window.close()
+            except: pass
+            try: wd.quit()
+            except: pass
 
         return True
 
@@ -501,7 +492,7 @@ class EnglishDict:
                             window['target_'].update(count)
 
                             try:
-                                wd.get(cst.ENGLISH_DICT_URL['英ナビ'] % target)
+                                wd.get(cst.ENGLISH_DICT_URL['英ナビ'][0] % target)
                                 html = wd.page_source
                                 html = html[html.find('<!-- word_head -->'):]
 
@@ -509,20 +500,16 @@ class EnglishDict:
                                 break
                             except:
                                 wd_error += 1
-                                try:
-                                    wd.quit()
-                                except:
-                                    pass
-                                try:
-                                    wd = web_driver.driver(headless=IS_HEADLESS)
-                                except:
-                                    pass
+                                try: wd.quit()
+                                except: pass
+                                try: wd = web_driver.driver(headless=IS_HEADLESS)
+                                except: pass
                                 com.sleep(1)
 
                         if not is_html:
                             com.log('HTML取得ミス: Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target, lv='W')
                             com.dialog('HTMLを取得ミスしました。\n　Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target,
-                                       title='TML取得ミス', lv='W')
+                                       title='HTML取得ミス', lv='W')
                             return False
 
                         if 0 == len(html):
@@ -678,9 +665,15 @@ class EnglishDict:
                                 if 0 < len(eng):
                                     examples.append(eng + ' | ' + jpn)
 
+                        # mp3のURL
+                        mp3 = html[html.find('<audio'):]
+                        mp3 = mp3[mp3.find('>') + 1: mp3.find('</audio')]
+                        mp3 = mp3[mp3.find('src='): mp3.find('type=')]
+                        mp3 = mp3[mp3.find('"') + 1: mp3.rfind('"')]
+
                         word[target] = {
                             'pronounce': pronounce, 'meaning': meaning, 'partspeech': partspeeches,
-                            'changes': changes, 'examples': examples, 'others': others}
+                            'changes': changes, 'examples': examples, 'others': others, 'mp3': mp3}
                         words.append(word)
 
                         # 中断イベント
@@ -719,14 +712,10 @@ class EnglishDict:
             return False
 
         finally:
-            try:
-                window.close()
-            except:
-                pass
-            try:
-                wd.quit()
-            except:
-                pass
+            try: window.close()
+            except: pass
+            try: wd.quit()
+            except: pass
 
         return True
 
@@ -789,7 +778,7 @@ class EnglishDict:
                             window['target_'].update(count)
 
                             try:
-                                wd.get(cst.ENGLISH_DICT_URL['Google'] % target)
+                                wd.get(cst.ENGLISH_DICT_URL['Google'][0] % target)
                                 com.sleep(1)
 
                                 while sec < 5:
@@ -898,14 +887,10 @@ class EnglishDict:
             return False
 
         finally:
-            try:
-                window.close()
-            except:
-                pass
-            try:
-                wd.quit()
-            except:
-                pass
+            try: window.close()
+            except: pass
+            try: wd.quit()
+            except: pass
 
         return True
 
@@ -945,6 +930,7 @@ class EnglishDict:
 
         rows = []
         merge = []
+        mp3s = {}
 
         for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
 
@@ -1110,9 +1096,10 @@ class EnglishDict:
                     # 和訳にWeblio追記
                     meaning = plus[key]['meaning']
                     meaning_kana = []
-                    if (0 <= meaning.find('の')
+                    if (0 <= meaning.find('の') and 'could' != key
                             and (0 <= meaning.find('分詞') or 0 <= meaning.find('過去形')
-                                 or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))):
+                                 or 0 <= meaning.find('人称単数現在') or 0 <= meaning.find('複数形'))) \
+                            or 'are' == key:
                         com.log('変化形(meaning)除外: ' + str(lv) + ', ' + key + ' | ' + meaning)
                         out_counts[lv - 1] += 1
                         continue
@@ -1510,6 +1497,15 @@ class EnglishDict:
                                 words[key]['meaning'].remove(text)
                                 continue
 
+                    for i in reversed(range(0, len(words[key]['meaning']))):
+
+                        words[key]['meaning'][i] = (words[key]['meaning'][i].replace('(', '')
+                                                    if words[key]['meaning'][i].find(')') < 0 else meaning)
+                        words[key]['meaning'][i] = (words[key]['meaning'][i].replace(')', '')
+                                                    if words[key]['meaning'][i].find('(') < 0 else meaning)
+
+                    words[key]['meaning'] = list(set(words[key]['meaning']))
+
                     # 例外処理
                     reg_key = key
                     if 'TRUE' == key:
@@ -1565,10 +1561,16 @@ class EnglishDict:
                         if 0 < len(countable):
                             words[key]['changes'].append(countable)
 
+                    mp3s[key] = words[key]['mp3']
+                    del words[key]['mp3']
+
                 if 0 < len(word):
                     rows.append(word)
 
             merges[lv] = rows
+
+        with open(cst.TEMP_PATH[cst.PC] + 'English/MP3.json', 'w') as out_file:
+            out_file.write(json.dumps(mp3s, ensure_ascii=False, indent=4))
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/Content.js', 'w') as out_file:
             out_file.write('const CONTENTS =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
@@ -1577,12 +1579,89 @@ class EnglishDict:
                                 for i in range(0, len(out_counts))]))
         return True
 
-    def _get_phrases(self, _):
+    # MP3ダウンロード
+    def _get_mp3(self, _):
+        wd_error = 0
 
-        merges = {}
+        wd = web_driver.driver()
+        if wd is None:
+            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+            return False
 
-        with open(cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[5][2] + '.' + FUNCTIONS[5][3], 'r') as in_file:
-            for row in in_file.read().split('\n'):
+        try:
+            with open(cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[6][2] + '.' + FUNCTIONS[6][3], 'r') as in_file:
+
+                count = 0
+                data = json.loads(in_file.read())
+
+                window = com.progress(self.myjob, ['MP3ダウンロード(' + str(len(data)) + ')', len(data)], interrupt=True)
+                event, values = window.read(timeout=0)
+
+                for key in data:
+                    lists= []
+                    count += 1
+                    window['MP3ダウンロード(' + str(len(data)) + ')_'].update(count)
+
+                    for i in range(0, len(MP3_DL)):
+
+                        url = cst.ENGLISH_DICT_URL[MP3_DL[i]][1]
+                        url = (data[key] if 0 == len(url) else url % key)
+
+                        if 0 < len(url):
+                            name = key + '_' + str(i + 1) + '.mp3'
+
+                            wd.command_executor._commands['send_command'] = (
+                                'POST', '/session/$sessionId/chromium/send_command')
+                            params = {'cmd': 'Page.setDownloadBehavior', 'params': {
+                                'behavior': 'allow','downloadPath': cst.TEMP_PATH[cst.PC] + 'English/mp3'}}
+                            wd.execute('send_command', params)
+
+                            if 1 == i:
+
+                                is_html = False
+                                for _ in range(0, 60):
+
+                                    try:
+                                        wd.get(url)
+                                        matching.click_pos(200, 200)
+                                        pgui.hotkey('command', 's')
+
+                                        is_html = True
+                                        break
+                                    except:
+                                        wd_error += 1
+                                        try: wd.quit()
+                                        except: pass
+                                        try: wd = web_driver.driver()
+                                        except: pass
+
+                                if not is_html:
+                                    com.log('MP3取得ミス: ' + key, lv='W')
+                                    com.dialog('MP3を取得ミスしました。\n　' + key, title='MP3取得ミス', lv='W')
+                                    return False
+                            else:
+                                urllib.request.urlretrieve(url, (cst.TEMP_PATH[cst.PC] + 'English/mp3/') + name)
+
+        finally:
+            try: window.close()
+            except: pass
+
+        return True
+
+    # フレーズ集作成、MP3参照辞書作成
+    def _create_phrases(self, _):
+
+        merges = dict()
+        merges['0'] = []
+        mp3_dict = {}
+        derivative = {}
+        phrase_max = 0
+
+        mp3_files = os.listdir(cst.TEMP_PATH[cst.PC] + 'English/mp3')
+
+        with open(cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[6][2] + '.' + FUNCTIONS[6][3], 'r') as in_file:
+            in_file = in_file.read().split('\n')
+            for row in in_file:
 
                 if 0 == len(row):
                     continue
@@ -1596,10 +1675,110 @@ class EnglishDict:
                 except:
                     merges[cols[0]] = [phrases]
 
+                phrase_max = cols[0]
+
+        with open(cst.TEMP_PATH[cst.PC] + 'English/content.js', 'r') as in_file:
+
+            data = in_file.read()
+            data = data[data.find('\n') + 1:]
+            data = json.loads(data)
+            mp3_path = cst.TEMP_PATH[cst.PC] + 'English/mp3/'
+
+            for lv in range(1, int(cst.ENGLISH_MASTER_LEVEL / 2) + 1):
+
+                for i in range(0, len(data[str(lv)])):
+                    for key in data[str(lv)][i]:
+                        lists = []
+
+                        if key in ['May', 'been']:
+                            continue
+
+                        # MP3ファイル、枝番付与
+                        for k in range(0, len(MP3_DL)):
+
+                            if os.path.exists(mp3_path + key + '.mp3'):
+                                os.rename(mp3_path + key + '.mp3', mp3_path + key + '_2.mp3')
+
+                        # MP3参照辞書
+                        for k in range(0, len(MP3_DL)):
+                            name = key + '_' + str(k + 1) + '.mp3'
+
+                            if os.path.exists(mp3_path + name):
+                                lists.append(name)
+
+                        dicts = data[str(lv)][i][key]
+                        if '助動詞' in dicts['partspeech']:
+                            merges['0'].append(
+                                {key:{'meaning': [text for text in dicts['meaning']
+                                                  if text not in ['缶', '5月'] and text.find('過去形') < 0],
+                                      'changes': [text for text in dicts['changes']
+                                                  if text.find('複数形') < 0 and 'shall' != key]
+                                      }})
+                            if 'be' == key:
+                                merges['0'][len(merges['0']) - 1][key]['changes'][0] = 'were(二人称複数過去形)'
+                                merges['0'][len(merges['0']) - 1][key]['changes'].insert(0, 'was(三人称単数過去形)')
+                                merges['0'][len(merges['0']) - 1][key]['changes'].append('are(二人称複数現在)')
+
+                        else:
+                            for k in range(0, len(merges[phrase_max])):
+                                for word in merges[phrase_max][k]:
+
+                                    ignores = merges[phrase_max][k][word]['meaning'][0]
+                                    if  key == word \
+                                            or (1 < len(ignores)
+                                                and (key in ignores.split(' ')
+                                                or ('un' == word and 0 <= key.find('under'))
+                                                or ('re' == word and 0 <= key.find('real')))):
+                                        continue
+
+                                    is_not_word = True
+                                    if word in ['ness', 'less']:
+
+                                        if not key.endswith(word):
+                                            continue
+                                        is_not_word = False
+
+                                    else:
+                                        if not key.startswith(word):
+                                            continue
+
+                                        if 're' == word:
+                                            for meaning in dicts['meaning']:
+
+                                                for check in ['再', '複', '続', '応', '反', '改', '帰', '返', '戻', '別', '退']:
+                                                    if 0 <= meaning.find(check):
+                                                        is_not_word = False
+                                                        break
+
+                                                if is_not_word:
+                                                    break
+                                        else:
+                                            is_not_word = False
+
+                                    if is_not_word:
+                                        continue
+
+                                    try:
+                                        derivative[word].append([key] + [text for text in dicts['meaning']])
+                                    except:
+                                        derivative[word] = [[key] + [text for text in dicts['meaning']]]
+                        mp3_dict[key] = lists
+
+        merges[phrase_max] = []
+        for word in derivative:
+            derivative[word] = sorted(derivative[word], key=lambda x: x[0])
+
+        for word in derivative:
+            for i in range(0, len(derivative[word])):
+                merges[phrase_max].append(
+                    {word: {'pronounce': derivative[word][i][0], 'meaning': derivative[word][i][1:]}})
+
         with open(cst.TEMP_PATH[cst.PC] + 'English/Phrase.js', 'w') as out_file:
             out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
-        return True
+        with open(cst.TEMP_PATH[cst.PC] + 'English/MP3.js', 'w') as out_file:
+            out_file.write('const MP3 =\n' + json.dumps(mp3_dict, ensure_ascii=False, indent=4))
 
+        return True
 
 # 中断イベント
 def _is_interrupt(window, event):

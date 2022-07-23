@@ -31,7 +31,7 @@ class KeepDisplay:
 
     def do(self):
 
-        window = self._window('| |')
+        window = self._window('　| |　')
         is_stop = False
 
         # イベントループ
@@ -56,9 +56,7 @@ class KeepDisplay:
     def _window(self, stop_btn):
         return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color=self.bgcolor,
                          location=(self.win_x - 50, 0), margins=(5, 5), icon=(os.getcwd() + cst.ICON_FILE), layout=
-                         [[sg.Button(stop_btn, key='replay', font=('', 12), pad=((0, 0), (0, 0))),
-                          sg.Text(' ' + str(self.turn) + '\n ' + str(int(self.move / 20)), key='turn', size=(2, 0), pad=((0, 0), (0, 0)),
-                          background_color=self.bgcolor, text_color='#000000')]])
+                         [[sg.Button(stop_btn, key='replay', font=('', 12), pad=((0, 0), (0, 0)))]])
 
     # イベントのアクション
     def _is_evwnt(self, window, event, is_stop):
@@ -69,16 +67,16 @@ class KeepDisplay:
             return None, None, None
 
         elif 'replay' == event:
-            if '| |' == window['replay'].get_text():
+            if '　| |　' == window['replay'].get_text():
                 com.log(self.myjob + ': 一時停止')
                 self.bgcolor = BGCOLOR_OFF
                 window.close()
-                return None, True, self._window('▶︎')
+                return None, True, self._window('　▶︎　')
 
-            elif '▶︎' == window['replay'].get_text():
+            elif '　▶︎　' == window['replay'].get_text():
                 com.log(self.myjob + ': 再開')
                 self.bgcolor = BGCOLOR_ON
                 window.close()
-                return None, False, self._window('| |')
+                return None, False, self._window('　| |　')
 
         return True, is_stop, window
