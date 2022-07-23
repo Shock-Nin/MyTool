@@ -36,9 +36,8 @@ class WebLogin:
             com.sleep(1)
             try:
                 # 事前画面あり
-                if name in ['GogoJungle', 'ガス']:
-                    url = ('https://www.gogojungle.co.jp/login' if 'GogoJungle' == name else
-                           url + '/login.html' if 'ガス' == name else '')
+                if name in ['ガス']:
+                    url += '/login.html'
                     self.wd.get(url)
                     com.sleep(1)
 

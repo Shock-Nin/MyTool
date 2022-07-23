@@ -174,7 +174,7 @@ class BlogPochi:
                 # wdMura.close()
 
                 wdMura.get('https://mypage.blogmura.com/login/')
-                com.sleep(1)
+                com.sleep(2)
 
                 web_driver.find_element(wdMura, 'email').send_keys(menu['ブログ村' == menu['SITE']]['ID2'].values[0])
                 web_driver.find_element(wdMura, 'password').send_keys(menu['ブログ村' == menu['SITE']]['PASS'].values[0])
