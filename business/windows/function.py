@@ -328,14 +328,26 @@ class Function:
                     if is_interrupt:
                         break
 
-                    com.log('マージ編集中: ' + files[i])
+                    com.log('マージ中: ' + files[i])
                     result = pd.concat(merge_file)
-                    result['Volume'] = 10.0
+                    result.to_csv(out_path + '/' + files[i], index=False)
+
+                    run_time = com.time_end(start_time)
+                    com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+
+                    result = pd.read_csv(out_path + '/' + files[i])
+                    for k in range(0, len(result)):
+                        num = int((float(result.at[result.index[k], 'High']) - float(result.at[result.index[k], 'Low'])) /
+                                  float(result.at[result.index[k], 'Close']) * 10000)
+                        result.at[result.index[k], 'Volume'] = str(int(4 if num < 4 else num) * 10 / 10)
+                        if 0 == k % 500000:
+                            print(files[i] + ': ' + str(k) + ' / ' + str(len(result)))
+
                     result.to_csv(out_path + '/' + files[i], index=False)
 
                     run_time = com.time_end(start_time)
                     total_time += run_time
-                    com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                    com.log('Volume編集完了(' + com.conv_time_str(run_time) + ') ' + files[i])
 
             finally:
                 try: window.close()
