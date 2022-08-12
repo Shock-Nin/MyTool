@@ -304,7 +304,7 @@ def _output_html():
                     if 0 < len(set_cur) and set_cur == prms[k]['Comments']:
                         item = str(read_set[key].item())
                         set_html += '<td class="prm' + ('' if str(prms[k][key]) == item else ' ng_set') + \
-                                    (' up_line' if 0 <= key.find('Lot') or 0 <= key.find('AnomalySpan') else '') + \
+                                    (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H', 'Anomaly'] else '') + \
                                     '" align="' + ('center">' + set_cur if 'Comments' == key else 'right">' + item) + '</td>'
 
                     ng_mql = ''
@@ -325,7 +325,7 @@ def _output_html():
                 except: pass
 
             html += '<tr>' + set_html + '<td class="col'
-            html += (' up_line' if 0 <= key.find('Lot') or 0 <= key.find('AnomalySpan') else '')
+            html += (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H', 'Anomaly'] else '')
             html += '" align="left">' + key + '</td>' + prm_html + '</tr>'
 
         # HTMLフッター(スタイル)
