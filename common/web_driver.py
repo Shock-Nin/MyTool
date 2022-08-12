@@ -3,6 +3,7 @@
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
 
@@ -42,3 +43,7 @@ def find_element(wd, element):
     except: pass
 
     return None
+
+def select_click(element, index):
+    select = Select(element)
+    select.select_by_index(index)

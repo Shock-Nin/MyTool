@@ -82,11 +82,12 @@ ENGLISH_NOUNS = {'doushi': '動詞', 'meishi': '名詞', 'keiyoshi': '形容詞'
 # ENGLISH_IMAGES_URL = 'https://www.google.com/search?q=consequence+%E3%82%A4%E3%83%A1%E3%83%BC%E3%82%B8'
 
 ENGLISH_DICT_URL = {
-    'Google': ['https://translate.google.co.jp/?hl=ja&sl=en&tl=ja&text=%s&op=translate', ''],
+    'Google': ['https://translate.google.co.jp/?hl=ja&sl=en&tl=ja&text=%s&op=translate', '%s'],
     'Weblio': ['https://ejje.weblio.jp/content/%s', 'https://weblio.hs.llnwd.net/e8/audio/%s.mp3'],
-    '英ナビ': ['https://www.ei-navi.jp/dictionary/content/%s', ''],
-    '英辞郎': ['https://eow.alc.co.jp/search?q=%s', ''],
-    'LONGMAN': ['https://www.ldoceonline.com/jp/dictionary/english-japanese/%s', 'https://www.ldoceonline.com/media/english/ameProns/%s.mp3']
+    '英ナビ': ['https://www.ei-navi.jp/dictionary/content/%s', '%s'],
+    '英辞郎': ['https://eow.alc.co.jp/search?q=%s', '%s'],
+    'LONGMAN': ['https://www.ldoceonline.com/jp/dictionary/english-japanese/%s', 'https://www.ldoceonline.com/media/english/ameProns/%s.mp3'],
+    '音読': ['', 'https://ondoku3.com/en/']
 }
 
 EINAVI_PARTSPEECH = {

@@ -319,7 +319,7 @@ def _output_html():
 
                         # .setのパラメータ
                         prm_html += '<td class="prm' + zero + ng_mql + \
-                                    (' up_line' if 0 <= key.find('Lot') or 0 <= key.find('AnomalySpan') else '') + \
+                                    (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H', 'Anomaly'] else '') + \
                                     '" align="' + ('center' if 'Comments' == key else 'right') + \
                                     '">' + str(prms[k][key]) + '</td>'
                 except: pass

@@ -5,7 +5,7 @@ import os
 from const import cst
 
 from common import web_driver
-from common import com, matching
+from common import com
 
 import re
 import json
@@ -13,8 +13,10 @@ import pykakasi
 import pandas as pd
 import PySimpleGUI as sg
 import pyautogui as pgui
-import pyperclip
 import urllib.request
+import pyperclip
+
+from selenium.webdriver.common.keys import Keys
 
 IS_HEADLESS = True
 
@@ -23,14 +25,15 @@ FUNCTIONS = [
     ['Weblio', '_get_weblio', 'Weblio', 'json'],
     ['英ナビ', '_get_Einavi', 'Einavi', 'json'],
     ['Google', '_get_google', 'Google', 'json'],
+    ['MP3取得', '_get_mp3', 'Content', 'js'],
     ['辞書', '_merge_content', 'Content', 'json'],
-    ['MP3取得', '_get_mp3', '', ''],
     ['フレーズ集', '_create_phrases', 'Phrase', 'csv'],
 ]
-OTHER_START = 4
+OTHER_START = 5
+PHRASE_SUFFIX = ['able', 'ful', 'ness', 'less', 'ress', 'lity', 'rity', 'ment']
 IGNORE_MEANINGS = ['関係代名詞', '現在完了', '過去完了', '未来完了']
-MP3_DL = ['Weblio', 'LONGMAN', '英ナビ']
-
+MP3_PATH = cst.TEMP_PATH[cst.PC] + 'English/mp3'
+MP3_DL = [['Weblio', 0], ['LONGMAN', 0], ['英ナビ', 0], ['音読', 12]]
 
 class EnglishDict:
 
@@ -39,11 +42,11 @@ class EnglishDict:
 
     def do(self):
         layout = [[FUNCTIONS[i][0] + '_' + str(k)
-                   for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)] +
+                   for k in range(1, int(cst.ENGLISH_MASTER_LEVEL / (2 if i in [4] else 1)) + 1)] +
                   [FUNCTIONS[i][0] + '_追加' if i in [1, 2, 3] else
                    FUNCTIONS[i][0] + '_マージ' if i in [0] else None]
-                  for i in range(0, len(FUNCTIONS) - 3)]
-        layout.append([FUNCTIONS[i][0] for i in range(4, len(FUNCTIONS))])
+                  for i in range(0, len(FUNCTIONS) - 2)]
+        layout.append([FUNCTIONS[i][0] for i in range(5, len(FUNCTIONS))])
 
         selects = com.dialog_cols('不要なものは外してください。', layout,
                                   ['l' for _ in range(0, len(FUNCTIONS))], '工程選択', obj='check')
@@ -136,14 +139,10 @@ class EnglishDict:
                             break
                         except:
                             wd_error += 1
-                            try:
-                                wd.quit()
-                            except:
-                                pass
-                            try:
-                                wd = web_driver.driver(headless=IS_HEADLESS)
-                            except:
-                                pass
+                            try: wd.quit()
+                            except: pass
+                            try: wd = web_driver.driver(headless=IS_HEADLESS)
+                            except: pass
                             com.sleep(1)
 
                     if not is_html:
@@ -297,15 +296,15 @@ class EnglishDict:
                         # 発音表記
                         if 0 <= html.find('phoneticEjjeDesc'):
                             pronounce = html[html.find('phoneticEjjeDesc'):]
-                            pronounce = pronounce[: pronounce.find('phoneticEjjeDc')]
                         else:
                             pronounce = html[html.find('syllableEjje'):]
-                            pronounce = pronounce[:pronounce.find('</div>')]
 
+                        pronounce = pronounce[:pronounce.find('</div>')]
                         pronounce = pronounce[pronounce.find('>') + 1: pronounce.rfind('</span>')]
-                        while 0 <= pronounce.find('<'):
-                            pronounce = pronounce.replace(pronounce[pronounce.find('<'): pronounce.find('>') + 1],
-                                                          '').strip()
+                        pronounce = pronounce.replace('<span class="phoneticEjjeDc">', ''). \
+                            replace('<span class="phoneticEjjeDesc">', ''). \
+                            replace('<span class="phoneticEjjeExt">', '').replace('</span>', '')
+                        pronounce = pronounce[:pronounce.rfind(')') + 1]
 
                         # 意味・対訳
                         meaning = html[html.find('>') + 1: html.find('</div>')]
@@ -742,10 +741,10 @@ class EnglishDict:
                 lv = int(select.split('_')[1])
                 rows = [row for row in datas if str(lv) == row.split(',')[0]]
 
+                old_data = ''
                 words = []
                 total_times = 0
                 count = 0
-                ng_target = ''
 
                 window = com.progress(self.myjob, ['lv', cst.ENGLISH_MASTER_LEVEL],
                                       ['target', len(rows)], interrupt=True)
@@ -760,104 +759,120 @@ class EnglishDict:
 
                     # 単語個別のHTML取得を、1分まで実施
                     for target in targets:
+                        while True:
 
-                        sec = 0
-                        is_match = False
+                            pos_x, pos_y = pgui.position()
+                            wd.get(cst.ENGLISH_DICT_URL['Google'][0] % '')
+                            com.sleep(1)
 
-                        while sec < 5:
+                            sec = 0
+                            is_match = False
+
+                            while sec < 5:
+
+                                # 中断イベント
+                                if _is_interrupt(window, event):
+                                    return None
+
+                                window['lv'].update(('追加: ' if insert else '') + 'Lv ' + str(lv) + '/' +
+                                                    str(cst.ENGLISH_MASTER_LEVEL) + ' [' + str(sec + 1) +
+                                                    ', wd' + str(wd_error) + ']')
+                                window['lv_'].update(lv - 1)
+                                window['target'].update(target + ' ' + str(count + 1) + '/' + str(len(rows)))
+                                window['target_'].update(count)
+
+                                try:
+                                    wd.get(cst.ENGLISH_DICT_URL['Google'][0] % target)
+                                    com.sleep(1)
+
+                                    for _ in range(0, 5):
+
+                                        shot, gray = com.shot_grab()
+                                        x, y = com.match(shot, gray, cst.MATCH_PATH + 'english/google_trans.png',
+                                                         (0, 0, 255))
+
+                                        if x is None:
+                                            com.sleep(1)
+                                            continue
+
+                                        is_match = True
+                                        break
+
+                                    break
+                                except:
+                                    wd_error += 1
+                                    try: wd.quit()
+                                    except: pass
+                                    try: wd = web_driver.driver()
+                                    except: pass
+                                    com.sleep(1)
+
+                            if not is_match:
+                                com.log('マッチングエラー: Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target, lv='W')
+
+                            try:
+                                pgui.click(int(x / 2 - 100), int(y / 2 + 20), clicks=2, interval=0, button='left')
+                            except:
+                                try:
+                                    pgui.click(700, 700, clicks=2, interval=0, button='left')
+                                except:
+                                    com.move_pos(pos_x, pos_y)
+                                    com.log('クリックエラー: Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target, lv='W')
+                                    count += 1
+                                    continue
+
+                            com.sleep(1)
+                            pgui.hotkey('command', 'a')
+                            pgui.hotkey('command', 'c')
+                            com.sleep(1)
+
+                            com.move_pos(pos_x, pos_y)
+                            data = pyperclip.paste()
+
+                            if data == old_data:
+                                continue
+                            old_data = data
+
+                            data = data.split('help_outline')
+
+                            pronounce = data[0].split('/')[0].split('\n')
+                            pronounce = pronounce[len(pronounce) - (4 if 0 <= pronounce.find('原文の言語') else 2)]
+
+                            meanings = []
+                            partspeeches = []
+
+                            try:
+                                for k in range(1, len(data[1].split('\n')) - 2):
+                                    text = data[1].split('\n')[k]
+
+                                    if re.match(r'([a-z])', text) or re.match(r'([A-Z])', text):
+                                        continue
+                                    elif len(text) < 0:
+                                        continue
+                                    elif text.endswith('詞'):
+                                        partspeeches.append(text)
+                                    else:
+                                        meanings.append(text)
+                            except:
+                                partspeeches.append('')
+                                meanings.append('')
+
+                            word[target] = {
+                                'pronounce': pronounce, 'meaning': list(set(meanings)), 'partspeech': partspeeches}
+                            words.append(word)
 
                             # 中断イベント
                             if _is_interrupt(window, event):
                                 return None
 
-                            window['lv'].update(('追加: ' if insert else '') + 'Lv ' + str(lv) + '/' +
-                                                str(cst.ENGLISH_MASTER_LEVEL) + ' [' + str(sec + 1) +
-                                                ', wd' + str(wd_error) + ']')
-                            window['lv_'].update(lv - 1)
-                            window['target'].update(target + ' ' + str(count + 1) + '/' + str(len(rows)))
-                            window['target_'].update(count)
-
-                            try:
-                                wd.get(cst.ENGLISH_DICT_URL['Google'][0] % target)
-                                com.sleep(1)
-
-                                while sec < 5:
-
-                                    shot, gray = com.shot_grab()
-                                    x, y = com.match(shot, gray, cst.MATCH_PATH + 'english/google_trans.png',
-                                                     (0, 0, 255))
-
-                                    if x is None:
-                                        com.sleep(1)
-                                        sec += 1
-                                        continue
-
-                                    is_match = True
-                                    break
-
-                                break
-                            except:
-                                wd_error += 1
-                                try:
-                                    wd.quit()
-                                except:
-                                    pass
-                                try:
-                                    wd = web_driver.driver()
-                                except:
-                                    pass
-                                com.sleep(1)
-                                sec += 1
-
-                        if not is_match:
-                            com.log('マッチングエラー: Lv' + str(lv) + ' - ' + str(count + 1) + ' ' + target, lv='W')
-                            ng_target += str(lv) + ',' + target + '\n'
                             count += 1
-                            continue
 
-                        pos_x, pos_y = pgui.position()
-                        pgui.click(int(x / 2 - 100), int(y / 2 + 20), clicks=2, interval=0, button='left')
+                            run_time = com.time_end(start_time)
+                            total_times += run_time
+                            com.log('Google(' + com.conv_time_str(run_time) + '): Lv' + str(lv) + ', ' +
+                                    target + '(' + str(count) + ') ' + pronounce + (' :' + str(partspeeches)))
 
-                        com.sleep(1)
-                        pgui.hotkey('command', 'a')
-                        pgui.hotkey('command', 'c')
-                        com.sleep(1)
-
-                        com.move_pos(pos_x, pos_y)
-                        data = pyperclip.paste().split('help_outline')
-
-                        pronounce = data[0].split('/')[0].split('\n')
-                        pronounce = pronounce[len(pronounce) - 2]
-
-                        meanings = []
-                        partspeeches = []
-
-                        for k in range(1, len(data[1].split('\n')) - 2):
-                            text = data[1].split('\n')[k]
-
-                            if re.match(r'([a-z])', text) or re.match(r'([A-Z])', text):
-                                continue
-                            elif len(text) < 0:
-                                continue
-                            elif text.endswith('詞'):
-                                partspeeches.append(text)
-                            else:
-                                meanings.append(text)
-
-                        word[target] = {
-                            'pronounce': pronounce, 'meaning': list(set(meanings)), 'partspeech': partspeeches}
-                        words.append(word)
-
-                        # 中断イベント
-                        if _is_interrupt(window, event):
-                            return None
-
-                        count += 1
-
-                        run_time = com.time_end(start_time)
-                        total_times += run_time
-                        com.log('Google(' + com.conv_time_str(run_time) + '): Lv' + str(lv) + ', ' +
-                                target + '(' + str(count) + ') ' + pronounce + (' :' + str(partspeeches)))
+                            break
 
                 if 0 < len(words):
                     insert_datas.append(words)
@@ -870,10 +885,6 @@ class EnglishDict:
                 if not insert:
                     with open(cst.TEMP_PATH[cst.PC] + 'English/dict/Google_' + str(lv) + '.json', 'w') as out_file:
                         json.dump({lv: words}, out_file, ensure_ascii=False, indent=4)
-
-                    if 0 < len(ng_target):
-                        with open(cst.TEMP_PATH[cst.PC] + 'English/Google.csv', 'a') as out_file:
-                            out_file.write(ng_target)
 
             if insert:
                 with open(cst.TEMP_PATH[cst.PC] + 'English/dict/Google_0.json', 'w') as out_file:
@@ -906,9 +917,11 @@ class EnglishDict:
 
         plus = {}
         for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
-            file = pd.read_json(plus_file.replace(
-                FUNCTIONS[1][2] + '.', FUNCTIONS[1][2] + '_' + str(lv) + '.'), encoding='utf8')
 
+            file = open(plus_file.replace(
+                FUNCTIONS[1][2] + '.', FUNCTIONS[1][2] + '_' + str(lv) + '.'), encoding='utf8').read()
+
+            file = json.loads(file)
             for col in file:
                 for i in range(0, len(file[col])):
                     for key in file[col][i]:
@@ -916,8 +929,10 @@ class EnglishDict:
 
         google = {}
         for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
-            file = pd.read_json(google_file.replace(
-                FUNCTIONS[3][2] + '.', FUNCTIONS[3][2] + '_' + str(lv) + '.'), encoding='utf8')
+
+            file = open(google_file.replace(
+                FUNCTIONS[3][2] + '.', FUNCTIONS[3][2] + '_' + str(lv) + '.'), encoding='utf8').read()
+            file = json.loads(file)
 
             for col in file:
                 for i in range(0, len(file[col])):
@@ -997,29 +1012,82 @@ class EnglishDict:
                 merges[lv] = new_datas
 
             rows = []
+            old_pronounce = ''
+            old_meaning = ''
 
             for words in merges[lv]:
                 word = {}
 
                 for key in words:
 
-                    if len(key) < 2 or key.endswith('tieth') or key.endswith('teenth'):
+                    # a・I・数字・Mr関係の除外
+                    if len(key) < 2 or key.endswith('tieth') or key.endswith('teenth') or key.endswith('.'):
+                        out_counts[lv - 1] += 1
+                        com.log('特定ワード除外: ' + key)
                         continue
 
-                    # 発音表記がGoogleにあった場合、優先使用
-                    try:
-                        if re.match(r'\ˈ', google[key]['pronounce']) \
-                                or re.match(r'([a-z])', google[key]['pronounce']) \
-                                or re.match(r'([A-Z])', google[key]['pronounce']):
-                            words[key]['pronounce'] = google[key]['pronounce']
-                    except:
-                        pass
+                    # Googleの整合性チェック
+                    if google[key]['pronounce'] == old_pronounce and google[key]['meaning'] == old_meaning:
+                        com.log('pronounce重複: ' + key)
+                    old_pronounce = google[key]['pronounce']
+                    old_meaning = google[key]['meaning']
 
-                    # 発音表記がない場合、Weblio使用
-                    if 0 == len(words[key]['pronounce']):
-                        words[key]['pronounce'] = plus[key]['pronounce']
+                    # 発音がWeblioにない場合
+                    pronounce = plus[key]['pronounce']
+                    inclosures = ['〈', '〉']
+                    if 0 == len(pronounce):
 
-                    words[key]['pronounce'] = words[key]['pronounce'].replace('&nbsp;', ' ')
+                        # 発音が英ナビにない場合、Google使用
+                        if 0 == len(words[key]['pronounce']):
+                            pronounce = google[key]['pronounce']
+                            inclosures = [' [', ']']
+
+                        # 英ナビを使用する場合
+                        else:
+                            pronounce = words[key]['pronounce'].replace('&nbsp;', ' ')
+                            inclosures = [' {', '}']
+
+                    # 発音がWeblioにある場合、優先使用
+                    else:
+                        pronounces = pronounce.split(',')
+                        pronounce = ''
+                        for i in range(0, len(pronounces)):
+                            if 0 <= pronounces[i].find('(米国'):
+
+                                pronounces[i] = pronounces[i].replace('--', '')
+
+                                # "-"がある場合は、英国を使用
+                                if 0 <= pronounces[i].find('‐') or 0 <= pronounces[i].find('ˈ-'):
+                                    try:
+                                        pronounce = pronounces[i + 1][:pronounces[i + 1].find('(英国')].strip()
+
+                                    # 英国がなければ、Googleを使用
+                                    except:
+                                        pronounce = google[key]['pronounce']
+                                        inclosures = [' [', ']']
+
+                                    # 最終的に"-"が残る場合は、Googleを使用
+                                    if 0 <= pronounce.find('‐'):
+                                        pronounce = google[key]['pronounce']
+                                        inclosures = [' [', ']']
+
+                                # 通常は米国を使用
+                                else:
+                                    if 0 <= pronounces[i].find('》'):
+                                        pronounces[i] = pronounces[i].split('》')[1]
+                                    pronounce = pronounces[i][:pronounces[i].find('(米国')].strip()
+
+                                if 0 <= pronounce.find(' '):
+                                    pronounce = pronounce.split(' ')[1]
+
+                                if 0 <= pronounce.find('形'):
+                                    pronounce = pronounce.split(')')[1]
+
+                    # 発声の文字変換(Google)
+                    pronounce = pronounce.replace('TH', 'ð').replace('T͟H', 'θ'). \
+                        replace('SH', 'ʃ').replace('ZH', 'dʒ').replace('NG', 'ˈŋ'). \
+                        replace('o͟o', 'ōō').replace('o͞o', 'úː').replace('o͝o', 'ˈʊ')
+                    words[key]['pronounce'] = inclosures[0] + pronounce + inclosures[1]
 
                     # 品詞がある場合は編集
                     if 0 < len(words[key]['partspeech']):
@@ -1345,7 +1413,7 @@ class EnglishDict:
                                 jpn = jpn.replace('「', '')
 
                             # 細かい整形
-                            eng = eng.replace('＝', ' / ').replace('；', ' / ').replace('()', '')
+                            eng = eng.replace('―', ' - ').replace('＝', ' / ').replace('；', ' / ').replace('()', '')
                             eng = eng.replace(eng[eng.find('〈'): eng.rfind('〉')], '')
                             eng = eng.replace(eng[eng.find('《'): eng.rfind('》')], '')
 
@@ -1443,6 +1511,10 @@ class EnglishDict:
 
                     words[key]['partspeech'] = partspeech
 
+                    # Googleに和訳が存在する場、Googleを使用
+                    if 0 < len(google[key]['meaning']) and 0 < len(google[key]['meaning'][0]):
+                        words[key]['meaning'] = google[key]['meaning']
+
                     # 最終チェック(meaning)
                     words[key]['meaning'] = sorted(words[key]['meaning'], reverse=True)
                     for i in reversed(range(0, len(words[key]['meaning']))):
@@ -1462,6 +1534,7 @@ class EnglishDict:
                             continue
 
                         for k in range(0, i):
+
                             text = words[key]['meaning'][k].translate(str.maketrans(
                                 {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
 
@@ -1511,15 +1584,16 @@ class EnglishDict:
                     if 'TRUE' == key:
                         reg_key = key.lower()
 
+                    # 品詞が英ナビにもWeblioにもなく、Googleにある場合はGoogle使用
+                    if 0 == len(words[key]['partspeech'][0]) and 0 < len(google[key]['partspeech']):
+                        words[key]['partspeech'] = google[key]['partspeech']
+
                     # 単語に格納
                     if 0 < len(words[key]['partspeech'][0]):
                         word[reg_key] = words[key]
                     else:
                         com.log('partspeechなし: ' + str(lv) + ', ' + key)
                         out_counts[lv - 1] += 1
-
-                    # 発声のエラー文字除去
-                    words[key]['pronounce'] = words[key]['pronounce'].replace('͟', '').replace('͞', '').replace('͝', '')
 
                     # 変化形の整理
                     if 0 < len(words[key]['changes']):
@@ -1580,69 +1654,131 @@ class EnglishDict:
         return True
 
     # MP3ダウンロード
-    def _get_mp3(self, _):
-        wd_error = 0
+    def _get_mp3(self, selects):
 
-        wd = web_driver.driver()
-        if wd is None:
-            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+        wd_error = 0
+        command = ('POST', '/session/$sessionId/chromium/send_command')
+        params = {'cmd': 'Page.setDownloadBehavior', 'params': {
+            'behavior': 'allow', 'downloadPath': MP3_PATH}}
+
+        # lm_wd = web_driver.driver()
+        # if lm_wd is None:
+        #     com.dialog('WebDriver(LONGMAN)で異常が発生しました。', 'WebDriver異常', 'E')
+        #     return False
+        # lm_wd.command_executor._commands['send_command'] = command
+        # lm_wd.execute('send_command', params)
+
+        od_wd = web_driver.driver()
+        if od_wd is None:
+            com.dialog('WebDriver(音読)で異常が発生しました。', 'WebDriver異常', 'E')
             return False
+        od_wd.command_executor._commands['send_command'] = command
+        od_wd.execute('send_command', params)
+        od_wd.get(cst.ENGLISH_DICT_URL['音読'][1])
+        com.sleep(1)
+        web_driver.find_element(od_wd, 'id_text').click()
+        com.sleep(3)
+
+        shot, gray = com.shot_grab()
+        x, y = com.match(shot, gray, cst.MATCH_PATH + 'english/ondoku_text.png', (255, 0, 255))
+        com.click_pos(int(x / 2 + 20), int(y / 2 + 100))
 
         try:
-            with open(cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[6][2] + '.' + FUNCTIONS[6][3], 'r') as in_file:
+            with open(cst.TEMP_PATH[cst.PC] + 'English/content.js', 'r') as in_file:
+
+                data = in_file.read()
+                data = data[data.find('\n') + 1:]
+                data = json.loads(data)
 
                 count = 0
-                data = json.loads(in_file.read())
 
                 window = com.progress(self.myjob, ['MP3ダウンロード(' + str(len(data)) + ')', len(data)], interrupt=True)
                 event, values = window.read(timeout=0)
 
-                for key in data:
-                    lists= []
-                    count += 1
-                    window['MP3ダウンロード(' + str(len(data)) + ')_'].update(count)
+                for select in selects:
+                    lv = int(select.split('_')[1])
 
-                    for i in range(0, len(MP3_DL)):
+                    for i in range(0, len(data[str(lv)])):
+                        for key in data[str(lv)][i]:
 
-                        url = cst.ENGLISH_DICT_URL[MP3_DL[i]][1]
-                        url = (data[key] if 0 == len(url) else url % key)
+                            count += 1
+                            window['MP3ダウンロード(' + str(len(data)) + ')_'].update(count)
 
-                        if 0 < len(url):
-                            name = key + '_' + str(i + 1) + '.mp3'
+                            for k in range(0, len(MP3_DL)):
 
-                            wd.command_executor._commands['send_command'] = (
-                                'POST', '/session/$sessionId/chromium/send_command')
-                            params = {'cmd': 'Page.setDownloadBehavior', 'params': {
-                                'behavior': 'allow','downloadPath': cst.TEMP_PATH[cst.PC] + 'English/mp3'}}
-                            wd.execute('send_command', params)
+                                url = cst.ENGLISH_DICT_URL[MP3_DL[k][0]][1]
+                                if '音読' != MP3_DL[k][0]:
+                                    url = (data[key] if 0 == len(url) else url % key)
 
-                            if 1 == i:
+                                if 0 == len(url):
+                                    continue
 
-                                is_html = False
-                                for _ in range(0, 60):
+                                name = key + '_' + str(k + 1) + '.mp3'
 
-                                    try:
-                                        wd.get(url)
-                                        matching.click_pos(200, 200)
-                                        pgui.hotkey('command', 's')
+                                if '音読' == MP3_DL[k][0]:
 
-                                        is_html = True
-                                        break
-                                    except:
-                                        wd_error += 1
-                                        try: wd.quit()
-                                        except: pass
-                                        try: wd = web_driver.driver()
-                                        except: pass
+                                    for m in range(0, MP3_DL[k][1]):
 
-                                if not is_html:
-                                    com.log('MP3取得ミス: ' + key, lv='W')
-                                    com.dialog('MP3を取得ミスしました。\n　' + key, title='MP3取得ミス', lv='W')
-                                    return False
-                            else:
-                                urllib.request.urlretrieve(url, (cst.TEMP_PATH[cst.PC] + 'English/mp3/') + name)
+                                        before = os.listdir(MP3_PATH)
+                                        name = key + '_' + str(m + 1) + '.mp3'
 
+                                        web_driver.select_click(web_driver.find_element(od_wd, 'id_voice'), m)
+
+                                        com.click_pos(int(x / 2 + 20), int(y / 2 + 100))
+                                        web_driver.find_element(od_wd, 'id_text').send_keys(Keys.COMMAND, 'a')
+                                        com.clip_copy(key)
+
+                                        web_driver.find_element(od_wd, 'submit').click()
+                                        com.sleep(2)
+                                        html = od_wd.page_source
+                                        html = html[html.find('<source'): ]
+                                        html = html[html.find('"') + 1: html.find('type')]
+                                        html = html[: html.find('"')]
+                                        urllib.request.urlretrieve(html, MP3_PATH + '/' + name)
+                                        # web_driver.find_element(od_wd, 'download-button').click()
+
+                                        for sec in range(0, 5):
+                                            com.sleep(1)
+                                            after = os.listdir(MP3_PATH)
+                                            diff_list = set(before) ^ set(after)
+                                            if 0 < len(diff_list):
+                                                if os.path.exists(MP3_PATH + '/' + name):
+                                                    os.remove(MP3_PATH + '/' + name)
+                                                os.rename(MP3_PATH + '/' + list(diff_list)[0], MP3_PATH + '/' + name)
+                                                break
+                                        com.sleep(1)
+                                else:
+                                    continue
+                                # elif 'LONGMAN' == MP3_DL[i][0]:
+                                #
+                                #     is_html = False
+                                #     for _ in range(0, 60):
+                                #
+                                #         try:
+                                #             lm_wd.get(url)
+                                #             matching.click_pos(200, 200)
+                                #             pgui.hotkey('command', 's')
+                                #
+                                #             is_html = True
+                                #             break
+                                #         except:
+                                #             wd_error += 1
+                                #             try: lm_wd.quit()
+                                #             except: pass
+                                #             try: lm_wd = web_driver.driver()
+                                #             except: pass
+                                #
+                                #     if not is_html:
+                                #         com.log('MP3取得ミス: ' + key, lv='W')
+                                #         com.dialog('MP3を取得ミスしました。\n　' + key, title='MP3取得ミス', lv='W')
+                                #         return False
+                                # else:
+                                #     urllib.request.urlretrieve(url, MP3_PATH + name)
         finally:
+            # try: lm_wd.quit()
+            # except: pass
+            try: od_wd.quit()
+            except: pass
             try: window.close()
             except: pass
 
@@ -1656,8 +1792,6 @@ class EnglishDict:
         mp3_dict = {}
         derivative = {}
         phrase_max = 0
-
-        mp3_files = os.listdir(cst.TEMP_PATH[cst.PC] + 'English/mp3')
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[6][2] + '.' + FUNCTIONS[6][3], 'r') as in_file:
             in_file = in_file.read().split('\n')
@@ -1727,14 +1861,21 @@ class EnglishDict:
                                     if  key == word \
                                             or (1 < len(ignores)
                                                 and (key in ignores.split(' ')
-                                                or ('un' == word and 0 <= key.find('under'))
-                                                or ('re' == word and 0 <= key.find('real')))):
+                                                or ('un' == word and key.startswith('under'))
+                                                or ('re' == word and key.startswith('real'))
+                                                or ('for' == word and key.startswith('fore'))
+                                                or ('in' == word and key.startswith('inter')))):
                                         continue
 
                                     is_not_word = True
-                                    if word in ['ness', 'less']:
+                                    if word in PHRASE_SUFFIX:
 
                                         if not key.endswith(word):
+                                            continue
+                                        is_not_word = False
+
+                                    elif word in ['ever']:
+                                        if not key.endswith(word) and not key.startswith(word):
                                             continue
                                         is_not_word = False
 
