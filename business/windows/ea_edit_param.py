@@ -285,7 +285,7 @@ def _output_html():
                     set_cur = val.split('_')[1]
 
             # 表示させないパラメータ項目
-            if 0 <= key.find('Logic') or key in ['Positions', 'Safety']:
+            if 0 <= key.find('Logic') or key in ['TradeMargin', 'Positions', 'Safety']:
                 continue
 
             set_html = ''
