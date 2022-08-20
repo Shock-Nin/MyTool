@@ -12,12 +12,15 @@ if 'Win' == PC:
     IP = socket.gethostbyname(PC_NAME)
 else:
     import requests
-    IP = requests.get('http://ipconfig.me').text
+    IP = requests.get('http://globalip.me').text
+    IP = IP[IP.find('curl globalip.me?ip'):]
+    IP = IP[IP.find('<td'):]
+    IP = IP[IP.find('>') + 1: IP.find('</td')].strip()
 
 DEV_IP = '164.70.84.254'
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'
-MAC_IP = ('IP??? ' if IP.find('133.32.') < 0 else '') + IP
+MAC_IP = ('IP??? ' if IP.find('133.32.') < 0 or '' else '') + IP
 
 IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MY_IP: 'My', MAC_IP: 'Mac'}
 IP_LIST = [DEV_IP, WEB_IP, MY_IP, MAC_IP]

@@ -1089,7 +1089,7 @@ class EnglishDict:
                         replace('o͟o', 'ōō').replace('o͞o', 'úː').replace('o͝o', 'ˈʊ')
                     words[key]['pronounce'] = inclosures[0] + pronounce + inclosures[1]
 
-                    # 品詞がある場合は編集
+                    # 英ナビに品詞がある場合は編集
                     if 0 < len(words[key]['partspeech']):
                         texts = words[key]['meaning'].replace('（', '(').replace('）', ')')
                         texts = texts.replace('，', '、').strip().split('、')
@@ -1515,69 +1515,70 @@ class EnglishDict:
                     if 0 < len(google[key]['meaning']) and 0 < len(google[key]['meaning'][0]):
                         words[key]['meaning'] = google[key]['meaning']
 
-                    # 最終チェック(meaning)
-                    words[key]['meaning'] = sorted(words[key]['meaning'], reverse=True)
-                    for i in reversed(range(0, len(words[key]['meaning']))):
+                    else:
+                        # 最終チェック(meaning)
+                        words[key]['meaning'] = sorted(words[key]['meaning'], reverse=True)
+                        for i in reversed(range(0, len(words[key]['meaning']))):
 
-                        words[key]['meaning'][i] = words[key]['meaning'][i].replace(' ', '')
-                        meaning = words[key]['meaning'][i]
+                            words[key]['meaning'][i] = words[key]['meaning'][i].replace(' ', '')
+                            meaning = words[key]['meaning'][i]
 
-                        if meaning in IGNORE_MEANINGS:
-                            words[key]['meaning'].remove(meaning)
-                            continue
+                            if meaning in IGNORE_MEANINGS:
+                                words[key]['meaning'].remove(meaning)
+                                continue
 
-                        chk_text = meaning.translate(str.maketrans(
-                            {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
-
-                        if 1 < len(words[key]['meaning']) and(len(chk_text) < 2 or 17 < len(chk_text)):
-                            words[key]['meaning'].remove(meaning)
-                            continue
-
-                        for k in range(0, i):
-
-                            text = words[key]['meaning'][k].translate(str.maketrans(
+                            chk_text = meaning.translate(str.maketrans(
                                 {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
 
-                            if text == chk_text or text.startswith(chk_text + '(') or text.endswith(')' + chk_text):
+                            if 1 < len(words[key]['meaning']) and(len(chk_text) < 2 or 17 < len(chk_text)):
                                 words[key]['meaning'].remove(meaning)
-                                break
+                                continue
 
-                    count = 0
-                    for i in reversed(range(1, len(words[key]['meaning']))):
-                        text = words[key]['meaning'][i]
+                            for k in range(0, i):
 
-                        if (text.find(')') < 0 <= text.find('(')
-                                or text.find('(') < 0 <= text.find(')')):
+                                text = words[key]['meaning'][k].translate(str.maketrans(
+                                    {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
 
-                            words[key]['meaning'].remove(text)
-                        else:
-                            if not re.match(r'([ア-ン])', text):
-                                count += 1
+                                if text == chk_text or text.startswith(chk_text + '(') or text.endswith(')' + chk_text):
+                                    words[key]['meaning'].remove(meaning)
+                                    break
 
-                    if 1 <= count:
-
+                        count = 0
                         for i in reversed(range(1, len(words[key]['meaning']))):
                             text = words[key]['meaning'][i]
 
-                            if re.match(r'([ア-ン])', text):
-                                words[key]['meaning'].remove(text)
+                            if (text.find(')') < 0 <= text.find('(')
+                                    or text.find('(') < 0 <= text.find(')')):
 
-                    if 2 < len(words[key]['meaning']):
+                                words[key]['meaning'].remove(text)
+                            else:
+                                if not re.match(r'([ア-ン])', text):
+                                    count += 1
+
+                        if 1 <= count:
+
+                            for i in reversed(range(1, len(words[key]['meaning']))):
+                                text = words[key]['meaning'][i]
+
+                                if re.match(r'([ア-ン])', text):
+                                    words[key]['meaning'].remove(text)
+
+                        if 2 < len(words[key]['meaning']):
+                            for i in reversed(range(0, len(words[key]['meaning']))):
+                                text = words[key]['meaning'][i]
+
+                                if (1 == len(text) or 10 < len(text)) and 5 < len(words[key]['meaning']):
+                                    words[key]['meaning'].remove(text)
+                                    continue
+
                         for i in reversed(range(0, len(words[key]['meaning']))):
-                            text = words[key]['meaning'][i]
 
-                            if (1 == len(text) or 10 < len(text)) and 5 < len(words[key]['meaning']):
-                                words[key]['meaning'].remove(text)
-                                continue
+                            words[key]['meaning'][i] = (words[key]['meaning'][i].replace('(', '')
+                                                        if words[key]['meaning'][i].find(')') < 0 else meaning)
+                            words[key]['meaning'][i] = (words[key]['meaning'][i].replace(')', '')
+                                                        if words[key]['meaning'][i].find('(') < 0 else meaning)
 
-                    for i in reversed(range(0, len(words[key]['meaning']))):
-
-                        words[key]['meaning'][i] = (words[key]['meaning'][i].replace('(', '')
-                                                    if words[key]['meaning'][i].find(')') < 0 else meaning)
-                        words[key]['meaning'][i] = (words[key]['meaning'][i].replace(')', '')
-                                                    if words[key]['meaning'][i].find('(') < 0 else meaning)
-
-                    words[key]['meaning'] = list(set(words[key]['meaning']))
+                        words[key]['meaning'] = list(set(words[key]['meaning']))
 
                     # 例外処理
                     reg_key = key
