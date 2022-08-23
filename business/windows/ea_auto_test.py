@@ -100,7 +100,7 @@ class EaAutoTest:
 
                 window = com.progress(self.myjob + '(' + com.str_time().split(' ')[1] + ')',
                                       [checks[i][0].split('_')[0], len(checks)],
-                                      [checks[i][0], len(checks[0])], interrupt=True)
+                                      [checks[i][0], len(checks[i])], interrupt=True)
 
                 event, values = window.read(timeout=0)
                 window[checks[i][0] + '_'].update(0)

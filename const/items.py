@@ -37,7 +37,7 @@ CURRNCYS_EA = [['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD', 'GOLD'],
 CURRNCYS_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',
                 'ZAR', 'TRY', 'NOK', 'HKD', 'SEK', 'MXN', 'PLN']
 EA_DATA_NAMES = ['EA個別成績', 'EA統合成績', 'EA統合年率']
-EA_START_YM = '2011.01'
+EA_START_YM = '2007.01'
 # EA_START_YM = '2005.01'
 
 # くりっく365 CSV取引データ
