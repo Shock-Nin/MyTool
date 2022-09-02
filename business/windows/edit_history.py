@@ -18,7 +18,7 @@ class EditHistory:
 
     def create_h1(self):
 
-        files = glob.glob(cst.HST_PATH[cst.PC] + '/??????.csv')
+        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/??????.csv')
         total_time = 0
 
         try:
@@ -27,7 +27,7 @@ class EditHistory:
 
                 window = com.progress('H1データ作成中', [files[i].split('/')[-1], len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
-                window[files[i].split('/')[len(files[i].split('/')) - 1] + '_'].update(i)
+                window[files[i].split('/')[-1] + '_'].update(i)
                 start_time = com.time_start()
 
                 out = ''
@@ -53,11 +53,11 @@ class EditHistory:
                         hi = 0
                         lo = 9999999
 
-                open(files[i].replace('history/', 'Trender/H1_'), 'w').write(out)
+                open(files[i].replace('\\', '/').replace('history/', 'Trender/H1_'), 'w').write(out)
 
                 run_time = com.time_end(start_time)
                 total_time += run_time
-                com.log(files[i].split('/')[-1] +
+                com.log(files[i].replace('\\', '/').split('/')[-1] +
                         '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
                 window.close()
         finally:
@@ -75,7 +75,7 @@ class EditHistory:
         if inputs[0] <= 0:
             return
 
-        files = glob.glob(cst.HST_PATH[cst.PC].replace('history', 'Trender') + '/H1_??????.csv')
+        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender') + '/H1_??????.csv')
         total_time = 0
 
         window = com.progress(
@@ -134,12 +134,12 @@ class EditHistory:
                         hi_d1 = 0
                         lo_d1 = 9999999
 
-                open(files[i].replace('Trender/H1_', 'Trender/MTF/H4_'), 'w').write(out_h4)
-                open(files[i].replace('Trender/H1_', 'Trender/MTF/D1_'), 'w').write(out_d1)
+                open(files[i].replace('\\', '/').replace('Trender/H1_', 'Trender/MTF/H4_'), 'w').write(out_h4)
+                open(files[i].replace('\\', '/').replace('Trender/H1_', 'Trender/MTF/D1_'), 'w').write(out_d1)
 
                 run_time = com.time_end(start_time)
                 total_time += run_time
-                com.log(files[i].split('/')[len(files[i].split('/')) - 1] +
+                com.log(files[i].replace('\\', '/').split('/')[-1] +
                         '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
 
             window.close()
@@ -152,11 +152,11 @@ class EditHistory:
 
         try:
             for path in PATHS:
-                files = glob.glob(cst.HST_PATH[cst.PC].replace('history', 'Trender') + '/' + path + '_??????.csv')
+                files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender') + '/' + path + '_??????.csv')
 
                 window = com.progress('MTFデータ作成中',
                                       ['H1', len(PATHS)],
-                                      [files[0].split('/')[len(files[0].split('/')) - 1], len(files)], interrupt=True)
+                                      [files[0].split('/')[-1], len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
 
                 window['H1'].update(path.replace('MTF/', ''))
@@ -166,13 +166,13 @@ class EditHistory:
                 for i in range(0, len(files)):
                     data = open(files[i], 'r').read().split('\n')
 
-                    window[files[0].split('/')[len(files[0].split('/')) - 1]].update(files[i].split('/')[len(files[i].split('/')) - 1])
-                    window[files[0].split('/')[len(files[0].split('/')) - 1] + '_'].update(i)
+                    window[files[0].split('/')[-1]].update(files[i].split('/')[-1])
+                    window[files[0].split('/')[-1] + '_'].update(i)
                     start_time = com.time_start()
 
                     out = ''
 
-                    for k in range(int(inputs[1][len(inputs[1]) - 1]) + 1, len(data) - 1):
+                    for k in range(int(inputs[1][-1]) + 1, len(data) - 1):
                         rows = data[k].split(',')
 
                         ma_lists = []
@@ -193,12 +193,12 @@ class EditHistory:
                         out += str(cl) + ',' + str(float(rows[3]) - float(rows[4])) + ',' + str(float(rows[5]) - float(rows[2])) + ','
                         out += ",".join(['{:.6f}'.format(ma) for ma in ma_lists]) + '\n'
 
-                    open(files[i].split('Trender/')[0] + 'Trender/Calc/' +
-                         files[i].split('/')[len(files[i].split('/')) - 1], 'w').write(out)
+                    open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/Calc/' +
+                         files[i].replace('\\', '/').split('/')[-1], 'w').write(out)
 
                     run_time = com.time_end(start_time)
                     total_time += run_time
-                    com.log(files[i].split('/')[len(files[i].split('/')) - 1] +
+                    com.log(files[i].replace('\\', '/').split('/')[-1] +
                             '編集完了(' + com.conv_time_str(run_time) + ') ' + files[i])
                 window.close()
         finally:
@@ -225,7 +225,7 @@ class EditHistory:
 
         try:
             # 日足から月初と月末10営業日を取得
-            files = glob.glob(cst.HST_PATH[cst.PC].replace('history', 'Trender/Calc/D1_*.csv'))
+            files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/Calc/D1_*.csv'))
 
             target_days = {files[i].split('/')[- 1].replace('.csv', '').replace('D1_', '') :
                                {} for i in range(0, len(files))}
@@ -280,11 +280,11 @@ class EditHistory:
                                     break
                             break
                     ym[key] = starts + ends
-                target_days[files[i].split('/')[- 1].replace('.csv', '').replace('D1_', '')] = ym
+                target_days[files[i].replace('\\', '/').split('/')[- 1].replace('.csv', '').replace('D1_', '')] = ym
 
             # 本データ作成
             for path in PATHS:
-                files = glob.glob(cst.HST_PATH[cst.PC].replace('history', 'Trender/Calc/') + path.replace('MTF/', '') + '*.csv')
+                files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/Calc/') + path.replace('MTF/', '') + '*.csv')
 
                 cur_name = files[0].split('/')[len(files[0].split('/')) - 1].replace('.csv', '')[3:]
                 window = com.progress('判定データ作成中', ['H1', len(PATHS)], [cur_name, len(files)], interrupt=True)
@@ -297,7 +297,7 @@ class EditHistory:
                 for i in range(0, len(files)):
                     data = open(files[i], 'r').read().split('\n')
 
-                    window[cur_name].update(files[i].split('/')[len(files[i].split('/')) - 1])
+                    window[cur_name].update(files[i].split('/')[-1])
                     window[cur_name + '_'].update(i)
                     start_time = com.time_start()
 
@@ -447,14 +447,10 @@ class EditHistory:
 
                         dfs.append(pd.DataFrame({header_names[n]: targets[k][n] for n in range(0, len(header_names))}))
 
-                    # cur = files[i].split('/')[len(files[0].split('/')) - 1].replace('.csv', '')[3:]
-                    # if cur[3:] in ['USD', 'JPY', 'CHF', 'CAD'] and 'XAUUSD' != cur:
-                    #     all_targets[cur] = pd.concat(dfs)
-
                     # 取得データを合算
                     series = {}
 
-                    cur = files[i].split('/')[len(files[0].split('/')) - 1].replace('.csv', '')[3:]
+                    cur = files[i].replace('\\', '/').split('/')[-1].replace('.csv', '')[3:]
                     is_all = (('USD' == cur[3:] and 'XAUUSD' != cur) or cur[3:] in ['JPY', 'CHF', 'CAD'])
 
                     for k in range(0, len(dfs)):
@@ -488,7 +484,6 @@ class EditHistory:
                             vals[9 - 3] = (0.0 if 0 == vals[5 - 3] else float('{:.2f}'.format(vals[9 - 3] / vals[5 - 3] * 100)))
                             vals[10 - 3] = (0.0 if 0 == vals[6 - 3] else float('{:.2f}'.format(vals[10 - 3] / vals[6 - 3] * 100)))
                             val_data = {str(value_names[n]): str(vals[n]) for n in range(0, len(vals))}
-                            # series[str(mm) + ',' + str(dd) + ',' + str(hh)] = ",".join([str(val) for val in vals])
 
                             try:
                                 series[str(mm)][str(dd)][str(hh)] = val_data
@@ -514,14 +509,14 @@ class EditHistory:
                                         except:
                                             all_targets[str(mm)] = {str(dd): {str(hh): {cur: all_val_data}}}
 
-                    with open(files[i].split('Trender/')[0] + 'Trender/Judge/' +
-                              files[i].split('/')[-1].replace('csv', 'js'), 'w') as out:
-                        out.write('const ' + files[i].split('/')[-1].replace('.csv', '') +
+                    with open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/Judge/' +
+                              files[i].replace('\\', '/').split('/')[-1].replace('csv', 'js'), 'w') as out:
+                        out.write('const ' + files[i].replace('\\', '/').split('/')[-1].replace('.csv', '') +
                                   ' =\n' + json.dumps(series, ensure_ascii=False, indent=4))
 
                     run_time = com.time_end(start_time)
                     total_time += run_time
-                    com.log(files[i].split('/')[-1] + '判定完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                    com.log(files[i].replace('\\', '/').split('/')[-1] + '判定完了(' + com.conv_time_str(run_time) + ') ' + files[i])
 
                 master_vals = {col: 0.0 for col in value_names}
                 for mm in all_targets:
@@ -555,9 +550,9 @@ class EditHistory:
                                 vals[key] = str(vals[key]) if key in ['Vola', 'WinSize', 'LoseSize'] else '{:.0f}'.format(vals[key])
                             all_targets[mm][dd][hh] = vals
 
-                with open(files[0].split('Trender/')[0] + 'Trender/Judge/' +
-                          files[0].split('/')[-1][:3] + 'USDIDX.js', 'w') as out:
-                    out.write('const ' + files[0].split('/')[-1][:3] + 'USDIDX =\n' + json.dumps(all_targets, ensure_ascii=False, indent=4))
+                with open(files[0].replace('\\', '/').split('Trender/')[0] + 'Trender/Judge/' +
+                          files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX.js', 'w') as out:
+                    out.write('const ' + files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX =\n' + json.dumps(all_targets, ensure_ascii=False, indent=4))
 
                 window.close()
         finally:
