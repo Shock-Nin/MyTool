@@ -25,7 +25,7 @@ class EditHistory:
             for i in range(0, len(files)):
                 data = open(files[i], 'r').read().split('\n')
 
-                window = com.progress('H1データ作成中', [files[i].split('/')[len(files[i].split('/')) - 1], len(files)], interrupt=True)
+                window = com.progress('H1データ作成中', [files[i].split('/')[-1], len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
                 window[files[i].split('/')[len(files[i].split('/')) - 1] + '_'].update(i)
                 start_time = com.time_start()
@@ -57,7 +57,7 @@ class EditHistory:
 
                 run_time = com.time_end(start_time)
                 total_time += run_time
-                com.log(files[i].split('/')[len(files[i].split('/')) - 1] +
+                com.log(files[i].split('/')[-1] +
                         '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
                 window.close()
         finally:
@@ -79,15 +79,15 @@ class EditHistory:
         total_time = 0
 
         window = com.progress(
-            'MTFデータ作成中', [files[0].split('/')[len(files[0].split('/')) - 1], len(files)], interrupt=True)
+            'MTFデータ作成中', [files[0].split('/')[-1], len(files)], interrupt=True)
         event, values = window.read(timeout=0)
 
         try:
             for i in range(0, len(files)):
                 data = open(files[i], 'r').read().split('\n')
 
-                window[files[0].split('/')[len(files[i].split('/')) - 1]].update(files[i].split('/')[len(files[i].split('/')) - 1])
-                window[files[0].split('/')[len(files[i].split('/')) - 1] + '_'].update(i)
+                window[files[0].split('/')[-1]].update(files[i].split('/')[-1])
+                window[files[0].split('/')[-1] + '_'].update(i)
 
                 start_time = com.time_start()
 
