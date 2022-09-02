@@ -19,6 +19,7 @@ from time import sleep
 from common import display
 dialog = display.dialog
 question = display.question
+input_box = display.input_box
 dialog_cols = display.dialog_cols
 progress = display.progress
 close = display.close

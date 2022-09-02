@@ -63,6 +63,46 @@ def question(msg, title, lv='', cancel=False):
     window.close()
     return flg
 
+# 確認ダイヤログ
+def input_box(msg, title, forms, cancel=False):
+
+    btn = [sg.Button('はい', key='はい', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777'),
+           sg.Button('いいえ', key='いいえ', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
+
+    if cancel:
+        btn.append(sg.Button('中断', key='中断', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#555555'))
+
+    layout = [sg.Column([[
+        sg.Frame('', background_color='#77CCFF', layout=[
+            [(sg.Text(forms[i][k], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF')
+              if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(12, 1)))]
+             for k in range(0, len(forms[i]))
+        ])] for i in range(0, len(forms))], background_color='#77CCFF'
+    )]
+
+    window = sg.Window(title, keep_on_top=True, modal=True, background_color='#77CCFF',
+                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
+                       layout=[layout, [sg.Text(msg, background_color='#77CCFF', text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])
+
+    flg = 0
+    while True:
+        if 'Mac' == cst.PC:
+            event, values = window.read(timeout=0)
+        else:
+            event, values = window.read()
+
+        if event in [sg.WIN_CLOSED, '中断']:
+            break
+        elif event in ['はい', '\r', 'Return:603979789']:
+            flg = 1
+            break
+        elif 'いいえ' == event:
+            flg = -1
+            break
+
+    window.close()
+    return [flg, values]
+
 
 # 表形式向けダイヤログ
 def dialog_cols(msg, cols, aligns, title, obj='', lv=''):

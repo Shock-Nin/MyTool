@@ -20,9 +20,10 @@ import pyautogui as pgui
 import PySimpleGUI as sg
 import subprocess
 
-""" PW_INPUT = True | CHANGE_MENU = -1 """
+""" PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
 PW_INPUT = False
 CHANGE_MENU = -1
+CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
@@ -50,7 +51,10 @@ FUNC_MENU = {
     'MT4ログ削除': 'ALL',
     '週間レート': 'DEV',
     'Winアップデート': 'ALL',
-    'ヒストリカル編集': 'DEV',
+    'Tickヒストリー編集': 'DEV',
+    'H1データ作成': 'DEV',
+    'MTFデータ編集': 'DEV',
+    'アノマリ〜判定': 'DEV',
     'hstコピー(テスト)': 'DEV',
     'hst転送(Web)': 'DEV',
     'Tickstory': 'DEV',

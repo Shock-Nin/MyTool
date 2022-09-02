@@ -10,6 +10,8 @@ import subprocess
 import pandas as pd
 import PySimpleGUI as sg
 
+from business.windows.edit_history import EditHistory
+
 
 class Function:
 
@@ -19,7 +21,7 @@ class Function:
 
     def do(self, fnc):
 
-        if fnc in ['ヒストリカル編集', 'hstコピー(テスト)', 'hst転送(Web)']:
+        if fnc in ['Tickヒストリー編集', 'H1データ作成', 'hstコピー(テスト)', 'hst転送(Web)']:
             if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
                 return
 
@@ -45,8 +47,14 @@ class Function:
         elif 'MT4ログ削除' == fnc:
             self.log_delete(fnc)
 
-        elif 'ヒストリカル編集' == fnc:
-            self.edit_history(fnc)
+        elif 'Tickヒストリー編集' == fnc:
+            self.merge_history(fnc)
+        elif 'H1データ作成' == fnc:
+            EditHistory().create_h1()
+        elif 'MTFデータ編集' == fnc:
+            EditHistory().edit_mtf()
+        elif 'アノマリ〜判定' == fnc:
+            EditHistory().edit_judge()
 
         elif 'hstコピー(テスト)' == fnc:
             self.copy_history_test(
@@ -281,8 +289,8 @@ class Function:
                        '\n　' + cst.MT4_PATH[:-1] + "".join(['\n　　' + row.replace(cst.MT4_PATH, '')
                                                             for row in msg])), fnc + ' 完了')
 
-    # TickstoryのCSVファイル編集
-    def edit_history(self, fnc):
+    # TickstoryのCSVファイルマージ
+    def merge_history(self, fnc):
         if self.ip == cst.DEV_IP:
 
             is_interrupt = False

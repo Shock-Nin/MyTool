@@ -8,6 +8,9 @@ Windowsタスクスケジューラ
 　　-f Batch
 　開始
 　　C:/Users/Administrator/Documents/MyTool
+　実行コマンド
+　　cd C:/Users/Administrator/Documents/MyTool; python mytool.py -f Batch
+　　cd dsk_nagaoka@MacBookAir202012 MyTool; python mytool.py -f Batch
 """
 from common import com
 from const import cst
@@ -55,7 +58,7 @@ class Batch:
 
         return ", ".join([job for job in jobs])
 
-    # WindpwsServer 共通バッチ
+    # WindowsServer 共通バッチ
     def _windows(self):
         jobs = []
 
@@ -75,7 +78,7 @@ class Batch:
 
         return ", ".join([job for job in jobs])
 
-    # WindpwsServer Webバッチ(5・35分)
+    # WindowsServer Webバッチ(5・35分)
     def _windows_web(self):
         jobs = []
 

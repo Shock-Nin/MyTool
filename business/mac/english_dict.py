@@ -1270,7 +1270,7 @@ class EnglishDict:
                         if 0 < len(text):
                             meanings.append(text.replace('，', '、').strip())
 
-                    words[key]['meaning'] = meanings
+                    words[key]['meaning'] = meanings + google[key]['meaning']
 
                     # 品詞がない場合、Weblio使用
                     if 0 == len(words[key]['partspeech']):
@@ -1511,74 +1511,100 @@ class EnglishDict:
 
                     words[key]['partspeech'] = partspeech
 
-                    # Googleに和訳が存在する場、Googleを使用
-                    if 0 < len(google[key]['meaning']) and 0 < len(google[key]['meaning'][0]):
-                        words[key]['meaning'] = google[key]['meaning']
+                    # 最終チェック(meaning)
+                    words[key]['meaning'] = sorted(words[key]['meaning'], reverse=True)
+                    for i in reversed(range(0, len(words[key]['meaning']))):
 
-                    else:
-                        # 最終チェック(meaning)
-                        words[key]['meaning'] = sorted(words[key]['meaning'], reverse=True)
-                        for i in reversed(range(0, len(words[key]['meaning']))):
+                        words[key]['meaning'][i] = words[key]['meaning'][i].replace(' ', '')
+                        meaning = words[key]['meaning'][i]
 
-                            words[key]['meaning'][i] = words[key]['meaning'][i].replace(' ', '')
-                            meaning = words[key]['meaning'][i]
+                        if meaning in IGNORE_MEANINGS:
+                            words[key]['meaning'].remove(meaning)
+                            continue
 
-                            if meaning in IGNORE_MEANINGS:
-                                words[key]['meaning'].remove(meaning)
-                                continue
+                        chk_text = meaning.translate(str.maketrans(
+                            {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
 
-                            chk_text = meaning.translate(str.maketrans(
+                        if 1 < len(words[key]['meaning']) and(len(chk_text) < 2 or 17 < len(chk_text)):
+                            words[key]['meaning'].remove(meaning)
+                            continue
+
+                        for k in range(0, i):
+
+                            text = words[key]['meaning'][k].translate(str.maketrans(
                                 {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
 
-                            if 1 < len(words[key]['meaning']) and(len(chk_text) < 2 or 17 < len(chk_text)):
+                            if text == chk_text or text.startswith(chk_text + '(') or text.endswith(')' + chk_text):
                                 words[key]['meaning'].remove(meaning)
-                                continue
+                                break
 
-                            for k in range(0, i):
+                    for i in reversed(range(1, len(words[key]['meaning']))):
+                        text = words[key]['meaning'][i]
 
-                                text = words[key]['meaning'][k].translate(str.maketrans(
-                                    {chr(0xFF01 + m): chr(0x21 + m) for m in range(94)}))
+                        if text.startswith('〜'):
+                            words[key]['meaning'].remove(text)
 
-                                if text == chk_text or text.startswith(chk_text + '(') or text.endswith(')' + chk_text):
-                                    words[key]['meaning'].remove(meaning)
-                                    break
+                    hira_count = 0
+                    kata_count = 0
+                    for i in reversed(range(1, len(words[key]['meaning']))):
+                        text = words[key]['meaning'][i]
 
-                        count = 0
+                        if (text.find(')') < 0 <= text.find('(')
+                                or text.find('(') < 0 <= text.find(')')):
+
+                            words[key]['meaning'].remove(text)
+                        elif 2 == len(text):
+                            if re.match(r'([あ-ん])', text):
+                                hira_count += 1
+                            if re.match(r'([ア-ン])', text):
+                                kata_count += 1
+
+                    if 1 <= hira_count:
                         for i in reversed(range(1, len(words[key]['meaning']))):
                             text = words[key]['meaning'][i]
 
-                            if (text.find(')') < 0 <= text.find('(')
-                                    or text.find('(') < 0 <= text.find(')')):
-
+                            if re.match(r'([あ-ん])', text):
                                 words[key]['meaning'].remove(text)
-                            else:
-                                if not re.match(r'([ア-ン])', text):
-                                    count += 1
 
-                        if 1 <= count:
+                    if 1 <= kata_count:
+                        for i in reversed(range(1, len(words[key]['meaning']))):
+                            text = words[key]['meaning'][i]
 
-                            for i in reversed(range(1, len(words[key]['meaning']))):
-                                text = words[key]['meaning'][i]
+                            if re.match(r'([ア-ン])', text):
+                                words[key]['meaning'].remove(text)
 
-                                if re.match(r'([ア-ン])', text):
-                                    words[key]['meaning'].remove(text)
-
-                        if 2 < len(words[key]['meaning']):
-                            for i in reversed(range(0, len(words[key]['meaning']))):
-                                text = words[key]['meaning'][i]
-
-                                if (1 == len(text) or 10 < len(text)) and 5 < len(words[key]['meaning']):
-                                    words[key]['meaning'].remove(text)
-                                    continue
-
+                    if 2 < len(words[key]['meaning']):
                         for i in reversed(range(0, len(words[key]['meaning']))):
+                            text = words[key]['meaning'][i]
 
-                            words[key]['meaning'][i] = (words[key]['meaning'][i].replace('(', '')
-                                                        if words[key]['meaning'][i].find(')') < 0 else meaning)
-                            words[key]['meaning'][i] = (words[key]['meaning'][i].replace(')', '')
-                                                        if words[key]['meaning'][i].find('(') < 0 else meaning)
+                            if (1 == len(text) or 10 < len(text)) and 5 < len(words[key]['meaning']):
+                                words[key]['meaning'].remove(text)
+                                continue
 
-                        words[key]['meaning'] = list(set(words[key]['meaning']))
+                    for i in reversed(range(0, len(words[key]['meaning']))):
+
+                        words[key]['meaning'][i] = (words[key]['meaning'][i].replace('(', '')
+                                                    if words[key]['meaning'][i].find(')') < 0 else meaning)
+                        words[key]['meaning'][i] = (words[key]['meaning'][i].replace(')', '')
+                                                    if words[key]['meaning'][i].find('(') < 0 else meaning)
+
+                    words[key]['meaning'] = list(set(words[key]['meaning']))
+                    try:
+                        for i in range(0, len(words[key]['meaning'])):
+
+                            text = words[key]['meaning'][i]
+                            cnvs = pykakasi.kakasi().convert(text)
+
+                            cnv = "".join([cnv['hira'] for cnv in cnvs])
+                            if text != cnv in words[key]['meaning']:
+                                words[key]['meaning'].remove(cnv)
+                            else:
+                                cnv = "".join([cnv['kana'] for cnv in cnvs])
+                                if text != cnv in words[key]['meaning']:
+                                    words[key]['meaning'].remove(cnv)
+                    except: pass
+
+                    words[key]['meaning'] = words[key]['meaning']
 
                     # 例外処理
                     reg_key = key
