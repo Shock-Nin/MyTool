@@ -23,7 +23,7 @@ import subprocess
 """ PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
 PW_INPUT = False
 CHANGE_MENU = -1
-# CHANGE_MENU = 0
+CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',

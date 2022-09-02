@@ -172,7 +172,7 @@ class EditHistory:
 
                     out = ''
 
-                    for k in range(int(inputs[1][-1]) + 1, len(data) - 1):
+                    for k in range(int(inputs[1][len(inputs[1]) - 1]) + 1, len(data) - 1):
                         rows = data[k].split(',')
 
                         ma_lists = []
@@ -284,9 +284,10 @@ class EditHistory:
 
             # 本データ作成
             for path in PATHS:
-                files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/Calc/') + path.replace('MTF/', '') + '*.csv')
+                files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/Calc/') +
+                                  path.replace('\\', '/').replace('MTF/', '') + '*.csv')
 
-                cur_name = files[0].split('/')[len(files[0].split('/')) - 1].replace('.csv', '')[3:]
+                cur_name = files[0].split('/')[-1].replace('.csv', '')[3:]
                 window = com.progress('判定データ作成中', ['H1', len(PATHS)], [cur_name, len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
 
@@ -516,7 +517,8 @@ class EditHistory:
 
                     run_time = com.time_end(start_time)
                     total_time += run_time
-                    com.log(files[i].replace('\\', '/').split('/')[-1] + '判定完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                    com.log(files[i].replace('\\', '/').split('/')[-1] + '判定完了(' + com.conv_time_str(run_time) +
+                            ') ' + files[i].replace('\\', '/'))
 
                 master_vals = {col: 0.0 for col in value_names}
                 for mm in all_targets:
@@ -547,12 +549,14 @@ class EditHistory:
                                     vals['SMA4_Dn'] += float(row['SMA4_Up'])
 
                             for key in vals:
-                                vals[key] = str(vals[key]) if key in ['Vola', 'WinSize', 'LoseSize'] else '{:.0f}'.format(vals[key])
+                                vals[key] = str(vals[key]) if key in ['Vola', 'WinSize', 'LoseSize'] else \
+                                    '{:.0f}'.format(vals[key])
                             all_targets[mm][dd][hh] = vals
 
                 with open(files[0].replace('\\', '/').split('Trender/')[0] + 'Trender/Judge/' +
                           files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX.js', 'w') as out:
-                    out.write('const ' + files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX =\n' + json.dumps(all_targets, ensure_ascii=False, indent=4))
+                    out.write('const ' + files[0].replace('\\', '/').split('/')[-1][:3] +
+                              'USDIDX =\n' + json.dumps(all_targets, ensure_ascii=False, indent=4))
 
                 window.close()
         finally:
