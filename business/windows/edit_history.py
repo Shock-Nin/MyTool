@@ -287,7 +287,7 @@ class EditHistory:
                 files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/Calc/') +
                                   path.replace('\\', '/').replace('MTF/', '') + '*.csv')
 
-                cur_name = files[0].split('/')[-1].replace('.csv', '')[3:]
+                cur_name = files[0].replace('\\', '/').split('/')[-1].replace('.csv', '')[3:]
                 window = com.progress('判定データ作成中', ['H1', len(PATHS)], [cur_name, len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
 
