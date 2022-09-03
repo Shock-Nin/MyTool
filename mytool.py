@@ -63,7 +63,7 @@ FUNC_MENU = {
 }
 WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])
 BTN = BTNS[WORK_IP]
-HEIGHT = 2 + (1 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
+HEIGHT = 2 + (2 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
 DP_XY_WIDTH = {
     cst.DEV_IP: [0, 150 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
     cst.WEB_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
