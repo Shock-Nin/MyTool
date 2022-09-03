@@ -14,9 +14,22 @@ JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1], ['判定', 10]]
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
 
-class EditHistory:
+class AnomalyHst:
+
+    def __init__(self, function):
+        self.function = function
+
+    def do(self):
+        if 'create_h1' ==self.function:
+            self.create_h1()
+        elif 'edit_mtf' ==self.function:
+            self.edit_mtf()
+        elif 'edit_judge' ==self.function:
+            self.edit_judge()
 
     def create_h1(self):
+        if com.question('H1ヒストリカル編集 開始しますか？', '開始確認') <= 0:
+            return 0
 
         files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/??????.csv')
         total_time = 0

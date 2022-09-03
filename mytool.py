@@ -42,6 +42,11 @@ EA_MENU = {
     'EA連続テスト': 'windows.ea_auto_test',
     'EAテスト結合': 'windows.ea_merge_test',
 }
+ANOMALY_MENU = {
+    'H1データ作成': 'create_h1',
+    'MTFデータ編集': 'edit_mtf',
+    'アノマリ〜判定': 'edit_judge',
+}
 FUNC_MENU = {
     '最適化セット': 'DEV',
     '最適化起動': 'DEV',
@@ -52,9 +57,6 @@ FUNC_MENU = {
     '週間レート': 'DEV',
     'Winアップデート': 'ALL',
     'Tickヒストリー編集': 'DEV',
-    'H1データ作成': 'DEV',
-    'MTFデータ編集': 'DEV',
-    'アノマリ〜判定': 'DEV',
     'hstコピー(テスト)': 'DEV',
     'hst転送(Web)': 'DEV',
     'Tickstory': 'DEV',
@@ -139,6 +141,9 @@ def main():
             layout.append([sg.Combo([key for key in EA_MENU],
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (10, 5)))])
+            layout.append([sg.Combo([key for key in ANOMALY_MENU],
+                                    default_value='　アノマリ〜', key='Anomaly', enable_events=True, readonly=True,
+                                    font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (10, 5)))])
         if cst.MAC_IP != WORK_IP:
             layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
                                     default_value='　機能', key='機能', enable_events=True, readonly=True,
@@ -161,7 +166,7 @@ def main():
                 return
 
             # セレクト選択した場合、ターミナルコマンドを実行
-            if event in ['Fold', 'Web', 'EA', '機能']:
+            if event in ['Fold', 'Web', 'EA', 'Anomaly', '機能']:
 
                 if event in ['Fold', 'Web']:
                     menu = cst.MENU_CSV[event]
@@ -195,7 +200,15 @@ def main():
                 elif 'EA' == event:
                     # 動的モジュールを実行
                     processes.append(subprocess.Popen(
-                        [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py', '-m', EA_MENU[select], '-e', select]))
+                        [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
+                         '-m', EA_MENU[select], '-e', select]))
+
+                # Anomalyセレクトで選択した場合
+                elif 'Anomaly' == event:
+                    # 動的モジュールを実行
+                    processes.append(subprocess.Popen(
+                        [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
+                         '-m', 'windows.anomaly_hst', '-e', ANOMALY_MENU[select]]))
 
                 # 単独機能で選択した場合
                 else:
