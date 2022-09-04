@@ -523,7 +523,7 @@ class AnomalyHst:
                                         except:
                                             all_targets[str(mm)] = {str(dd): {str(hh): {cur: all_val_data}}}
 
-                    with open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/Judge/' +
+                    with open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/anomaly/judge/' +
                               files[i].replace('\\', '/').split('/')[-1].replace('csv', 'js'), 'w') as out:
                         out.write('const ' + files[i].replace('\\', '/').split('/')[-1].replace('.csv', '') +
                                   ' =\n' + json.dumps(series, ensure_ascii=False, indent=4))
@@ -566,7 +566,7 @@ class AnomalyHst:
                                     '{:.0f}'.format(vals[key])
                             all_targets[mm][dd][hh] = vals
 
-                with open(files[0].replace('\\', '/').split('Trender/')[0] + 'Trender/Judge/' +
+                with open(files[0].replace('\\', '/').split('Trender/')[0] + 'Trender/anomaly/judge/' +
                           files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX.js', 'w') as out:
                     out.write('const ' + files[0].replace('\\', '/').split('/')[-1][:3] +
                               'USDIDX =\n' + json.dumps(all_targets, ensure_ascii=False, indent=4))
