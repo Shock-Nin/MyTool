@@ -598,8 +598,8 @@ class AnomalyHst:
                                     vals['Total'] += 1
                                     vals['UpCnt'] += (1 if 0 < updn else 0)
                                     vals['DnCnt'] += (1 if updn < 0 else 0)
-                                    vals['UpVal'] += (data['Close'] - data['Open'] if 0 < updn else 0)
-                                    vals['DnVal'] -= (data['Open'] - data['Close'] if updn < 0 else 0)
+                                    vals['UpVal'] += (data['Close'] - data['Open'] if 0 < updn else 0) / data['Close']
+                                    vals['DnVal'] += (data['Open'] - data['Close'] if updn < 0 else 0) / data['Close']
 
                                 if is_all:
                                     all_vals['Vola'] += vals['Vola']
