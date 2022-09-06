@@ -231,6 +231,10 @@ class AnomalyHst:
 
         total_time = 0
 
+        mon_cur = {}
+        mon_master = {'Month': 0, 'Open': 0.0, 'High': 0.0, 'Low': 9999999.0, 'Close': 0.0}
+        mon_names = ['Vola', 'Total', 'UpCnt', 'DnCnt', 'UpVal', 'DnVal']
+
         value_names = [name for name in [
             'Vola', 'Total', 'WinCnt', 'LoseCnt', 'WinCnt_J', 'LoseCnt_J', 'WinSize', 'LoseSize'
             ] + ['SMA' + no + '_' + updn for no in ['', '3', '4'] for updn in ['Up', 'Dn']]]
@@ -295,6 +299,47 @@ class AnomalyHst:
                     ym[key] = starts + ends
                 target_days[files[i].replace('\\', '/').split('/')[- 1].replace('.csv', '').replace('D1_', '')] = ym
 
+                # 月足作成
+                mon_datas = []
+                day1st = False
+                data = open(files[i].replace('Calc', 'MTF'), 'r').read().split('\n')
+
+                start_num = -1
+                end_num = -1
+                for k in range(0, len(data) - 1):
+                    rows = data[k].split(',')[0]
+
+                    if -1 == start_num:
+                        if int(rows[: 4]) == int(inputs[1][0]):
+                            start_num = k
+                    if -1 == end_num:
+                        if int(inputs[1][1]) + 1 == int(data[k + 1].split(',')[0][: 4]):
+                            end_num = k
+
+                    if int(rows[: 4]) < int(inputs[1][0]):
+                        continue
+                    elif int(inputs[1][1]) < int(rows[: 4]):
+                        break
+
+                for k in range(start_num, end_num):
+                    rows = data[k].split(',')
+
+                    if not day1st:
+                        day1st = True
+                        mon_data = mon_master.copy()
+                        mon_data['Month'] = int(rows[0][4:6])
+                        mon_data['Open'] = float(rows[2])
+
+                    mon_data['High'] = max(mon_data['High'], float(rows[3]))
+                    mon_data['Low'] = min(mon_data['Low'], float(rows[4]))
+                    mon_data['Close'] = float(rows[5])
+
+                    if k == end_num - 1 or rows[0][4: 6] != data[k + 1].split(',')[0][4: 6]:
+                        day1st = False
+                        mon_datas.append(mon_data)
+
+                mon_cur[files[i].replace('\\', '/').split('/')[- 1].replace('.csv', '').replace('D1_', '')] = mon_datas
+
             # 本データ作成
             for path in PATHS:
                 files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/Calc/') +
@@ -309,6 +354,10 @@ class AnomalyHst:
                 all_targets = {}
 
                 for i in range(0, len(files)):
+
+                    if files[i].find('D1') < 0:
+                        continue
+
                     data = open(files[i], 'r').read().split('\n')
 
                     window[cur_name].update(files[i].split('/')[-1])
@@ -337,8 +386,8 @@ class AnomalyHst:
                     dfs = []
 
                     for k in range(0, len(targets)):
-
                         count = 0
+
                         for m in range(start_num, end_num):
                             rows = data[m].split(',')
 
@@ -511,7 +560,8 @@ class AnomalyHst:
                                 all_vals[3 - 3] += vals[3 - 3]
                                 all_vals[9 - 3] += vals[9 - 3]
                                 all_vals[10 - 3] += vals[10 - 3]
-                                all_val_data = {str(value_names[n]): str(all_vals[n]) for n in range(0, len(all_vals))}
+                                all_val_data = {value_names[n]: str(all_vals[n]) for n in range(0, len(value_names))}
+
                                 try:
                                     all_targets[str(mm)][str(dd)][str(hh)][cur] = all_val_data
                                 except:
@@ -522,6 +572,58 @@ class AnomalyHst:
                                             all_targets[str(mm)][str(dd)]= {str(hh): {cur: all_val_data}}
                                         except:
                                             all_targets[str(mm)] = {str(dd): {str(hh): {cur: all_val_data}}}
+
+                    if 0 <= path.find('/D1'):
+
+                        for key in mon_cur:
+                            if key != cur:
+                                continue
+
+                            for k in range(1, 13):
+
+                                vals = {col: 0.0 for col in mon_names}
+                                all_vals = {col: 0.0 for col in mon_names}
+                                series[str(k)]['Month'] = {0: []}
+
+                                for m in range(0, len(mon_cur[key])):
+                                    data = mon_cur[key][m]
+
+                                    if k != data['Month']:
+                                        continue
+
+                                    updn = (1 if data['Open'] < data['Close'] else
+                                            -1 if data['Close'] < data[ 'Open'] else 0)
+
+                                    vals['Vola'] += (data['High'] - data['Low']) / data['Close']
+                                    vals['Total'] += 1
+                                    vals['UpCnt'] += (1 if 0 < updn else 0)
+                                    vals['DnCnt'] += (1 if updn < 0 else 0)
+                                    vals['UpVal'] += (data['Close'] - data['Open'] if 0 < updn else 0)
+                                    vals['DnVal'] -= (data['Open'] - data['Close'] if updn < 0 else 0)
+
+                                if is_all:
+                                    all_vals['Vola'] += vals['Vola']
+                                    all_vals['Total'] += vals['Total']
+                                    all_vals['UpCnt'] += vals['UpCnt']
+                                    all_vals['DnCnt'] += vals['DnCnt']
+                                    all_vals['UpVal'] += vals['UpVal']
+                                    all_vals['DnVal'] += vals['DnVal']
+                                    all_val_data = {mon_names[n]: str(all_vals[mon_names[n]]) for n in range(0, len(mon_names))}
+
+                                    try:
+                                        all_targets[str(k)]['Month'][0][cur] = all_val_data
+                                    except:
+                                        try:
+                                            all_targets[str(k)]['Month'][0] = {cur: all_val_data}
+                                        except:
+                                            try:
+                                                all_targets[str(k)]['Month'] = {0: {cur: all_val_data}}
+                                            except:
+                                                all_targets[str(k)] = {'Month': {0: {cur: all_val_data}}}
+
+                                series[str(k)]['Month'][0] = {key: (
+                                    str(int(vals[key])) if key in ['Total', 'UpCnt', 'DnCnt'] else
+                                    str(vals[key])) for key in mon_names}
 
                     with open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/anomaly/judge/' +
                               files[i].replace('\\', '/').split('/')[-1].replace('csv', 'js'), 'w') as out:
@@ -534,37 +636,58 @@ class AnomalyHst:
                             ') ' + files[i].replace('\\', '/'))
 
                 master_vals = {col: 0.0 for col in value_names}
+                mon_master_vals = {col: 0.0 for col in mon_names}
+
                 for mm in all_targets:
                     for dd in all_targets[mm]:
                         for hh in all_targets[mm][dd]:
                             vals = master_vals.copy()
+                            mon_vals = mon_master_vals.copy()
 
                             for cur in all_targets[mm][dd][hh]:
                                 row = all_targets[mm][dd][hh][cur]
 
-                                if 'USD' == cur[:3]:
-                                    for key in row:
-                                        vals[key] += float(row[key])
+                                if 'Month' == dd:
+                                    if 'USD' == cur[:3]:
+                                        for key in row:
+                                            mon_vals[key] += float(row[key])
+                                    else:
+                                        mon_vals['Vola'] += float(row['Vola'])
+                                        mon_vals['Total'] += float(row['Total'])
+                                        mon_vals['UpCnt'] += float(row['DnCnt'])
+                                        mon_vals['DnCnt'] += float(row['UpCnt'])
+                                        mon_vals['UpVal'] += float(row['DnVal'])
+                                        mon_vals['DnVal'] += float(row['UpVal'])
                                 else:
-                                    vals['Vola'] += float(row['Vola'])
-                                    vals['Total'] += float(row['Total'])
-                                    vals['WinCnt'] += float(row['LoseCnt'])
-                                    vals['LoseCnt'] += float(row['WinCnt'])
-                                    vals['WinCnt_J'] += float(row['LoseCnt_J'])
-                                    vals['LoseCnt_J'] += float(row['WinCnt_J'])
-                                    vals['WinSize'] += (-float(row['LoseSize']))
-                                    vals['LoseSize'] += (-float(row['WinSize']))
-                                    vals['SMA_Up'] += float(row['SMA_Dn'])
-                                    vals['SMA_Dn'] += float(row['SMA_Up'])
-                                    vals['SMA3_Up'] += float(row['SMA3_Dn'])
-                                    vals['SMA3_Dn'] += float(row['SMA3_Up'])
-                                    vals['SMA4_Up'] += float(row['SMA4_Dn'])
-                                    vals['SMA4_Dn'] += float(row['SMA4_Up'])
+                                    if 'USD' == cur[:3]:
+                                        for key in row:
+                                            vals[key] += float(row[key])
+                                    else:
+                                        vals['Vola'] += float(row['Vola'])
+                                        vals['Total'] += float(row['Total'])
+                                        vals['WinCnt'] += float(row['LoseCnt'])
+                                        vals['LoseCnt'] += float(row['WinCnt'])
+                                        vals['WinCnt_J'] += float(row['LoseCnt_J'])
+                                        vals['LoseCnt_J'] += float(row['WinCnt_J'])
+                                        vals['WinSize'] += (-float(row['LoseSize']))
+                                        vals['LoseSize'] += (-float(row['WinSize']))
+                                        vals['SMA_Up'] += float(row['SMA_Dn'])
+                                        vals['SMA_Dn'] += float(row['SMA_Up'])
+                                        vals['SMA3_Up'] += float(row['SMA3_Dn'])
+                                        vals['SMA3_Dn'] += float(row['SMA3_Up'])
+                                        vals['SMA4_Up'] += float(row['SMA4_Dn'])
+                                        vals['SMA4_Dn'] += float(row['SMA4_Up'])
 
-                            for key in vals:
-                                vals[key] = str(vals[key]) if key in ['Vola', 'WinSize', 'LoseSize'] else \
-                                    '{:.0f}'.format(vals[key])
-                            all_targets[mm][dd][hh] = vals
+                            if 'Month' == dd:
+                                for key in mon_vals:
+                                    mon_vals[key] = str(mon_vals[key]) if key in ['Vola', 'UpVal', 'DnVal'] else \
+                                        '{:.0f}'.format(mon_vals[key])
+                                all_targets[mm][dd][hh] = mon_vals
+                            else:
+                                for key in vals:
+                                    vals[key] = str(vals[key]) if key in ['Vola', 'WinSize', 'LoseSize'] else \
+                                        '{:.0f}'.format(vals[key])
+                                all_targets[mm][dd][hh] = vals
 
                 with open(files[0].replace('\\', '/').split('Trender/')[0] + 'Trender/anomaly/judge/' +
                           files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX.js', 'w') as out:
