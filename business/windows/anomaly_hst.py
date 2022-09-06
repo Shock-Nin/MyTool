@@ -355,8 +355,8 @@ class AnomalyHst:
 
                 for i in range(0, len(files)):
 
-                    if files[i].find('D1') < 0:
-                        continue
+                    # if files[i].find('D1') < 0:
+                    #     continue
 
                     data = open(files[i], 'r').read().split('\n')
 
