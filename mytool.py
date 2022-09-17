@@ -23,7 +23,7 @@ import subprocess
 """ PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
 PW_INPUT = False
 CHANGE_MENU = -1
-# CHANGE_MENU = 0
+CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
@@ -43,9 +43,12 @@ EA_MENU = {
     'EAテスト結合': 'windows.ea_merge_test',
 }
 ANOMALY_MENU = {
-    'H1データ作成': 'create_h1',
-    'MTFデータ編集': 'edit_mtf',
-    'アノマリ〜判定': 'edit_judge',
+    'H1データ作成': 'windows.anomaly_hst/create_h1',
+    'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
+    'アノマリ〜': 'windows.anomaly_data/edit_judge',
+    'スペシャル': 'windows.anomaly_data/specials',
+    'Webコンテンツ': 'windows.anomaly_web/contents',
+    'Tweet': 'windows.anomaly_web/tweet',
 }
 FUNC_MENU = {
     '最適化セット': 'DEV',
@@ -208,7 +211,7 @@ def main():
                     # 動的モジュールを実行
                     processes.append(subprocess.Popen(
                         [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
-                         '-m', 'windows.anomaly_hst', '-e', ANOMALY_MENU[select]]))
+                         '-m', ANOMALY_MENU[select].split('/')[0], '-e', ANOMALY_MENU[select].split('/')[1]]))
 
                 # 単独機能で選択した場合
                 else:

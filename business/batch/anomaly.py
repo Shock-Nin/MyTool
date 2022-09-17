@@ -115,17 +115,13 @@ class Anomaly:
             wd.get(ANM_URL)
             com.sleep(1)
 
-            top_str = wd.page_source[wd.page_source.find('anomalyData'):]
-            guid_str = ''
+            top_str = wd.page_source[wd.page_source.find('anomalyTitle'):]
+            top_str = top_str[top_str.find('>') + 1: top_str.find('...')]
 
-            if 0 <= top_str.find('基本スタンス'):
-                guid_str = top_str[top_str.find('基本スタンス') + 7:]
-                guid_str = guid_str[:guid_str.find('<br>')]
+            guid_str = wd.page_source[wd.page_source.find('topicTop'):]
+            guid_str = guid_str[guid_str.find('>') + 1: guid_str.find('</table>')]
 
-            top_str = top_str[top_str.find('>') + 1: top_str.find('週は') - 10]
-            top_str = top_str.replace('のアノマリ〜', '')
-
-            topic_texts.append(top_str)
+            topic_texts.append(top_str[:-1] + '')
             topic_texts.append(guid_str)
 
         except Exception as e:
@@ -150,7 +146,8 @@ class Anomaly:
         except Exception as e:
             com.log('Topic出力エラー: ' + str(e), 'E')
 
-    def tweet(self, topic_texts):
+    def tweet(self):
+        topic_texts = self._edit_topic_texts()
 
         msg = ''
         err_msg = ''
@@ -160,42 +157,45 @@ class Anomaly:
             while 0 <= topic.find('<'):
                 topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
 
-            msg += topic + '\n'
+            msg += topic.replace('&nbsp;') + '\n'
 
         msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
+
+
+        print(msg)
         act = '1'
-        try:
-            # ウェブ操作スタート
-            wd = web_driver.driver(headless=self.is_batch)
-            if wd is None:
-                com.log('WebDriverエラー', 'E')
-                return None
-
-            wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
-                   '&text=' + urllib.parse.quote(msg, 'utf8'))
-            com.sleep(5)
-            act = '2, ' + wd.title
-
-            web_driver.find_element(wd, 'session[username_or_email]').send_keys(cst.TWITTER_ID)
-            web_driver.find_element(wd, 'session[password]').send_keys(cst.TWITTER_PW)
-            act = '3, ' + wd.title
-
-            web_driver.find_element(wd, '/html/body/div/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
-            com.sleep(5)
-            act = '4, ' + wd.title
-
-            if IS_TWEET:
-                web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
-                com.sleep(3)
-                act = '5, ' + wd.title
-                com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
-
-        except Exception as e:
-            err_msg = ' エラー発生(' + act + ') ' + str(e)
-
-        finally:
-            try: wd.quit()
-            except: pass
+        # try:
+        #     # ウェブ操作スタート
+        #     wd = web_driver.driver(headless=self.is_batch)
+        #     if wd is None:
+        #         com.log('WebDriverエラー', 'E')
+        #         return None
+        #
+        #     wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
+        #            '&text=' + urllib.parse.quote(msg, 'utf8'))
+        #     com.sleep(5)
+        #     act = '2, ' + wd.title
+        #
+        #     web_driver.find_element(wd, 'session[username_or_email]').send_keys(cst.TWITTER_ID)
+        #     web_driver.find_element(wd, 'session[password]').send_keys(cst.TWITTER_PW)
+        #     act = '3, ' + wd.title
+        #
+        #     web_driver.find_element(wd, '/html/body/div/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
+        #     com.sleep(5)
+        #     act = '4, ' + wd.title
+        #
+        #     if IS_TWEET:
+        #         web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
+        #         com.sleep(3)
+        #         act = '5, ' + wd.title
+        #         com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
+        #
+        # except Exception as e:
+        #     err_msg = ' エラー発生(' + act + ') ' + str(e)
+        #
+        # finally:
+        #     try: wd.quit()
+        #     except: pass
 
         com.log('アノマリーTweet [' + self.now_day_str + ' ' + self.my_span_str + 'h]' +
                 (' 完了' if 0 == len(err_msg) else err_msg), lv=('' if 0 == len(err_msg) else 'E'))

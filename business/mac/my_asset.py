@@ -21,6 +21,12 @@ class MyAsset:
     def do(self):
 
         try:
+
+            # 7時未満はNG
+            if datetime.datetime.now().hour < 7:
+                com.dialog('時間外、7時未満です。', '時間外', 'W')
+                return
+
             # DB接続
             self.cnx = my_sql.MySql('data_my')
 
