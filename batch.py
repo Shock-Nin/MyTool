@@ -102,21 +102,16 @@ class Batch:
             if 0 == len(jobs):
                 com.log('Batch開始: ' + cst.IP)
 
-            instance = Anomaly(self.myjob)
-            topic_texts = instance.create()
-            jobs.append('アノマリーTopic')
+            # 4で割れる時間、月曜6時〜金曜最終、元旦とクリスマス以外、にツイート実行
+            if (self.now.hour + 2) % 4 == 0 \
+                    and ((0 == self.now.weekday() and 6 < self.now.hour)
+                         or 0 < self.now.weekday() < 5) \
+                    and not (1 == self.now.month and 1 == self.now.day) \
+                    and not (12 == self.now.month and 25 == self.now.day):
 
-            if topic_texts is not None:
-
-                # 4で割れる時間、月曜6時〜金曜最終、元旦とクリスマス以外、にツイート実行
-                if (self.now.hour + 2) % 4 == 0 \
-                        and ((0 == self.now.weekday() and 6 < self.now.hour)
-                             or 0 < self.now.weekday() < 5) \
-                        and not (1 == self.now.month and 1 == self.now.day) \
-                        and not (12 == self.now.month and 25 == self.now.day):
-
-                    instance.tweet(topic_texts)
-                    jobs.append('アノマリーTweet')
+                instance = Anomaly(self.myjob)
+                instance.tweet()
+                jobs.append('アノマリーTweet')
 
             # 9・11時に実行
             if self.now.hour in [9, 11]:

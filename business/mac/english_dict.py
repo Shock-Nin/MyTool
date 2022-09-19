@@ -946,6 +946,7 @@ class EnglishDict:
         rows = []
         merge = []
         mp3s = {}
+        change_irregular = {}
 
         for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
 
@@ -1662,6 +1663,21 @@ class EnglishDict:
                         if 0 < len(countable):
                             words[key]['changes'].append(countable)
 
+                        changes = {key : ['', '']}
+                        for change in words[key]['changes']:
+                            if 0 <= change.find('過去'):
+
+                                if not change.split('(')[0].endswith('d'):
+
+                                    if 0 <= change.find('過去形'):
+                                        changes[key][0] = change
+                                    else:
+                                        changes[key][1] = change
+
+                        for change in changes:
+                            if 0 < len(changes[change][0]) + len(changes[change][1]):
+                                change_irregular[change] = changes[change]
+
                     mp3s[key] = words[key]['mp3']
                     del words[key]['mp3']
 
@@ -1675,6 +1691,35 @@ class EnglishDict:
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/Content.js', 'w') as out_file:
             out_file.write('const CONTENTS =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
+
+        irregular_verb1 = []
+        irregular_verb2 = []
+        irregular_verb3 = []
+        irregular_verb4 = []
+
+        for change in change_irregular:
+
+            if re.match(r'([A-Z])', change[0]):
+                continue
+
+            pasts = change_irregular[change]
+            past1 = pasts[0].split('(')[0]
+            past2 = pasts[1].split('(')[0]
+
+            if len(past1) == 0 < len(past2):
+                irregular_verb3.append(change)
+            elif change != past1 == past2:
+                irregular_verb2.append(change)
+            elif change == past1 == past2:
+                irregular_verb4.append(change)
+            else:
+                irregular_verb1.append(change)
+
+        irregular_verbs = [['不規則(All)'], sorted(irregular_verb1), ['不規則(Past)'], sorted(irregular_verb2),
+                           ['不規則(Simple)'], sorted(irregular_verb3), ['無変化'], sorted(irregular_verb4)]
+
+        with open(cst.TEMP_PATH[cst.PC] + 'English/IrregularVerb.js', 'w') as out_file:
+            out_file.write('const IRREGULAR_VERB_LISTS =\n' + json.dumps(irregular_verbs, ensure_ascii=False, indent=4))
 
         com.log('除外件数: ' + str([str(i + 1) + '(' + str(out_counts[i]) + ')'
                                 for i in range(0, len(out_counts))]))
@@ -1943,6 +1988,7 @@ class EnglishDict:
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/Phrase.js', 'w') as out_file:
             out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
+
         with open(cst.TEMP_PATH[cst.PC] + 'English/MP3.js', 'w') as out_file:
             out_file.write('const MP3 =\n' + json.dumps(mp3_dict, ensure_ascii=False, indent=4))
 

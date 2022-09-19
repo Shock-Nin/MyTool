@@ -29,12 +29,12 @@ class AnomalyData:
         if inputs[0] <= 0:
             return
 
-        err_msg = self._edit_gotobe(inputs)
-        if err_msg is None:
-            return
-        elif len(err_msg):
-            com.dialog(err_msg, 'エラー発生', lv='W')
-            return
+        # err_msg = self._edit_gotobe(inputs)
+        # if err_msg is None:
+        #     return
+        # elif len(err_msg):
+        #     com.dialog(err_msg, 'エラー発生', lv='W')
+        #     return
 
         err_msg = self._edit_shakai_mado(inputs)
         if err_msg is None:
@@ -624,7 +624,6 @@ class AnomalyData:
 
                             trade_date[date[0]][date[1]][date[2]]['-1'] = before
 
-
                         before = {'Open': 0.0, 'High': 0.0, 'Low': 9999999.9, 'Close': 0.0,
                                   'Trade': -1, 'High_h': -1, 'Low_h': -1, 'Vola': 0.0, 'Before': 0.0}
 
@@ -699,6 +698,10 @@ class AnomalyData:
                 if week_num not in [1]:
                     continue
 
+                if (now_ymd.month in [12] and 25 < now_ymd.day) \
+                        or (now_ymd.month in [1] and now_ymd.day < 5):
+                    continue
+
                 count += 1
                 if 5 == count:
                     weeks[-2] = 0
@@ -720,8 +723,10 @@ class AnomalyData:
 
                 data = open(files[i], 'r').read().split('\n')
                 start_num, end_num = _get_start_end(data, inputs)
-                before = {'Open': 0.0, 'High': 0.0, 'Low': 9999999.9, 'Close': 0.0,
-                          'Real': -1}
+                before = {'Open': 0.0, 'High': 0.0, 'Low': 9999999.9, 'Close': 0.0, 'Real': -1}
+
+                year = 0
+                month = 0
 
                 for k in range(start_num, end_num + 1):
 
@@ -741,6 +746,8 @@ class AnomalyData:
                     for m in range(0, len(mondays)):
                         if rows[0] in [fridays[m], mondays[m], tuesdays[m]]:
                             week_no = weeks[m]
+                            year = mondays[m][:4]
+                            month = mondays[m][4:6]
                             break
 
                     hour = (24 if is_tuesday else 0) + int(rows[1])
@@ -756,32 +763,7 @@ class AnomalyData:
                         before['Real'] = int(rows[0])
 
                     else:
-                        date = [rows[0][:4], rows[0][4:6], str(week_no)]
-
-                        if is_monday:
-                            if 0 < before['Open']:
-
-                                before['Vola'] = \
-                                    (float(before['High']) - float(before['Low'])) / float(before['Close'])
-                                before['Before'] = \
-                                    (float(before['Close']) - float(before['Open'])) / float(before['Close'])
-                                before['After'] = \
-                                    (float(rows[2]) - float(before['Close'])) / float(before['Close'])
-
-                                for key in before:
-                                    before[key] = ('{:.' + ('0' if key in ['Real', 'High_h', 'Low_h'] else '5') +
-                                                        'f}').format(float(before[key]))
-
-                                try:
-                                    trade_date[date[0]][date[1]][date[2]][hour] = before
-                                except:
-                                    try:
-                                        trade_date[date[0]][date[1]][date[2]] = {-1: before}
-                                    except:
-                                        try:
-                                            trade_date[date[0]][date[1]] = {date[2]: {-1: before}}
-                                        except:
-                                            trade_date[date[0]] = {date[1]: {date[2]: {-1: before}}}
+                        date = [year, month, str(week_no)]
 
                         val = {'Open': float(rows[2]), 'High': float(rows[3]), 'Low': float(rows[4]),
                                'Close': float(rows[5]), 'Real': int(rows[0])}
@@ -800,8 +782,23 @@ class AnomalyData:
                                 except:
                                     trade_date[date[0]] = {date[1]: {date[2]: {hour: val}}}
 
-                        before = {'Open': 0.0, 'High': 0.0, 'Low': 9999999.9, 'Close': 0.0,
-                                  'Real': -1}
+                        if is_monday:
+                            if 0 < before['Open']:
+
+                                before['Vola'] = \
+                                    (float(before['High']) - float(before['Low'])) / float(before['Close'])
+                                before['Before'] = \
+                                    (float(before['Close']) - float(before['Open'])) / float(before['Close'])
+                                before['After'] = \
+                                    (float(rows[2]) - float(before['Close'])) / float(before['Close'])
+
+                                for key in before:
+                                    before[key] = ('{:.' + ('0' if key in ['Real', 'High_h', 'Low_h'] else '5') +
+                                                        'f}').format(float(before[key]))
+
+                                trade_date[date[0]][date[1]][date[2]][-1] = before
+
+                        before = {'Open': 0.0, 'High': 0.0, 'Low': 9999999.9, 'Close': 0.0, 'Real': -1}
 
                 with open(files[0].replace('\\', '/').split('Trender/')[0] +
                           'Trender/anomaly/special/H1_' + cur + '_MAD.js', 'w') as out:
