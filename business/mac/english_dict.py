@@ -1706,7 +1706,7 @@ class EnglishDict:
             past1 = pasts[0].split('(')[0]
             past2 = pasts[1].split('(')[0]
 
-            if len(past1) == 0 < len(past2):
+            if past1 != change == past2:
                 irregular_verb3.append(change)
             elif change != past1 == past2:
                 irregular_verb2.append(change)

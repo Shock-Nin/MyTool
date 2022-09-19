@@ -109,8 +109,7 @@ class Batch:
                     and not (1 == self.now.month and 1 == self.now.day) \
                     and not (12 == self.now.month and 25 == self.now.day):
 
-                instance = Anomaly(self.myjob)
-                instance.tweet()
+                Anomaly(self.myjob).tweet()
                 jobs.append('アノマリーTweet')
 
             # 9・11時に実行

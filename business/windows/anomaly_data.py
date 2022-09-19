@@ -29,12 +29,12 @@ class AnomalyData:
         if inputs[0] <= 0:
             return
 
-        # err_msg = self._edit_gotobe(inputs)
-        # if err_msg is None:
-        #     return
-        # elif len(err_msg):
-        #     com.dialog(err_msg, 'エラー発生', lv='W')
-        #     return
+        err_msg = self._edit_gotobe(inputs)
+        if err_msg is None:
+            return
+        elif len(err_msg):
+            com.dialog(err_msg, 'エラー発生', lv='W')
+            return
 
         err_msg = self._edit_shakai_mado(inputs)
         if err_msg is None:
@@ -789,6 +789,7 @@ class AnomalyData:
                                     (float(before['High']) - float(before['Low'])) / float(before['Close'])
                                 before['Before'] = \
                                     (float(before['Close']) - float(before['Open'])) / float(before['Close'])
+                                before['Start'] = float(rows[2])
                                 before['After'] = \
                                     (float(rows[2]) - float(before['Close'])) / float(before['Close'])
 

@@ -42,20 +42,16 @@ class Anomaly:
 
         self.anm_path = cst.ANM_PATH[cst.PC]
 
-    def create(self):
+    def tweet(self):
 
         self._get_now_span()
         self._get_week_count()
 
-        com.log('Anomaly開始: ' +
+        com.log('アノマリーTweet開始: ' +
             str(self.trade_y) + '-' + str(self.trade_m) + '-' + str(self.trade_d) + '(' +
             str(cst.DAY_WEEK[self.trade_w]) + str(self.trade_w) + ') ' + str(self.week_count) + 'w [' +
             str(self.trade_h) + 'h-' + str(self.now_span) + ', ' + str(cst.ANM_SPAN[self.now_span]) + ']')
 
-        self.tweet()
-        return ''
-
-    def tweet(self):
         topic_texts = self._edit_topic_texts()
 
         msg = ''
