@@ -53,20 +53,23 @@ class Anomaly:
             str(self.trade_h) + 'h-' + str(self.now_span) + ', ' + str(cst.ANM_SPAN[self.now_span]) + ']')
 
         topic_texts = self._edit_topic_texts()
+        if 0 == len(topic_texts):
+            return ''
 
-        msg = ''
-        err_msg = ''
-
-        for topic in topic_texts:
-            topic = topic.replace('<br>', '\n')
-            while 0 <= topic.find('<'):
-                topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
-
-            msg += topic.replace('&nbsp;', '')
-
-        msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
-        act = '1'
         try:
+            msg = ''
+            err_msg = ''
+
+            for topic in topic_texts:
+                topic = topic.replace('<br>', '\n')
+                while 0 <= topic.find('<'):
+                    topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
+
+                msg += topic.replace('&nbsp;', '')
+
+            msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
+            act = '1'
+
             # ウェブ操作スタート
             wd = web_driver.driver(headless=self.is_batch)
             if wd is None:
@@ -165,6 +168,7 @@ class Anomaly:
 
         except Exception as e:
             com.log('Topic取得エラー: ' + str(e), 'E')
+            topic_texts = []
         finally:
             try: wd.quit()
             except: pass
