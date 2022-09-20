@@ -99,9 +99,6 @@ class Batch:
         # 30分未満の場合にのみ実行
         if self.now.minute < 30:
 
-            if 0 == len(jobs):
-                com.log('Batch開始: ' + cst.IP)
-
             # 4で割れる時間、月曜6時〜金曜最終、元旦とクリスマス以外、にツイート実行
             if (self.now.hour + 2) % 4 == 0 \
                     and ((0 == self.now.weekday() and 6 < self.now.hour)
@@ -109,11 +106,18 @@ class Batch:
                     and not (1 == self.now.month and 1 == self.now.day) \
                     and not (12 == self.now.month and 25 == self.now.day):
 
+                if 0 == len(jobs):
+                    com.log('Batch開始: ' + cst.IP)
+
                 Anomaly(self.myjob).tweet()
                 jobs.append('アノマリーTweet')
 
             # 9・11時に実行
             if self.now.hour in [9, 11]:
+
+                if 0 == len(jobs):
+                    com.log('Batch開始: ' + cst.IP)
+
                 SayaDaily(self.myjob).get_csv()
                 jobs.append('365日足更新')
 

@@ -62,7 +62,7 @@ class Anomaly:
             while 0 <= topic.find('<'):
                 topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
 
-            msg += topic.replace('&nbsp;') + '\n'
+            msg += topic.replace('&nbsp;', '')
 
         msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
         act = '1'
