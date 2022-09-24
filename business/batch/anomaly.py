@@ -163,7 +163,7 @@ class Anomaly:
             guid_str = wd.page_source[wd.page_source.find('topicTop'):]
             guid_str = guid_str[guid_str.find('>') + 1: guid_str.find('</table>')]
 
-            topic_texts.append(top_str[:-1] + '')
+            topic_texts.append(top_str + '、')
             topic_texts.append(guid_str)
 
         except Exception as e:

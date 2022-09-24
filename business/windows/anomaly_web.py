@@ -13,6 +13,7 @@ from business.batch.anomaly import Anomaly
 
 PATH = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/anomaly')
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+JPN_DAYWEEKS = ['', '月', '火', '水', '木', '金']
 
 
 class AnomalyWeb:
@@ -43,12 +44,12 @@ class AnomalyWeb:
         #     com.dialog(err_msg, 'エラー発生', lv='W')
         #     return
         #
-        # err_msg = self._edit_gotobe()
-        # if err_msg is None:
-        #     return
-        # elif len(err_msg):
-        #     com.dialog(err_msg, 'エラー発生', lv='W')
-        #     return
+        err_msg = self._edit_gotobe()
+        if err_msg is None:
+            return
+        elif len(err_msg):
+            com.dialog(err_msg, 'エラー発生', lv='W')
+            return
 
         err_msg = self._edit_shakai_mado()
         if err_msg is None:
@@ -103,7 +104,7 @@ class AnomalyWeb:
     def _edit_gotobe(self):
         files = glob.glob(PATH + '/special/H1_*_GTB.js')
 
-        window = com.progress('WEB(ゴトー日)作成中', [files[0].split('/')[-1], len(files)], interrupt=True)
+        window = com.progress('まとめデータ(ゴトー日)作成中', [files[0].split('/')[-1], len(files)], interrupt=True)
         event, values = window.read(timeout=0)
 
         data = pd.read_json(files[0]).to_dict()
@@ -276,10 +277,15 @@ class AnomalyWeb:
                                 del month_data[mm][wk][hh]
                                 continue
 
+                            if '1' < wk and '-1' == hh:
+                                del month_data[mm][wk][hh]
+                                continue
+
                             for key in list(month_data[mm][wk][hh]):
                                 if '-99' == hh and key in ['win', 'lose', 'win_cnt', 'lose_cnt']:
                                     del month_data[mm][wk][hh][key]
                                     continue
+
 
                                 if '-' == month_data[mm][wk][hh][key]:
                                     continue
@@ -304,21 +310,115 @@ class AnomalyWeb:
             with open(PATH + '/content/GoToBe.js', 'w') as out:
                 out.write('{' + ", ".join([cur_data for cur_data in jsons]) + '}')
 
-        # except Exception as e:
-        #     return 'エラー発生: ' + str(e)
+        except Exception as e:
+            return 'まとめデータ(ゴトー日)エラー発生: ' + str(e)
         finally:
             try: window.close()
             except: pass
+
+        jsons = pd.read_json(PATH + '/content/GoToBe.js').to_dict()
+        window = com.progress('コンテンツ(ゴトー日)作成中', ['GoToBe', len(jsons)], interrupt=True)
+        event, values = window.read(timeout=0)
+
+        total_time = 0
+        cur_msg = {}
+        try:
+            for cur in jsons:
+                mon_msg = {}
+
+                for month in jsons[cur]:
+                    wk_msg = {}
+
+                    for week in jsons[cur][month]:
+
+                        if '0' == str(week):
+                            continue
+                        msg = ''
+
+                        rate = -1
+                        pf = -1
+                        ratio = -1
+
+                        try:
+                            if 1 == int(week):
+                                best = jsons[cur][month][week]['-1']
+                                pf = float(best['pf'])
+                            else:
+                                for hour in jsons[cur][month][week]:
+                                    if '-99' == hour:
+                                        continue
+
+                                    if pf < float(jsons[cur][month][week][hour]['pf']):
+                                        best = jsons[cur][month][week][hour]
+                                        pf = float(best['pf'])
+                                        best_hour = int(hour) + 6 - (24 if 10 < int(hour) else 0)
+
+                        except:
+                            com.log(cur + ': ' + str(month) + ', ' + str(week) + ' データ不在')
+                            continue
+
+                        msg += '「' + JPN_DAYWEEKS[int(week)] + '曜ゴト〜日」の傾向として、'
+                        if 1 < pf:
+                            rate = float(best['rate'])
+                            ratio = float(best['ratio'])
+
+                            msg += ('オープン直後に' if '1' == str(week) else str(best_hour) + '時頃に')
+                            msg += 'ドル買い<br>　→ 9時過ぎ〜10時前決済で、勝率 ' + '{:.2f}'.format(rate) + '%<br>'
+                            msg += '[プロフィットファクター ' + '{:.2f}'.format(pf) + ']'
+                            msg += '[損益レシオ ' + '{:.2f}'.format(ratio) + ']です。<br>'
+                            if 2 < pf:
+                                if 65 < rate:
+                                    msg += '勝率もPFも非常に高いので、迷いは無用です。'
+                                elif 50 < rate:
+                                    msg += '勝率が高くPFが非常に高いので、迷いは無用です。'
+                                else:
+                                    msg += '勝率は低いですがPFは非常に高いので、問題はないでしょう。'
+                            elif 1.5 < pf:
+                                if 65 < rate:
+                                    msg += '勝率もPFも高いので、安心して行きましょう。'
+                                elif 50 < rate:
+                                    msg += '勝率もPFもそこそこ高いので、継続すれば問題ないでしょう。'
+                                else:
+                                    msg += '勝率は低いですがPFはそこそこですので、問題はないでしょう。'
+                            else:
+                                if 65 < rate:
+                                    msg += '勝率は高いですがPFがあまり高くないので、雰囲気怪しければ見送りましょう。'
+                                elif 50 < rate:
+                                    msg += '勝率もPFもあまり高くないので、見送りが無難です。'
+                                else:
+                                    msg += '勝率もPFも低いので、見送りが無難です。'
+                        else:
+                            msg += 'ドル買いに適したタイミングはないようです。<br>'
+                            msg += '他の通貨でチャンスを探り、次の機会を待ちましょう。'
+
+                        wk_msg[week] = msg + '<br>'
+                    mon_msg['total' if '0' == str(month) else str(month)] = wk_msg
+                cur_msg[cur] = mon_msg
+
+            with open(PATH + '/content/GoToBe_info.js', 'w') as out:
+                out.write('const GOTOBE = ' + json.dumps(cur_msg, ensure_ascii=False, indent=4))
+
+        except Exception as e:
+            return 'コンテンツ(ゴトー日)エラー発生: ' + str(e)
+        finally:
+            try:
+                window.close()
+            except:
+                pass
         return ''
 
     # マド空けのコンテンツデータ作成
     def _edit_shakai_mado(self):
         files = glob.glob(PATH + '/special/H1_*_MAD.js')
 
-        window = com.progress('WEB(マド空け)作成中', [files[0].split('/')[-1], len(files)], interrupt=True)
+        window = com.progress('まとめデータ(マド空け)作成中', [files[0].split('/')[-1], len(files)], interrupt=True)
         event, values = window.read(timeout=0)
 
         total_time = 0
+
+        misses = [0.2, 0.5, 1.0]
+        heights = ['total'] + misses
+        comps = [['today', 'tomorrow'], [75, 100, 125]]
         try:
             jsons = []
             for i in range(0, len(files)):
@@ -330,9 +430,6 @@ class AnomalyWeb:
                 start_time = com.time_start()
 
                 datas = []
-                misses = [0.2, 0.5, 1.0]
-                heights = ['total'] + misses
-                comps = [['today', 'tomorrow'], [75, 100, 125]]
                 no_data_msg = ''
 
                 # 基本データの計算
@@ -344,12 +441,12 @@ class AnomalyWeb:
 
                         for wk in data[yy][mm]:
 
-                            vals = {height: ({**{'half_under': 0, 'up_cnt': 0, 'dn_cnt': 0},
-                                              **{day + str(comp): [0, {'miss' + str(miss).replace('.', ''):
-                                                                           [0, {'lose_avg': 0.0}] for miss in misses}]
-                                                 for day in comps[0] for comp in comps[1]}}
+                            vals = {height: ({**{'up_cnt': 0, 'dn_cnt': 0, 'half_under': 0},
+                                              **{day + str(comp): {
+                                                  'miss' + str(miss).replace('.', ''): {
+                                                      'win': 0.0, 'win_cnt': 0, 'lose': 0.0, 'lose_cnt': 0
+                                                  } for miss in misses } for day in comps[0] for comp in comps[1]}}
                                              if float == type(height) else 0) for height in heights}
-
                             try:
                                 before = float(data[yy][mm][wk]['-1']['Before'])
                                 after = float(data[yy][mm][wk]['-1']['After'])
@@ -389,6 +486,10 @@ class AnomalyWeb:
                             # マドが大きさ別で成立した場合
                             for height in comp_heights:
 
+                                # totalは、何もしない
+                                if str == type(height):
+                                    continue
+
                                 # オープンから1時間後に、マドの半分以上を埋めた回数
                                 val = abs(start * after * 0.5)
 
@@ -397,61 +498,108 @@ class AnomalyWeb:
                                 elif after < 0:
                                     vals[height]['half_under'] += (1 if start + val < high else 0)
 
-                                for day in ['today', 'tomorrow']:
-                                    for k in range(0, len(comps[1])):
-                                        is_misses = [False for _ in misses]
-                                        is_comps = [False for _ in comps[1]]
+                                for k in range(0, len(comps[1])):
+                                    for m in range(0, len(misses)):
+                                        is_comp = False
+                                        is_miss = False
+
+                                        str_miss = 'miss' + str(misses[m]).replace('.', '')
 
                                         # 高安値で、成否と成功前の失敗をカウント
                                         for hh in data[yy][mm][wk]:
 
                                             # totalは、何もしない
-                                            if str == type(height) or -1 == int(hh):
+                                            if -1 == int(hh):
                                                 continue
 
-                                            if ('today' == day and int(hh) < 24) or 'tomorrow' == day:
+                                            if 24 <= int(hh):
+                                                break
 
-                                                high = float(data[yy][mm][wk][hh]['High'])
-                                                low = float(data[yy][mm][wk][hh]['Low'])
+                                            high = float(data[yy][mm][wk][hh]['High'])
+                                            low = float(data[yy][mm][wk][hh]['Low'])
+                                            str_day = 'today' + str(comps[1][k])
 
-                                                # マドがオープンからの逆行が、埋まりより先の場合
-                                                for m in range(0, len(is_misses)):
-                                                    if not is_misses[m] and not is_comps[k]:
+                                            # マドがオープンからの逆行が、埋まりより先の場合
+                                            if not is_miss and not is_comp:
 
-                                                        val = abs(comp_target * after * misses[m])
-                                                        if 'up' == updn:
-                                                            is_misses[m] = start + val < high
-                                                        else:
-                                                            is_misses[m] = low < start - val
+                                                val = abs(start * misses[m] / 100)
+                                                if 'up' == updn:
+                                                    is_miss = start + val < high
+                                                else:
+                                                    is_miss = low < start - val
 
-                                                        if is_misses[m]:
-                                                            vals[height][day + str(comps[1][k])][1][
-                                                                'miss' + str(misses[m]).replace('.', '')][0] += 1
+                                                if is_miss:
+                                                    vals[height][str_day][str_miss]['lose_cnt'] += 1
+                                                    vals[height][str_day][str_miss]['lose'] += val
 
-                                                            vals[height][day + str(comps[1][k])][1][
-                                                                'miss' + str(misses[m]).replace('.', '')][1]['lose_avg'] += \
-                                                                comp_target * float(str(misses[m]).replace('.', ''))
+                                            # マド埋まりの●%が、逆光より先に達成した場合
+                                            if not is_comp and not is_miss:
+                                                val = abs(after * (comps[1][k] / 100))
 
-                                                # マド埋まりの●%が達成した場合
-                                                if not is_comps[k]:
+                                                is_comp = (low < start - val
+                                                               if 'up' == updn else start + val < high)
 
-                                                    val = start - (start * after * (comps[1][k] / 100))
-                                                    is_comps[k] = (low < val if 'up' == updn else val < high)
+                                                if is_comp:
+                                                    vals[height][str_day][str_miss]['win_cnt'] += 1
+                                                    vals[height][str_day][str_miss]['win'] += val
 
-                                                    if is_comps[k]:
-                                                        vals[height][day + str(comps[1][k])][0] += 1
+                                        str_day = 'tomorrow' + str(comps[1][k])
+                                        if is_miss:
+                                            vals[height][str_day][str_miss]['lose_cnt'] += 1
+                                            vals[height][str_day][str_miss]['lose'] += val
+                                        if is_comp:
+                                            vals[height][str_day][str_miss]['win_cnt'] += 1
+                                            vals[height][str_day][str_miss]['win'] += val
 
+                                        for hh in data[yy][mm][wk]:
+
+                                            # totalは、何もしない
+                                            if -1 == int(hh):
+                                                continue
+
+                                            if int(hh) < 24:
+                                                continue
+
+                                            high = float(data[yy][mm][wk][hh]['High'])
+                                            low = float(data[yy][mm][wk][hh]['Low'])
+
+                                            # マドがオープンからの逆行が、埋まりより先の場合
+                                            if not is_miss and not is_comp:
+
+                                                val = abs(start * misses[m] / 100)
+                                                if 'up' == updn:
+                                                    is_miss = start + val < high
+                                                else:
+                                                    is_miss = low < start - val
+
+                                                if is_miss:
+                                                    vals[height][str_day][str_miss]['lose_cnt'] += 1
+                                                    vals[height][str_day][str_miss]['lose'] += val
+
+                                            # マド埋まりの●%が、逆光より先に達成した場合
+                                            if not is_comp and not is_miss:
+                                                val = abs(after * (comps[1][k] / 100))
+
+                                                is_comp = (low < start - val
+                                                           if 'up' == updn else start + val < high)
+
+                                                if is_comp:
+                                                    vals[height][str_day][str_miss]['win_cnt'] += 1
+                                                    vals[height][str_day][str_miss]['win'] += val
                             wk_data[str(wk)] = vals
                         mm_data[str(int(mm))] = wk_data
                     datas.append(mm_data)
 
                 # 合計エリアのデータ作成
                 month_data = {str(mm): {str(wk): {
-                    height: ({**{'half_under': 0, 'up_cnt': 0, 'dn_cnt': 0,
-                                 'up_rate': 0.0, 'dn_rate': 0.0},
-                              **{day + str(comp): [0, {'miss' + str(miss).replace('.', ''): [0, {
-                                  'win_avg': 0.0, 'lose_avg': 0.0, 'ratio': 0.0, 'pf': 0}] for miss in misses}]
-                                 for day in comps[0] for comp in comps[1]}} if float == type(height) else 0)
+                    height: ({**{'up_cnt': 0, 'dn_cnt': 0, 'up_rate': 0.0, 'dn_rate': 0.0,
+                                 'half_under': 0, 'half_rate': 0.0},
+                              **{day + str(comp): {
+                                  'miss' + str(miss).replace('.', ''): {
+                                      'win': 0.0, 'win_cnt': 0, 'win_rate': 0.0, 'win_avg': 0.0,
+                                      'lose': 0.0, 'lose_cnt': 0, 'lose_rate': 0.0,
+                                      'lose_avg': 0.0, 'ratio': 0.0, 'pf': 0} for miss in misses
+                              } for day in comps[0] for comp in comps[1]}} if float == type(height) else 0)
                     for height in heights} for wk in range(-99, 5) if not -99 < wk < 0} for mm in range(0, 13)}
 
                 # データの集計
@@ -468,24 +616,21 @@ class AnomalyWeb:
                                         if float == type(hh):
                                             for keys in years[mm][wk][hh]:
 
-                                                if list == type(years[mm][wk][hh][keys]):
-                                                    month_data[mn][wn][hh][keys][0] += years[mm][wk][hh][keys][0]
-
-                                                    for miss in years[mm][wk][hh][keys][1]:
-                                                        if list == type(years[mm][wk][hh][keys]):
-                                                            month_data[mn][wn][hh][keys][1][miss][1]['lose_avg'] += \
-                                                                years[mm][wk][hh][keys][1][miss][1]['lose_avg']
-
-                                                        else:
-                                                            month_data[mn][wn][hh][keys][1][miss][0] += \
-                                                                years[mm][wk][hh][keys][1][miss]
-                                                else:
+                                                if type(years[mm][wk][hh][keys]) in [int, float]:
                                                     month_data[mn][wn][hh][keys] += years[mm][wk][hh][keys]
+                                                else:
+                                                    for miss in years[mm][wk][hh][keys]:
+                                                        if type(years[mm][wk][hh][keys]) in [int, float]:
+                                                            month_data[mn][wn][hh][keys][miss] += \
+                                                                years[mm][wk][hh][keys][miss]
+                                                        else:
+                                                            for result in years[mm][wk][hh][keys][miss]:
+                                                                month_data[mn][wn][hh][keys][miss][result] += \
+                                                                    years[mm][wk][hh][keys][miss][result]
                                         else:
                                             month_data[mn][wn][hh] += years[mm][wk][hh]
 
                 # 集計データの計算
-                trade_info = ['up', 'dn']
                 for mm in month_data:
                     for wk in month_data[mm]:
                         month_info = ['0', mm]
@@ -495,84 +640,88 @@ class AnomalyWeb:
                             for mn in month_info:
                                 for wn in week_info:
 
-                                    if float == type(hh):
+                                    if float != type(hh):
+                                        continue
 
-                                        vals = month_data[mn][wn][hh]
+                                    obj = month_data[mn][wn][hh]
+                                    total = obj['up_cnt'] + obj['dn_cnt']
+                                    if 0 == total:
+                                        continue
 
-                                        count = (vals['up_cnt'] + vals['dn_cnt'])
+                                    for keys in obj:
 
-                                        for keys in month_data[mm][wk][hh]:
+                                        # マドの上下別出現率
+                                        if keys.endswith('_cnt'):
+                                            updn = keys.split('_')[0]
 
-                                            if keys.endswith('_cnt'):
-                                                updn = keys.split('_')[0]
+                                            obj[updn + '_rate'] = \
+                                                (0 if 0 == month_data[mn][wn]['total'] else
+                                                 (obj[('up' if 'up' == updn else 'dn') + '_cnt']) /
+                                                 month_data[mn][wn]['total'] * 100)
 
-                                                # マドの上下別出現率
-                                                month_data[mn][wn][hh][updn + '_rate'] = \
-                                                    (0 if 0 == month_data[mn][wn]['total'] else
-                                                     (vals[('up' if 'up' == updn else 'dn') + '_cnt']) /
-                                                     month_data[mn][wn]['total'] * 100)
+                                        # オープン1時間後の、マド残り50%以下確率
+                                        elif 'half_under' == keys:
+                                            obj['half_rate'] = obj['half_under'] / total * 100
 
-                                            elif list == type(month_data[mm][wk][hh][keys]):
-                                                win = hh * float(keys.replace('today', '').replace('tomorrow', '')) / 10
+                                        elif keys.startswith('today') or keys.startswith('tomorrow'):
 
-                                                for miss in month_data[mm][wk][hh][keys][1]:
-                                                    # miss_val = float(month_data[mm][wk][hh][keys][1][miss][0].replace('miss', ''))
+                                            for miss in obj[keys]:
 
-                                                    month_data[mm][wk][hh][keys][1][miss][1]['win_avg'] = \
-                                                        (0 if 0 == month_data[mm][wk][hh][keys][0] else
-                                                         win / month_data[mm][wk][hh][keys][0])
-                                                    month_data[mm][wk][hh][keys][1][miss][1]['lose_avg'] = \
-                                                        month_data[mm][wk][hh][keys][1][miss][1]['lose_avg'] / \
-                                                        1
-                                                    month_data[mm][wk][hh][keys][1][miss][1]['ratio'] = 3
-                                                    month_data[mm][wk][hh][keys][1][miss][1]['pf'] = 4
+                                                result = obj[keys][miss]
+                                                if type(result) in [int, float]:
+                                                    continue
 
+                                                result['win_rate'] = result['win_cnt'] / total * 100
+                                                result['win_avg'] = (0 if 0 == result['win_cnt'] else
+                                                                        result['win'] / result['win_cnt'])
 
-                                        # month_data[mn][wn][hh]['pf'] = \
-                                        #     ('-' if 0 == vals['dn'] else vals['up'] / -vals['dn'])
+                                                result['lose_rate'] = result['lose_cnt'] / total * 100
+                                                result['lose_avg'] = (0 if 0 == result['lose_cnt'] else
+                                                                      result['lose'] / result['lose_cnt'])
 
-                                        #     val = (0 if 0 == count else month_data[mn][wn][hh] / count)
-                                        #     month_data[mn][wn][hh][updn + '_avg'] = val
-                                        #
-                                        # month_data[mn][wn][hh]['ratio'] = ('-' if 0 == vals['dn'] else
-                                        #     month_data[mn][wn][hh]['up_avg'] / -month_data[mn][wn][hh]['dn_avg'])
+                                                result['pf'] = (0 if 0 == result['lose'] else
+                                                                result['win'] / result['lose'])
+
+                                                result['ratio'] = (0 if 0 == result['lose_avg'] else
+                                                                   result['win_avg'] / result['lose_avg'])
 
                 # 出力データの文字整形
                 for mm in month_data:
                     for wk in month_data[mm]:
-                        for hh in list(month_data[mm][wk]):
 
+                        for hh in list(month_data[mm][wk]):
                             if float == type(hh):
 
-                                if 0 == month_data[mm][wk][hh]['up_cnt'] + month_data[mm][wk][hh]['dn_cnt']:
-                                    del month_data[mm][wk][hh]
-                                    continue
+                                for keys in month_data[mm][wk][hh]:
+                                    if type(month_data[mm][wk][hh][keys]) in [float, int]:
 
-                                for key in month_data[mm][wk][hh]:
-                                    continue
-                                    if '-99' == hh and key in ['up', 'dn', 'up_cnt', 'dn_cnt']:
-                                        del month_data[mm][wk][hh][key]
-                                        continue
+                                        month_data[mm][wk][hh][keys] = \
+                                            ('{:.' + ('0' if keys.find('rate') < 0 else '3') +
+                                             'f}').format(float(month_data[mm][wk][hh][keys]))
+                                        month_data[mm][wk][hh][keys] = (
+                                            '0' if month_data[mm][wk][hh][keys]
+                                        in ['0.000'] else month_data[mm][wk][hh][keys])
+                                    else:
 
-                                    if '-' == month_data[mm][wk][hh][key]:
-                                        continue
+                                        for miss in month_data[mm][wk][hh][keys]:
+                                            if type(month_data[mm][wk][hh][keys][miss]) in [float, int]:
+                                                month_data[mm][wk][hh][keys][miss] = (
+                                                    '0' if month_data[mm][wk][hh][keys][miss]
+                                                in ['0.000', '0.000000'] else month_data[mm][wk][hh][keys][miss])
+                                            else:
+                                                for result in month_data[mm][wk][hh][keys][miss]:
+                                                    month_data[mm][wk][hh][keys][miss][result] = \
+                                                        ('{:.' + ('0' if result.endswith('cnt') else
+                                                                  '6' if result.endswith('avg') else '3') +
+                                                         'f}').format(float(month_data[mm][wk][hh][keys][miss][result]))
+                                                    month_data[mm][wk][hh][keys][miss][result] = (
+                                                        '0' if month_data[mm][wk][hh][keys][miss][result]
+                                                               in ['0.000', '0.000000'] else
+                                                        month_data[mm][wk][hh][keys][miss][result])
 
-                                    month_data[mm][wk][hh][key] = \
-                                        ('{:.' + ('0' if 0 <= key.find('_cnt') else '3') +
-                                         'f}').format(float(month_data[mm][wk][hh][key]))
-                                    month_data[mm][wk][hh][key] = \
-                                        ('0' if '0.000' == month_data[mm][wk][hh][key] else
-                                         month_data[mm][wk][hh][key])
-
-                                    if float(month_data[mm][wk][hh][key]) == 0 <= key.find('_cnt'):
-                                        for col in ['', '_cnt', '_avg']:
-                                            month_data[mm][wk][hh][key.split('_cnt')[0] + col] = '-'
-
-
-
-
-
-
+                            else:
+                                month_data[mm][wk][hh] = \
+                                    '{:.0f}'.format(float(month_data[mm][wk][hh]))
 
                 if 0 < len(no_data_msg):
                     com.log(cur + ' データ不足' + no_data_msg)
@@ -583,15 +732,99 @@ class AnomalyWeb:
                 com.log(files[i].replace('\\', '/').split('/')[-1] + '完了(' +
                         com.conv_time_str(run_time) + ') ' + files[i].replace('\\', '/'))
 
-            with open(PATH + '/content/ShakaiMado.js', 'w') as out:
+            with open(PATH + '/content/ShakayMado.js', 'w') as out:
                 out.write('{' + ", ".join([cur_data for cur_data in jsons]) + '}')
 
-    #     except Exception as e:
-    #         return 'エラー発生: ' + str(e)
+        # except Exception as e:
+        #     return 'まとめデータ(マド空け)エラー発生: ' + str(e)
+        finally:
+            try: window.close()
+            except: pass
+
+        jsons = pd.read_json(PATH + '/content/ShakayMado.js').to_dict()
+        window = com.progress('コンテンツ(マド空け)作成中', ['ShakaiMado', len(jsons)], interrupt=True)
+        event, values = window.read(timeout=0)
+
+        total_time = 0
+        cur_msg = {}
+        try:
+            for cur in jsons:
+                mon_msg = {}
+
+                for month in jsons[cur]:
+                    for week in jsons[cur][month]:
+
+                        if '-99' != week:
+                            continue
+
+                        total = float(jsons[cur][month][week]['total'])
+                        if 0 == total:
+                            continue
+
+                        msg = '<span style="background: #FFFFAA;">'
+                        msg += ('全般傾向' if '0' == str(month) else str(month) + '月の傾向') + '</span><br>'
+                        height_cnt = 0
+
+                        for height in reversed(jsons[cur][month][week]):
+                            if 'total' == height:
+                                continue
+
+                            height_cnt += 1
+                            height_data = jsons[cur][month][week][height]
+
+                            up_cnt = float(height_data['up_cnt'])
+                            dn_cnt = float(height_data['dn_cnt'])
+                            up_rate = float(height_data['up_rate'])
+                            dn_rate = float(height_data['dn_rate'])
+                            mado = up_cnt + dn_cnt
+
+                            msg += '<span style="background: #FFFFCC;">' + str(height_cnt) + '. ' + str(height) + '%以上 アケ率 '
+                            msg += '{:.2f}'.format(mado / total * 100) + '%'
+                            msg += ' (上' + '{:.2f}'.format(up_rate) + '・下' + '{:.2f}'.format(dn_rate) + ')</span><br>'
+
+                            msg += '　オープン1時間以内の半分以上ウメ率 ' + '{:.2f}'.format(
+                                float(height_data['half_rate'])) + '%<br>'
+                            msg += '　○ 逆行0.5%未満で100%ウメ達成率 ' + '{:.2f}'.format(
+                                float(height_data['today100']['miss05']['win_rate'])) + '%<br>'
+                            msg += '　× 逆行0.5%以上の先行率 ' + '{:.2f}'.format(
+                                float(height_data['today100']['miss05']['lose_rate'])) + '%<br>'
+
+                            msg += '<details style="padding-left: 20px;"><summary>　詳細分析</summary>'
+                            # for miss in height_data[keys][1]:
+
+                            for day_info in [['today', '当日中'], ['tomorrow', '翌日中']]:
+                                for keys in height_data:
+                                    if type(height_data[keys]) in [float, int] or not keys.startswith(day_info[0]):
+                                        continue
+
+                                    for miss in height_data[keys]:
+                                        msg += day_info[1] + keys.replace(day_info[0], '')
+                                        msg += '%　ウメ' + ('(ブチ抜き)' if keys.endswith('125') else '')
+                                        msg += '逆行' + str(int(miss.replace('miss', '')) / 10) + '%<br>'
+
+                                        msg += '　○ [逆行]未満達成率 '
+                                        msg += ('' if 0 == mado else '{:.2f}'.format(float(height_data[keys][miss]['win_rate']))) + '% VS '
+                                        msg += '　× [逆行]以上先行率 '
+                                        msg += ('' if 0 == mado else '{:.2f}'.format(float(height_data[keys][miss]['lose_rate']))) + '%<br>'
+                                        msg += '　プロフィットファクタ '
+                                        msg += '{:.2f}'.format(float(height_data[keys][miss]['pf'])) + ' : '
+                                        msg += '　損益レシオ '
+                                        msg += '{:.2f}'.format(float(height_data[keys][miss]['ratio'])) + '<br>'
+
+                            msg += '</details>'
+                        mon_msg['total' if '0' == str(month) else str(month)] = msg
+                cur_msg[cur] = mon_msg
+
+            with open(PATH + '/content/ShakayMado_info.js', 'w') as out:
+                out.write('const SHAKAY_MADO = ' + json.dumps(cur_msg, ensure_ascii=False, indent=4))
+
+        # except Exception as e:
+        #     return 'コンテンツ(マド空け)エラー発生: ' + str(e)
         finally:
             try: window.close()
             except: pass
         return ''
+
 
 # 中断イベント
 def _is_interrupt(window, event):

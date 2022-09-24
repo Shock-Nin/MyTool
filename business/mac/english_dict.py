@@ -1021,8 +1021,9 @@ class EnglishDict:
 
                 for key in words:
 
-                    # a・I・数字・Mr関係の除外
-                    if len(key) < 2 or key.endswith('tieth') or key.endswith('teenth') or key.endswith('.'):
+                    # a・I・数字・Mr関係の除外と、特定狙い撃ち除外
+                    if len(key) < 2 or key.endswith('tieth') or key.endswith('teenth') or key.endswith('.')\
+                            or key in ['am']:
                         out_counts[lv - 1] += 1
                         com.log('特定ワード除外: ' + key)
                         continue
@@ -1681,6 +1682,13 @@ class EnglishDict:
                     mp3s[key] = words[key]['mp3']
                     del words[key]['mp3']
 
+                    # 特定狙い撃ち修正
+                    if 'be' == key:
+                        words[key]['changes'][0] = words[key]['changes'][0].replace('過去形', '二人称複数過去形')
+                        words[key]['changes'].insert(0, 'was(三人称単数過去形)')
+                        words[key]['changes'].append('are(二人称複数現在形)')
+                        words[key]['changes'].append('am(一人称単数形)')
+
                 if 0 < len(word):
                     rows.append(word)
 
@@ -1883,6 +1891,9 @@ class EnglishDict:
 
                 phrase_max = cols[0]
 
+        check_dict = {}
+        best_dict = {}
+        group_dict = {}
         with open(cst.TEMP_PATH[cst.PC] + 'English/content.js', 'r') as in_file:
 
             data = in_file.read()
@@ -1920,10 +1931,6 @@ class EnglishDict:
                                       'changes': [text for text in dicts['changes']
                                                   if text.find('複数形') < 0 and 'shall' != key]
                                       }})
-                            if 'be' == key:
-                                merges['0'][len(merges['0']) - 1][key]['changes'][0] = 'were(二人称複数過去形)'
-                                merges['0'][len(merges['0']) - 1][key]['changes'].insert(0, 'was(三人称単数過去形)')
-                                merges['0'][len(merges['0']) - 1][key]['changes'].append('are(二人称複数現在)')
 
                         else:
                             for k in range(0, len(merges[phrase_max])):
@@ -1975,8 +1982,46 @@ class EnglishDict:
                                         derivative[word].append([key] + [text for text in dicts['meaning']])
                                     except:
                                         derivative[word] = [[key] + [text for text in dicts['meaning']]]
-                        mp3_dict[key] = lists
 
+                        for k in range(0, len(dicts['others'])):
+                            if 0 <= dicts['others'][k].find('比較'):
+                                others = dicts['others'][k].split(', ')
+                                for m in range(0, len(others)):
+                                    if 0 <= others[m].find('比較'):
+                                        targets = others[m].split('(')[0].split(',')
+                                        for target in targets:
+                                            if key in check_dict:
+                                                check_dict[key].append(target)
+                                            else:
+                                                check_dict[key] = [target]
+
+                        for k in range(0, len(dicts['others'])):
+                            if 0 <= dicts['others'][k].find('最上級'):
+                                others = dicts['others'][k].split(', ')
+                                for m in range(0, len(others)):
+                                    if 0 <= others[m].find('最上級'):
+                                        targets = others[m].split('(')[0].split(',')
+                                        for target in targets:
+                                            if target in best_dict:
+                                                best_dict[target].append(key)
+                                            else:
+                                                best_dict[target] = [key]
+
+                        for k in range(0, len(dicts['others'])):
+                            if 0 <= dicts['others'][k].find('同義'):
+                                others = dicts['others'][k].split(', ')
+                                for m in range(0, len(others)):
+                                    if 0 <= others[m].find('同義'):
+                                        targets = others[m].split('(')[1].replace(')', '').replace(' ', ',').split(',')
+                                        for target in targets:
+                                            if target == key:
+                                                continue
+                                            if target in group_dict:
+                                                group_dict[target].append(key)
+                                            else:
+                                                group_dict[target] = [key]
+
+                        mp3_dict[key] = lists
         merges[phrase_max] = []
         for word in derivative:
             derivative[word] = sorted(derivative[word], key=lambda x: x[0])
@@ -1987,7 +2032,10 @@ class EnglishDict:
                     {word: {'pronounce': derivative[word][i][0], 'meaning': derivative[word][i][1:]}})
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/Phrase.js', 'w') as out_file:
-            out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4))
+            out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4) + '\n')
+            out_file.write('const CHECKS =\n' + json.dumps(check_dict, ensure_ascii=False, indent=4) + '\n')
+            out_file.write('const BESTS =\n' + json.dumps(best_dict, ensure_ascii=False, indent=4) + '\n')
+            out_file.write('const GROUPS =\n' + json.dumps(group_dict, ensure_ascii=False, indent=4) + '\n')
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/MP3.js', 'w') as out_file:
             out_file.write('const MP3 =\n' + json.dumps(mp3_dict, ensure_ascii=False, indent=4))
