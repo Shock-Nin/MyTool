@@ -28,14 +28,14 @@ class Function:
                 fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1_2', 'MT4_TEST/Test1_3'],
                 affinity=['F', '2', '4', '8'],
                 dev_path={'週間レート': 'MT4_RATE'},
-                web_path=['MT4_INVEST'],
+                web_path=['OANDA', 'Rakuten'],
                 my_path=['OANDA'],  # 'FxPro', 'MyFx', 'XM'
             )
         elif 'EX4コピー' == fnc:
             # コピー(target)はワイルドカード、削除(remove)は完全一致
             self.copy_ex4(
                 fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2', 'Test3'],
-                web_path=['MT4_INVEST'],
+                web_path=['OANDA', 'Rakuten'],
                 my_path=['FxPro', 'OANDA', 'MyFx'],
                 target_ea=['AnomalyShocknin', 'AnomalyGoToBe'],
                 target_ind=['AnomalyShocknin', 'AnomalyGoToBe', 'sts', 'JikanDeGo', 'WheSitaDoch'],
