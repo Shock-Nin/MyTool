@@ -416,7 +416,7 @@ class AnomalyWeb:
 
         total_time = 0
 
-        misses = [0.2, 0.5, 1.0]
+        misses = [0.2, 0.3, 0.4, 0.5]
         heights = ['total'] + misses
         comps = [['today', 'tomorrow'], [75, 100, 125]]
         try:
@@ -448,10 +448,10 @@ class AnomalyWeb:
                                                   } for miss in misses } for day in comps[0] for comp in comps[1]}}
                                              if float == type(height) else 0) for height in heights}
                             try:
-                                before = float(data[yy][mm][wk]['-1']['Before'])
-                                after = float(data[yy][mm][wk]['-1']['After'])
+                                close = float(data[yy][mm][wk]['-1']['Close'])
                                 start = float(data[yy][mm][wk]['-1']['Start'])
-                                comp_target = float(data[yy][mm][wk]['-1']['Close'])
+
+                                mado = (start - close)
                             except:
                                 no_data_msg += ', 金曜(' + str(yy) + '-' + str(mm) + '-' + str(wk) + ')'
                             try:
@@ -467,9 +467,9 @@ class AnomalyWeb:
 
                             # 週明けの回数をカウント
                             vals['total'] += 1
-                            if 0 < after:
+                            if 0 < mado:
                                 updn = 'up'
-                            elif after < 0:
+                            elif mado < 0:
                                 updn = 'dn'
                             else:
                                 continue
@@ -479,7 +479,7 @@ class AnomalyWeb:
                             for height in heights:
 
                                 if float == type(height):
-                                    if height / 100 < abs(after):
+                                    if height / 100 < abs(mado / close):
                                         vals[height][updn + '_cnt'] += 1
                                         comp_heights.append(height)
 
@@ -491,11 +491,11 @@ class AnomalyWeb:
                                     continue
 
                                 # オープンから1時間後に、マドの半分以上を埋めた回数
-                                val = abs(start * after * 0.5)
+                                val = abs(mado * 0.5)
 
-                                if 0 < after:
+                                if 0 < mado:
                                     vals[height]['half_under'] += (1 if low < start - val else 0)
-                                elif after < 0:
+                                elif mado < 0:
                                     vals[height]['half_under'] += (1 if start + val < high else 0)
 
                                 for k in range(0, len(comps[1])):
@@ -534,7 +534,7 @@ class AnomalyWeb:
 
                                             # マド埋まりの●%が、逆光より先に達成した場合
                                             if not is_comp and not is_miss:
-                                                val = abs(after * (comps[1][k] / 100))
+                                                val = abs(mado * (comps[1][k] / 100))
 
                                                 is_comp = (low < start - val
                                                                if 'up' == updn else start + val < high)
@@ -578,7 +578,7 @@ class AnomalyWeb:
 
                                             # マド埋まりの●%が、逆光より先に達成した場合
                                             if not is_comp and not is_miss:
-                                                val = abs(after * (comps[1][k] / 100))
+                                                val = abs(mado * (comps[1][k] / 100))
 
                                                 is_comp = (low < start - val
                                                            if 'up' == updn else start + val < high)
@@ -735,8 +735,8 @@ class AnomalyWeb:
             with open(PATH + '/content/ShakayMado.js', 'w') as out:
                 out.write('{' + ", ".join([cur_data for cur_data in jsons]) + '}')
 
-        # except Exception as e:
-        #     return 'まとめデータ(マド空け)エラー発生: ' + str(e)
+        except Exception as e:
+            return 'まとめデータ(マド空け)エラー発生: ' + str(e)
         finally:
             try: window.close()
             except: pass
@@ -749,71 +749,104 @@ class AnomalyWeb:
         cur_msg = {}
         try:
             for cur in jsons:
-                mon_msg = {}
+                span_data = {}
 
                 for month in jsons[cur]:
                     for week in jsons[cur][month]:
 
-                        if '-99' != week:
-                            continue
+                        if '0' == str(month):
+                            if '-99' == str(week):
+                                info = '全般'
+                                reg_key = 'total'
+                            elif '0' == str(week):
+                                info = '中間週の'
+                                reg_key = 'mid'
+                            elif '4' == str(week):
+                                info = '最終週の'
+                                reg_key = '4th'
+                            elif '3' == str(week):
+                                info = '最終前週の'
+                                reg_key = '3rd'
+                            elif '2' == str(week):
+                                info = '第2週目の'
+                                reg_key = '2nd'
+                            else:
+                                info = '第1週目の'
+                                reg_key = '1st'
+                        else:
+                            info = str(month) + '月の'
+                            reg_key = str(month)
 
                         total = float(jsons[cur][month][week]['total'])
-                        if 0 == total:
-                            continue
-
-                        msg = '<span style="background: #FFFFAA;">'
-                        msg += ('全般傾向' if '0' == str(month) else str(month) + '月の傾向') + '</span><br>'
                         height_cnt = 0
+                        height_data = {}
 
-                        for height in reversed(jsons[cur][month][week]):
+                        for height in jsons[cur][month][week]:
                             if 'total' == height:
                                 continue
 
                             height_cnt += 1
-                            height_data = jsons[cur][month][week][height]
+                            data = jsons[cur][month][week][height]
 
-                            up_cnt = float(height_data['up_cnt'])
-                            dn_cnt = float(height_data['dn_cnt'])
-                            up_rate = float(height_data['up_rate'])
-                            dn_rate = float(height_data['dn_rate'])
-                            mado = up_cnt + dn_cnt
+                            comp_data = {}
+                            for day_info in [['today', '当日'], ['tomorrow', '翌日']]:
+                                cls = ('madoToday' if 'today' == day_info[0] else 'madoTomorrow')
 
-                            msg += '<span style="background: #FFFFCC;">' + str(height_cnt) + '. ' + str(height) + '%以上 アケ率 '
-                            msg += '{:.2f}'.format(mado / total * 100) + '%'
-                            msg += ' (上' + '{:.2f}'.format(up_rate) + '・下' + '{:.2f}'.format(dn_rate) + ')</span><br>'
-
-                            msg += '　オープン1時間以内の半分以上ウメ率 ' + '{:.2f}'.format(
-                                float(height_data['half_rate'])) + '%<br>'
-                            msg += '　○ 逆行0.5%未満で100%ウメ達成率 ' + '{:.2f}'.format(
-                                float(height_data['today100']['miss05']['win_rate'])) + '%<br>'
-                            msg += '　× 逆行0.5%以上の先行率 ' + '{:.2f}'.format(
-                                float(height_data['today100']['miss05']['lose_rate'])) + '%<br>'
-
-                            msg += '<details style="padding-left: 20px;"><summary>　詳細分析</summary>'
-                            # for miss in height_data[keys][1]:
-
-                            for day_info in [['today', '当日中'], ['tomorrow', '翌日中']]:
-                                for keys in height_data:
-                                    if type(height_data[keys]) in [float, int] or not keys.startswith(day_info[0]):
+                                for keys in data:
+                                    if type(data[keys]) in [float, int] or not keys.startswith(day_info[0]):
                                         continue
 
-                                    for miss in height_data[keys]:
-                                        msg += day_info[1] + keys.replace(day_info[0], '')
-                                        msg += '%　ウメ' + ('(ブチ抜き)' if keys.endswith('125') else '')
-                                        msg += '逆行' + str(int(miss.replace('miss', '')) / 10) + '%<br>'
+                                    miss_data = {}
+                                    for miss in data[keys]:
 
-                                        msg += '　○ [逆行]未満達成率 '
-                                        msg += ('' if 0 == mado else '{:.2f}'.format(float(height_data[keys][miss]['win_rate']))) + '% VS '
-                                        msg += '　× [逆行]以上先行率 '
-                                        msg += ('' if 0 == mado else '{:.2f}'.format(float(height_data[keys][miss]['lose_rate']))) + '%<br>'
-                                        msg += '　プロフィットファクタ '
-                                        msg += '{:.2f}'.format(float(height_data[keys][miss]['pf'])) + ' : '
-                                        msg += '　損益レシオ '
-                                        msg += '{:.2f}'.format(float(height_data[keys][miss]['ratio'])) + '<br>'
+                                        win_rate = ('0' if 0 == mado else '{:.2f}'.format(float(data[keys][miss]['win_rate'])))
+                                        lose_rate = ('0' if 0 == mado else '{:.2f}'.format(float(data[keys][miss]['lose_rate'])))
+                                        pf = ('-' if 0 == float(data[keys][miss]['pf']) else '{:.2f}'.format(float(data[keys][miss]['pf'])))
+                                        ratio = ('-' if 0 == float(data[keys][miss]['ratio']) else '{:.2f}'.format(float(data[keys][miss]['ratio'])))
+                                        clr = ' style="color: #FF0000;"'
 
-                            msg += '</details>'
-                        mon_msg['total' if '0' == str(month) else str(month)] = msg
-                cur_msg[cur] = mon_msg
+                                        txt = '<tr><td class="' + cls + '"><span style="font-size: 12px;">'
+                                        txt += info + '傾向</span><br><span style="font-size: 8px;">['
+                                        txt += str(int(mado)) + ' / ' + str(int(total)) + '] </span></td><td class="madoTd"'
+                                        txt += ('' if '0' == win_rate or 60 < float(win_rate) else clr) + '>'
+                                        txt += ('0' if 0 == float(win_rate) else win_rate) + '%'
+                                        txt += '</td><td class="madoTd"'
+                                        txt += ('' if '0' == win_rate or float(lose_rate) < 40 else clr) + '>'
+                                        txt += ('0' if 0 == float(lose_rate) else lose_rate) + '%'
+                                        txt += '</td><td class="madoTd"'
+                                        txt += ('' if '-' == pf or 1 < float(pf) else ' bgcolor="#FF0000"') + '>'
+                                        txt += pf + '</td><td class="madoTd"'
+                                        txt += ('' if '-' == ratio or 0.5 < float(ratio) else ' bgcolor="#FFAAAA"') + '>'
+                                        txt += ratio + '</td></tr>'
+
+                                        miss_data[miss] = txt
+                                    comp_data[keys] = miss_data
+                                height_data[height] = comp_data
+                        span_data[reg_key] = height_data
+
+                        if '0' == str(month) and '-99' != str(week):
+                            topic = {}
+                            size = '0.3'
+                            miss = 'miss' + size.replace('.', '')
+
+                            data = jsons[cur][month][week][size]
+
+                            topic['total'] = str(int(total))
+                            topic['half_rate'] = data['half_rate']
+                            topic['up_rate'] = data['up_rate']
+                            topic['dn_rate'] = data['dn_rate']
+                            topic['up_cnt'] = data['up_cnt']
+                            topic['dn_cnt'] = data['dn_cnt']
+
+                            topic['lose_rate'] = data['today100'][miss]['lose_rate']
+                            topic['win_rate'] = data['today100'][miss]['win_rate']
+                            topic['pf'] = ('-' if 0 == float(data['today100'][miss]['pf']) else
+                                           '{:.2f}'.format(float(data['today100'][miss]['pf'])))
+
+                            topic['ratio'] = ('-' if 0 == float(data['today100'][miss]['ratio']) else
+                                              '{:.2f}'.format(float(data['today100'][miss]['ratio'])))
+                            span_data[reg_key]['topic'] = topic
+                cur_msg[cur] = span_data
 
             with open(PATH + '/content/ShakayMado_info.js', 'w') as out:
                 out.write('const SHAKAY_MADO = ' + json.dumps(cur_msg, ensure_ascii=False, indent=4))

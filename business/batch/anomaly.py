@@ -166,6 +166,11 @@ class Anomaly:
             topic_texts.append(top_str + '、')
             topic_texts.append(guid_str)
 
+
+            with open(ANM_OUT_PATH + '/topic.txt', 'w') as out:
+                topic = "".join([txt for txt in topic_texts])
+                out.write('食人のアノマリ〜つまみ食い！<br><br>' + topic[: topic.find('</td>')])
+
         except Exception as e:
             com.log('Topic取得エラー: ' + str(e), 'E')
             topic_texts = []

@@ -787,11 +787,7 @@ class AnomalyData:
 
                                 before['Vola'] = \
                                     (float(before['High']) - float(before['Low'])) / float(before['Close'])
-                                before['Before'] = \
-                                    (float(before['Close']) - float(before['Open'])) / float(before['Close'])
                                 before['Start'] = float(rows[2])
-                                before['After'] = \
-                                    (float(rows[2]) - float(before['Close'])) / float(before['Close'])
 
                                 for key in before:
                                     before[key] = ('{:.' + ('0' if key in ['Real', 'High_h', 'Low_h'] else '5') +

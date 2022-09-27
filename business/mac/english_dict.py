@@ -1990,10 +1990,12 @@ class EnglishDict:
                                     if 0 <= others[m].find('比較'):
                                         targets = others[m].split('(')[0].split(',')
                                         for target in targets:
-                                            if key in check_dict:
-                                                check_dict[key].append(target)
-                                            else:
-                                                check_dict[key] = [target]
+                                            if 0 <= target.find('more'):
+                                                continue
+                                            try:
+                                                check_dict[key] += ', ' + target
+                                            except:
+                                                check_dict[key] = target
 
                         for k in range(0, len(dicts['others'])):
                             if 0 <= dicts['others'][k].find('最上級'):
@@ -2002,10 +2004,10 @@ class EnglishDict:
                                     if 0 <= others[m].find('最上級'):
                                         targets = others[m].split('(')[0].split(',')
                                         for target in targets:
-                                            if target in best_dict:
-                                                best_dict[target].append(key)
-                                            else:
-                                                best_dict[target] = [key]
+                                            try:
+                                                best_dict[target] += ', ' + key
+                                            except:
+                                                best_dict[target] = key
 
                         for k in range(0, len(dicts['others'])):
                             if 0 <= dicts['others'][k].find('同義'):
@@ -2019,7 +2021,11 @@ class EnglishDict:
                                             if target in group_dict:
                                                 group_dict[target].append(key)
                                             else:
-                                                group_dict[target] = [key]
+                                                try:
+                                                    if target not in group_dict[key]:
+                                                        group_dict[target] = [key]
+                                                except:
+                                                    group_dict[target] = [key]
 
                         mp3_dict[key] = lists
         merges[phrase_max] = []
@@ -2031,11 +2037,31 @@ class EnglishDict:
                 merges[phrase_max].append(
                     {word: {'pronounce': derivative[word][i][0], 'meaning': derivative[word][i][1:]}})
 
+        for key in list(check_dict):
+            if (check_dict[key].find(', ') < 0 or not check_dict[key].endswith('er'))\
+                    and key not in ['good', 'bad', 'far']:
+                del check_dict[key]
+        check_dict = sorted(check_dict.items(), key=lambda x: x[0])
+
+        for key in list(best_dict):
+            if (best_dict[key].find(', ') < 0 or not key.endswith('st'))\
+                    and best_dict[key] not in ['good', 'bad', 'far']:
+                del best_dict[key]
+        best_dict = sorted(best_dict.items(), key=lambda x: x[0])
+
+        groups = []
+        for key in group_dict:
+            groups.append(key + "".join([', ' + val for val in group_dict[key]]))
+        groups.sort()
+
         with open(cst.TEMP_PATH[cst.PC] + 'English/Phrase.js', 'w') as out_file:
-            out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4) + '\n')
-            out_file.write('const CHECKS =\n' + json.dumps(check_dict, ensure_ascii=False, indent=4) + '\n')
-            out_file.write('const BESTS =\n' + json.dumps(best_dict, ensure_ascii=False, indent=4) + '\n')
-            out_file.write('const GROUPS =\n' + json.dumps(group_dict, ensure_ascii=False, indent=4) + '\n')
+            # out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4) + '\n')
+            out_file.write('const IRREGULAR_ADJECTIVE =\n' + json.dumps(
+                {'comparative': check_dict, 'superlative': best_dict, 'group': groups
+                 }, ensure_ascii=False, indent=4) + '\n')
+            # out_file.write('const GROUPS =\n' + json.dumps(groups, ensure_ascii=False, indent=4) + '\n')
+            # out_file.write('const CHECKS =\n' + json.dumps(check_dict, ensure_ascii=False, indent=4) + '\n')
+            # out_file.write('const BESTS =\n' + json.dumps(best_dict, ensure_ascii=False, indent=4) + '\n')
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/MP3.js', 'w') as out_file:
             out_file.write('const MP3 =\n' + json.dumps(mp3_dict, ensure_ascii=False, indent=4))
