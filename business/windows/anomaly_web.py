@@ -82,6 +82,16 @@ class AnomalyWeb:
 
 
 
+
+
+
+
+
+
+
+
+
+
                     pass
 
                 # jsons.append('"' + cur + '": ' + json.dumps(month_data, ensure_ascii=False, indent=4))
@@ -320,7 +330,6 @@ class AnomalyWeb:
         window = com.progress('コンテンツ(ゴトー日)作成中', ['GoToBe', len(jsons)], interrupt=True)
         event, values = window.read(timeout=0)
 
-        total_time = 0
         cur_msg = {}
         try:
             for cur in jsons:
@@ -330,19 +339,18 @@ class AnomalyWeb:
                     wk_msg = {}
 
                     for week in jsons[cur][month]:
-
                         if '0' == str(week):
                             continue
-                        msg = ''
 
-                        rate = -1
                         pf = -1
-                        ratio = -1
+                        count = -1
+                        best_hour = -1
 
                         try:
                             if 1 == int(week):
                                 best = jsons[cur][month][week]['-1']
                                 pf = float(best['pf'])
+                                count = int(best['win_cnt']) + int(best['lose_cnt'])
                             else:
                                 for hour in jsons[cur][month][week]:
                                     if '-99' == hour:
@@ -352,46 +360,18 @@ class AnomalyWeb:
                                         best = jsons[cur][month][week][hour]
                                         pf = float(best['pf'])
                                         best_hour = int(hour) + 6 - (24 if 10 < int(hour) else 0)
+                                        count = int(best['win_cnt']) + int(best['lose_cnt'])
 
                         except:
                             com.log(cur + ': ' + str(month) + ', ' + str(week) + ' データ不在')
                             continue
 
-                        msg += '「' + JPN_DAYWEEKS[int(week)] + '曜ゴト〜日」の傾向として、'
-                        if 1 < pf:
-                            rate = float(best['rate'])
-                            ratio = float(best['ratio'])
+                        rate = float(best['rate'])
+                        ratio = float(best['ratio'])
 
-                            msg += ('オープン直後に' if '1' == str(week) else str(best_hour) + '時頃に')
-                            msg += 'ドル買い<br>　→ 9時過ぎ〜10時前決済で、勝率 ' + '{:.2f}'.format(rate) + '%<br>'
-                            msg += '[プロフィットファクター ' + '{:.2f}'.format(pf) + ']'
-                            msg += '[損益レシオ ' + '{:.2f}'.format(ratio) + ']です。<br>'
-                            if 2 < pf:
-                                if 65 < rate:
-                                    msg += '勝率もPFも非常に高いので、迷いは無用です。'
-                                elif 50 < rate:
-                                    msg += '勝率が高くPFが非常に高いので、迷いは無用です。'
-                                else:
-                                    msg += '勝率は低いですがPFは非常に高いので、問題はないでしょう。'
-                            elif 1.5 < pf:
-                                if 65 < rate:
-                                    msg += '勝率もPFも高いので、安心して行きましょう。'
-                                elif 50 < rate:
-                                    msg += '勝率もPFもそこそこ高いので、継続すれば問題ないでしょう。'
-                                else:
-                                    msg += '勝率は低いですがPFはそこそこですので、問題はないでしょう。'
-                            else:
-                                if 65 < rate:
-                                    msg += '勝率は高いですがPFがあまり高くないので、雰囲気怪しければ見送りましょう。'
-                                elif 50 < rate:
-                                    msg += '勝率もPFもあまり高くないので、見送りが無難です。'
-                                else:
-                                    msg += '勝率もPFも低いので、見送りが無難です。'
-                        else:
-                            msg += 'ドル買いに適したタイミングはないようです。<br>'
-                            msg += '他の通貨でチャンスを探り、次の機会を待ちましょう。'
-
-                        wk_msg[week] = msg + '<br>'
+                        wk_msg[week] = {
+                            'rate': str(rate), 'ratio': str(ratio), 'pf': str(pf),
+                            'count': str(count), 'best_hour': str(best_hour)}
                     mon_msg['total' if '0' == str(month) else str(month)] = wk_msg
                 cur_msg[cur] = mon_msg
 
@@ -745,7 +725,6 @@ class AnomalyWeb:
         window = com.progress('コンテンツ(マド空け)作成中', ['ShakaiMado', len(jsons)], interrupt=True)
         event, values = window.read(timeout=0)
 
-        total_time = 0
         cur_msg = {}
         try:
             for cur in jsons:
@@ -805,9 +784,10 @@ class AnomalyWeb:
                                         ratio = ('-' if 0 == float(data[keys][miss]['ratio']) else '{:.2f}'.format(float(data[keys][miss]['ratio'])))
                                         clr = ' style="color: #FF0000;"'
 
-                                        txt = '<tr><td class="' + cls + '"><span style="font-size: 12px;">'
+                                        txt = '<tr><td class="madoTd ' + cls + '"><span style="font-size: 12px;">'
                                         txt += info + '傾向</span><br><span style="font-size: 8px;">['
-                                        txt += str(int(mado)) + ' / ' + str(int(total)) + '] </span></td><td class="madoTd"'
+                                        txt += str(int(data[keys][miss]['win_cnt']) + int(data[keys][miss]['lose_cnt']))
+                                        txt += ' / ' + str(int(total)) + '] </span></td><td class="madoTd"'
                                         txt += ('' if '0' == win_rate or 60 < float(win_rate) else clr) + '>'
                                         txt += ('0' if 0 == float(win_rate) else win_rate) + '%'
                                         txt += '</td><td class="madoTd"'
@@ -824,35 +804,35 @@ class AnomalyWeb:
                                 height_data[height] = comp_data
                         span_data[reg_key] = height_data
 
-                        if '0' == str(month) and '-99' != str(week):
-                            topic = {}
-                            size = '0.3'
-                            miss = 'miss' + size.replace('.', '')
+                        topic = {}
+                        size = '0.3'
+                        miss = 'miss' + size.replace('.', '')
 
-                            data = jsons[cur][month][week][size]
+                        data = jsons[cur][month][week][size]
 
-                            topic['total'] = str(int(total))
-                            topic['half_rate'] = data['half_rate']
-                            topic['up_rate'] = data['up_rate']
-                            topic['dn_rate'] = data['dn_rate']
-                            topic['up_cnt'] = data['up_cnt']
-                            topic['dn_cnt'] = data['dn_cnt']
+                        topic['total'] = str(int(total))
+                        topic['half_rate'] = data['half_rate']
+                        topic['up_rate'] = data['up_rate']
+                        topic['dn_rate'] = data['dn_rate']
+                        topic['up_cnt'] = data['up_cnt']
+                        topic['dn_cnt'] = data['dn_cnt']
 
-                            topic['lose_rate'] = data['today100'][miss]['lose_rate']
-                            topic['win_rate'] = data['today100'][miss]['win_rate']
-                            topic['pf'] = ('-' if 0 == float(data['today100'][miss]['pf']) else
-                                           '{:.2f}'.format(float(data['today100'][miss]['pf'])))
+                        topic['lose_rate'] = data['today100'][miss]['lose_rate']
+                        topic['win_rate'] = data['today100'][miss]['win_rate']
+                        topic['pf'] = ('-' if 0 == float(data['today100'][miss]['pf']) else
+                                       '{:.2f}'.format(float(data['today100'][miss]['pf'])))
 
-                            topic['ratio'] = ('-' if 0 == float(data['today100'][miss]['ratio']) else
-                                              '{:.2f}'.format(float(data['today100'][miss]['ratio'])))
-                            span_data[reg_key]['topic'] = topic
+                        topic['ratio'] = ('-' if 0 == float(data['today100'][miss]['ratio']) else
+                                          '{:.2f}'.format(float(data['today100'][miss]['ratio'])))
+                        span_data[reg_key]['topic'] = topic
+
                 cur_msg[cur] = span_data
 
             with open(PATH + '/content/ShakayMado_info.js', 'w') as out:
                 out.write('const SHAKAY_MADO = ' + json.dumps(cur_msg, ensure_ascii=False, indent=4))
 
-        # except Exception as e:
-        #     return 'コンテンツ(マド空け)エラー発生: ' + str(e)
+        except Exception as e:
+            return 'コンテンツ(マド空け)エラー発生: ' + str(e)
         finally:
             try: window.close()
             except: pass

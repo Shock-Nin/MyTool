@@ -1592,21 +1592,17 @@ class EnglishDict:
 
                     words[key]['meaning'] = list(set(words[key]['meaning']))
                     try:
-                        for i in range(0, len(words[key]['meaning'])):
+                        for i in range(0, len(words[key]['meaning']) - 1):
+                            cnvs = pykakasi.kakasi().convert(words[key]['meaning'][i])
+                            hira1 = "".join([cnv['hira'] for cnv in cnvs])
 
-                            text = words[key]['meaning'][i]
-                            cnvs = pykakasi.kakasi().convert(text)
+                            for k in reversed(range(1, len(words[key]['meaning']))):
+                                cnvs = pykakasi.kakasi().convert(words[key]['meaning'][k])
+                                hira2 = "".join([cnv['hira'] for cnv in cnvs])
 
-                            cnv = "".join([cnv['hira'] for cnv in cnvs])
-                            if text != cnv in words[key]['meaning']:
-                                words[key]['meaning'].remove(cnv)
-                            else:
-                                cnv = "".join([cnv['kana'] for cnv in cnvs])
-                                if text != cnv in words[key]['meaning']:
-                                    words[key]['meaning'].remove(cnv)
+                                if hira1 == hira2:
+                                    words[key]['meaning'].remove(hira2)
                     except: pass
-
-                    words[key]['meaning'] = words[key]['meaning']
 
                     # 例外処理
                     reg_key = key
@@ -2055,7 +2051,7 @@ class EnglishDict:
         groups.sort()
 
         with open(cst.TEMP_PATH[cst.PC] + 'English/Phrase.js', 'w') as out_file:
-            # out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4) + '\n')
+            out_file.write('const PHRASES =\n' + json.dumps(merges, ensure_ascii=False, indent=4) + '\n')
             out_file.write('const IRREGULAR_ADJECTIVE =\n' + json.dumps(
                 {'comparative': check_dict, 'superlative': best_dict, 'group': groups
                  }, ensure_ascii=False, indent=4) + '\n')

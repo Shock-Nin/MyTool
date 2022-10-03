@@ -69,6 +69,8 @@ class Anomaly:
 
             msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
             act = '1'
+            print(msg)
+            return None
 
             # ウェブ操作スタート
             wd = web_driver.driver(headless=self.is_batch)
@@ -157,18 +159,14 @@ class Anomaly:
             wd.get(ANM_URL)
             com.sleep(1)
 
-            top_str = wd.page_source[wd.page_source.find('anomalyTitle'):]
-            top_str = top_str[top_str.find('>') + 1: top_str.find('...')]
+            top_str = wd.page_source[wd.page_source.find('topTopic'):]
+            top_str = top_str[top_str.find('>') + 1: top_str.find('</p>')]
 
-            guid_str = wd.page_source[wd.page_source.find('topicTop'):]
-            guid_str = guid_str[guid_str.find('>') + 1: guid_str.find('</table>')]
-
-            topic_texts.append(top_str + '、')
-            topic_texts.append(guid_str)
+            topic_texts.append(top_str)
 
             with open(ANM_OUT_PATH + '/topic.txt', 'w', encoding='utf8') as out:
                 topic = "".join([txt for txt in topic_texts])
-                out.write('食人のアノマリ〜つまみ食い！<br><br>' + topic[: topic.find('</td>')])
+                out.write('食人のアノマリ〜つまみ食い！<br><br>' + topic)
 
         except Exception as e:
             com.log('Topic取得エラー: ' + str(e), 'E')
