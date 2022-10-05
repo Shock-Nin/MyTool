@@ -18,7 +18,7 @@ ANM_URL += 'anomaly'
 ANM_OUT_PATH = cst.ANM_OUT_PATH[cst.PC]
 # ANM_OUT_PATH += 'test'
 IS_TWEET = True
-# IS_TWEET = True
+# IS_TWEET = False
 
 
 class Anomaly:
@@ -69,8 +69,6 @@ class Anomaly:
 
             msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
             act = '1'
-            print(msg)
-            return None
 
             # ウェブ操作スタート
             wd = web_driver.driver(headless=self.is_batch)
