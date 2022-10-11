@@ -36,7 +36,7 @@ class AnomalyData:
             com.dialog(err_msg, 'エラー発生', lv='W')
             return
 
-        err_msg = self._edit_shakai_mado(inputs)
+        err_msg = self._edit_shakay_mado(inputs)
         if err_msg is None:
             return
         elif len(err_msg):
@@ -103,7 +103,7 @@ class AnomalyData:
                                 if 10 == len(ends):
                                     break
                             break
-                    ym[key] = starts + ends
+                    ym[key] = starts + sorted(ends)
                 target_days[files[i].replace('\\', '/').split('/')[- 1].replace('.csv', '').replace('D1_', '')] = ym
 
                 # 月足作成
@@ -199,7 +199,6 @@ class AnomalyData:
                             return None
 
                         count = 0
-
                         for m in range(start_num, end_num):
                             rows = data[m].split(',')
 
@@ -667,7 +666,7 @@ class AnomalyData:
         return ''
 
     # マド空け用データ統計
-    def _edit_shakai_mado(self, inputs):
+    def _edit_shakay_mado(self, inputs):
 
         total_time = 0
         try:

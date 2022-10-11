@@ -26,7 +26,7 @@ class AnomalyWeb:
         if 'tweet' == self.function:
             if com.question('Tweet作成 開始しますか？', '開始確認') <= 0:
                 return
-            Anomaly(self.function).tweet()
+            Anomaly(self.function).do(True)
             return
 
         getattr(self, '_' + self.function)()
@@ -51,7 +51,7 @@ class AnomalyWeb:
             com.dialog(err_msg, 'エラー発生', lv='W')
             return
 
-        err_msg = self._edit_shakai_mado()
+        err_msg = self._edit_shakay_mado()
         if err_msg is None:
             return
         elif len(err_msg):
@@ -100,7 +100,7 @@ class AnomalyWeb:
                 com.log(files[i].replace('\\', '/').split('/')[-1] + '完了(' +
                         com.conv_time_str(run_time) + ') ' + files[i].replace('\\', '/'))
 
-            with open(PATH + '/content/ShakaiMado.js', 'w') as out:
+            with open(PATH + '/content/ShakayMado.js', 'w') as out:
                 out.write('{' + ", ".join([cur_data for cur_data in jsons]) + '}')
 
         except Exception as e:
@@ -388,7 +388,7 @@ class AnomalyWeb:
         return ''
 
     # マド空けのコンテンツデータ作成
-    def _edit_shakai_mado(self):
+    def _edit_shakay_mado(self):
         files = glob.glob(PATH + '/special/H1_*_MAD.js')
 
         window = com.progress('まとめデータ(マド空け)作成中', [files[0].split('/')[-1], len(files)], interrupt=True)
@@ -722,7 +722,7 @@ class AnomalyWeb:
             except: pass
 
         jsons = pd.read_json(PATH + '/content/ShakayMado.js').to_dict()
-        window = com.progress('コンテンツ(マド空け)作成中', ['ShakaiMado', len(jsons)], interrupt=True)
+        window = com.progress('コンテンツ(マド空け)作成中', ['ShakayMado', len(jsons)], interrupt=True)
         event, values = window.read(timeout=0)
 
         cur_msg = {}
@@ -735,25 +735,18 @@ class AnomalyWeb:
 
                         if '0' == str(month):
                             if '-99' == str(week):
-                                info = '全般'
                                 reg_key = 'total'
                             elif '0' == str(week):
-                                info = '中間週の'
-                                reg_key = 'mid'
+                                reg_key = '0md'
                             elif '4' == str(week):
-                                info = '最終週の'
                                 reg_key = '4th'
                             elif '3' == str(week):
-                                info = '最終前週の'
                                 reg_key = '3rd'
                             elif '2' == str(week):
-                                info = '第2週目の'
                                 reg_key = '2nd'
                             else:
-                                info = '第1週目の'
                                 reg_key = '1st'
                         else:
-                            info = str(month) + '月の'
                             reg_key = str(month)
 
                         total = float(jsons[cur][month][week]['total'])
@@ -767,9 +760,15 @@ class AnomalyWeb:
                             height_cnt += 1
                             data = jsons[cur][month][week][height]
 
-                            comp_data = {}
+                            comp_data = [{
+                                'total': str(int(total)),
+                                'half_rate' :data['half_rate'],
+                                'up_rate': data['up_rate'],
+                                'dn_rate': data['dn_rate'],
+                                'up_cnt': data['up_cnt'],
+                                'dn_cnt': data['dn_cnt']},
+                            {}]
                             for day_info in [['today', '当日'], ['tomorrow', '翌日']]:
-                                cls = ('madoToday' if 'today' == day_info[0] else 'madoTomorrow')
 
                                 for keys in data:
                                     if type(data[keys]) in [float, int] or not keys.startswith(day_info[0]):
@@ -778,54 +777,19 @@ class AnomalyWeb:
                                     miss_data = {}
                                     for miss in data[keys]:
 
-                                        win_rate = ('0' if 0 == mado else '{:.2f}'.format(float(data[keys][miss]['win_rate'])))
-                                        lose_rate = ('0' if 0 == mado else '{:.2f}'.format(float(data[keys][miss]['lose_rate'])))
-                                        pf = ('-' if 0 == float(data[keys][miss]['pf']) else '{:.2f}'.format(float(data[keys][miss]['pf'])))
-                                        ratio = ('-' if 0 == float(data[keys][miss]['ratio']) else '{:.2f}'.format(float(data[keys][miss]['ratio'])))
-                                        clr = ' style="color: #FF0000;"'
-
-                                        txt = '<tr><td class="madoTd ' + cls + '"><span style="font-size: 12px;">'
-                                        txt += info + '傾向</span><br><span style="font-size: 8px;">['
-                                        txt += str(int(data[keys][miss]['win_cnt']) + int(data[keys][miss]['lose_cnt']))
-                                        txt += ' / ' + str(int(total)) + '] </span></td><td class="madoTd"'
-                                        txt += ('' if '0' == win_rate or 60 < float(win_rate) else clr) + '>'
-                                        txt += ('0' if 0 == float(win_rate) else win_rate) + '%'
-                                        txt += '</td><td class="madoTd"'
-                                        txt += ('' if '0' == win_rate or float(lose_rate) < 40 else clr) + '>'
-                                        txt += ('0' if 0 == float(lose_rate) else lose_rate) + '%'
-                                        txt += '</td><td class="madoTd"'
-                                        txt += ('' if '-' == pf or 1 < float(pf) else ' bgcolor="#FF0000"') + '>'
-                                        txt += pf + '</td><td class="madoTd"'
-                                        txt += ('' if '-' == ratio or 0.5 < float(ratio) else ' bgcolor="#FFAAAA"') + '>'
-                                        txt += ratio + '</td></tr>'
-
-                                        miss_data[miss] = txt
-                                    comp_data[keys] = miss_data
+                                        miss_data[miss] = {
+                                            'lose_rate': data[keys][miss]['lose_rate'],
+                                            'win_rate': data[keys][miss]['win_rate'],
+                                            'lose_cnt': data[keys][miss]['lose_cnt'],
+                                            'win_cnt': data[keys][miss]['win_cnt'],
+                                            'pf': ('-' if 0 == float(data[keys][miss]['pf']) else
+                                                   '{:.2f}'.format(float(data[keys][miss]['pf']))),
+                                            'ratio': ('-' if 0 == float(data[keys][miss]['ratio']) else
+                                                      '{:.2f}'.format(float(data[keys][miss]['ratio'])))
+                                        }
+                                    comp_data[1][keys] = miss_data
                                 height_data[height] = comp_data
                         span_data[reg_key] = height_data
-
-                        topic = {}
-                        size = '0.3'
-                        miss = 'miss' + size.replace('.', '')
-
-                        data = jsons[cur][month][week][size]
-
-                        topic['total'] = str(int(total))
-                        topic['half_rate'] = data['half_rate']
-                        topic['up_rate'] = data['up_rate']
-                        topic['dn_rate'] = data['dn_rate']
-                        topic['up_cnt'] = data['up_cnt']
-                        topic['dn_cnt'] = data['dn_cnt']
-
-                        topic['lose_rate'] = data['today100'][miss]['lose_rate']
-                        topic['win_rate'] = data['today100'][miss]['win_rate']
-                        topic['pf'] = ('-' if 0 == float(data['today100'][miss]['pf']) else
-                                       '{:.2f}'.format(float(data['today100'][miss]['pf'])))
-
-                        topic['ratio'] = ('-' if 0 == float(data['today100'][miss]['ratio']) else
-                                          '{:.2f}'.format(float(data['today100'][miss]['ratio'])))
-                        span_data[reg_key]['topic'] = topic
-
                 cur_msg[cur] = span_data
 
             with open(PATH + '/content/ShakayMado_info.js', 'w') as out:

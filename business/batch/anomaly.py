@@ -42,12 +42,12 @@ class Anomaly:
 
         self.anm_path = cst.ANM_PATH[cst.PC]
 
-    def tweet(self):
+    def do(self, is_tweet):
 
         self._get_now_span()
         self._get_week_count()
 
-        com.log('アノマリーTweet開始: ' +
+        com.log('アノマリーTopic作成開始: ' +
             str(self.trade_y) + '-' + str(self.trade_m) + '-' + str(self.trade_d) + '(' +
             str(cst.DAY_WEEK[self.trade_w]) + str(self.trade_w) + ') ' + str(self.week_count) + 'w [' +
             str(self.trade_h) + 'h-' + str(self.now_span) + ', ' + str(cst.ANM_SPAN[self.now_span]) + ']')
@@ -56,6 +56,11 @@ class Anomaly:
         if 0 == len(topic_texts):
             return ''
 
+        if is_tweet:
+            com.log('アノマリーTweet開始')
+            self._tweet(topic_texts)
+
+    def _tweet(self, topic_texts):
         try:
             msg = ''
             err_msg = ''
@@ -157,10 +162,12 @@ class Anomaly:
             wd.get(ANM_URL)
             com.sleep(1)
 
-            top_str = wd.page_source[wd.page_source.find('topTopic'):]
+            top_str = wd.page_source[wd.page_source.find('topicText'):]
             top_str = top_str[top_str.find('>') + 1: top_str.find('</p>')]
-
             topic_texts.append(top_str)
+
+            # special_str = wd.page_source[wd.page_source.find('topicSpecialText'):]
+            # special_str = special_str[special_str.find('>') + 1: special_str.find('</p>')]
 
             with open(ANM_OUT_PATH + '/topic.txt', 'w', encoding='utf8') as out:
                 topic = "".join([txt for txt in topic_texts])
