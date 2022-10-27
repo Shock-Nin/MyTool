@@ -10,7 +10,7 @@ import pandas as pd
 import PySimpleGUI as sg
 
 PATHS = ['H1', 'MTF/H4', 'MTF/D1']
-JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1], ['判定', 10]]
+JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1]]
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
 
@@ -49,6 +49,7 @@ class AnomalyData:
     def _edit_judge(self):
 
         inputs = com.input_box('アノマリ〜 開始しますか？', '開始確認', JUDGE_INPUTS)
+
         if inputs[0] <= 0:
             return
 
@@ -58,10 +59,11 @@ class AnomalyData:
         mon_master = {'Month': 0, 'Open': 0.0, 'High': 0.0, 'Low': 9999999.0, 'Close': 0.0}
         mon_names = ['Vola', 'Total', 'UpCnt', 'DnCnt', 'UpVal', 'DnVal']
 
-        value_names = [name for name in [
-            'Vola', 'Total', 'WinCnt', 'LoseCnt', 'WinCnt_J', 'LoseCnt_J', 'WinSize', 'LoseSize'
-            ] + ['SMA' + no + '_' + updn for no in ['', '3', '4'] for updn in ['Up', 'Dn']]]
-        header_names = ['Month', 'Day', 'Hour'] + value_names
+        sma_list = ['SMA' + no + '_' + updn for no in ['', '3', '4'] for updn in ['Up', 'Dn']]
+        vola_list = ['VolaRank']
+
+        value_names_master = ['Vola', 'Total', 'WinCnt', 'LoseCnt', 'WinSize', 'LoseSize']
+        header_names_master = ['Month', 'Day', 'Hour'] + value_names_master
 
         try:
             # 日足から月初と月末10営業日を取得
@@ -189,6 +191,7 @@ class AnomalyData:
                             break
 
                     # 日と曜日で2巡
+                    header_names = header_names_master + (sma_list if 0 <= path.find('/D1') else vola_list)
                     targets = [[[] for _ in range(0, len(header_names))] for _ in range(0, 2)]
                     dfs = []
 
@@ -212,7 +215,6 @@ class AnomalyData:
                                 for day in days:
                                     if day[0] == rows[2]:
                                         count += 1
-                                        days = day
                                         is_day = True
                                         break
                             except:
@@ -232,92 +234,84 @@ class AnomalyData:
                             targets[k][3].append(float(rows[5]) / float(rows[4]))
                             targets[k][4].append(1)
 
-                            # 終値上昇回数、終値下落回数、終値上昇回数(判定超え)、終値下落回数(判定超え)、上昇値幅、下落値幅
+                            # 終値上昇回数、終値下落回数、上昇値幅、下落値幅
                             no = 4
                             if float(data[m - 1].split(',')[4]) < float(rows[4]):
                                 targets[k][no + 1].append(1)
                                 targets[k][no + 2].append(0)
-                                targets[k][no + 3].append(0 if 0 == float(rows[5]) else 1
-                                if float(inputs[1][2]) < float(days[1]) / float(rows[5]) else 0)
+                                targets[k][no + 3].append(float(rows[6]) / float(rows[4]))
                                 targets[k][no + 4].append(0)
-                                targets[k][no + 5].append(float(rows[6]) / float(rows[4]))
-                                targets[k][no + 6].append(0)
 
                             elif float(rows[4]) < float(data[m - 1].split(',')[4]):
                                 targets[k][no + 1].append(0)
                                 targets[k][no + 2].append(1)
                                 targets[k][no + 3].append(0)
-                                targets[k][no + 4].append(0 if 0 == float(rows[5]) else 1
-                                if float(inputs[1][2]) < float(days[1]) / float(rows[5]) else 0)
-                                targets[k][no + 5].append(0)
-                                targets[k][no + 6].append(float(rows[6]) / float(rows[4]))
+                                targets[k][no + 4].append(float(rows[6]) / float(rows[4]))
                             else:
                                 targets[k][no + 1].append(0)
                                 targets[k][no + 2].append(0)
                                 targets[k][no + 3].append(0)
                                 targets[k][no + 4].append(0)
-                                targets[k][no + 5].append(0)
-                                targets[k][no + 6].append(0)
 
+                            no = 8
                             # SMA4本上昇、SMA4本下落、SMA1〜3上昇、SMA1〜3下落、SMA1・2・4上昇、SMA1・2・4下落
-                            no = 10
-                            if float(data[m - 1].split(',')[9]) < float(rows[9]):
+                            if 0 <= path.find('/D1'):
+                                if float(data[m - 1].split(',')[9]) < float(rows[9]):
 
-                                up_cnt = (1 if float(data[m - 1].split(',')[7]) < float(rows[7]) else 0)
-                                up_cnt += (1 if float(data[m - 1].split(',')[8]) < float(rows[8]) else 0)
-                                up_cnt += (1 if float(data[m - 1].split(',')[10]) < float(rows[10]) else 0)
+                                    up_cnt = (1 if float(data[m - 1].split(',')[7]) < float(rows[7]) else 0)
+                                    up_cnt += (1 if float(data[m - 1].split(',')[8]) < float(rows[8]) else 0)
+                                    up_cnt += (1 if float(data[m - 1].split(',')[10]) < float(rows[10]) else 0)
 
-                                targets[k][no + 2].append(0)
-                                targets[k][no + 4].append(0)
-                                targets[k][no + 6].append(0)
-                                if 2 == up_cnt:
-                                    targets[k][no + 1].append(0)
-                                    targets[k][no + 3].append(1)
-                                    targets[k][no + 5].append(0)
-                                elif 3 == up_cnt:
-                                    targets[k][no + 3].append(1)
-                                    targets[k][no + 5].append(1)
-                                    if float(data[m - 1].split(',')[10]) < float(data[m - 2].split(',')[10]):
-                                        targets[k][no + 1].append(1)
-                                    else:
-                                        targets[k][no + 1].append(0)
-                                else:
-                                    targets[k][no + 1].append(0)
-                                    targets[k][no + 3].append(0)
-                                    targets[k][no + 5].append(0)
-
-                            elif float(rows[9]) < float(data[m - 1].split(',')[9]):
-
-                                dn_cnt = (1 if float(rows[7]) < float(data[m - 1].split(',')[7]) else 0)
-                                dn_cnt += (1 if float(rows[8]) < float(data[m - 1].split(',')[8]) else 0)
-                                dn_cnt += (1 if float(rows[10]) < float(data[m - 1].split(',')[10]) else 0)
-
-                                targets[k][no + 1].append(0)
-                                targets[k][no + 3].append(0)
-                                targets[k][no + 5].append(0)
-                                if 2 == dn_cnt:
-                                    targets[k][no + 2].append(0)
-                                    targets[k][no + 4].append(1)
-                                    targets[k][no + 6].append(0)
-                                elif 3 == dn_cnt:
-                                    targets[k][no + 4].append(1)
-                                    targets[k][no + 6].append(1)
-                                    if float(data[m - 2].split(',')[10]) < float(data[m - 1].split(',')[10]):
-                                        targets[k][no + 2].append(1)
-                                    else:
-                                        targets[k][no + 2].append(0)
-                                else:
                                     targets[k][no + 2].append(0)
                                     targets[k][no + 4].append(0)
                                     targets[k][no + 6].append(0)
+                                    if 2 == up_cnt:
+                                        targets[k][no + 1].append(0)
+                                        targets[k][no + 3].append(1)
+                                        targets[k][no + 5].append(0)
+                                    elif 3 == up_cnt:
+                                        targets[k][no + 3].append(1)
+                                        targets[k][no + 5].append(1)
+                                        if float(data[m - 1].split(',')[10]) < float(data[m - 2].split(',')[10]):
+                                            targets[k][no + 1].append(1)
+                                        else:
+                                            targets[k][no + 1].append(0)
+                                    else:
+                                        targets[k][no + 1].append(0)
+                                        targets[k][no + 3].append(0)
+                                        targets[k][no + 5].append(0)
+
+                                elif float(rows[9]) < float(data[m - 1].split(',')[9]):
+
+                                    dn_cnt = (1 if float(rows[7]) < float(data[m - 1].split(',')[7]) else 0)
+                                    dn_cnt += (1 if float(rows[8]) < float(data[m - 1].split(',')[8]) else 0)
+                                    dn_cnt += (1 if float(rows[10]) < float(data[m - 1].split(',')[10]) else 0)
+
+                                    targets[k][no + 1].append(0)
+                                    targets[k][no + 3].append(0)
+                                    targets[k][no + 5].append(0)
+                                    if 2 == dn_cnt:
+                                        targets[k][no + 2].append(0)
+                                        targets[k][no + 4].append(1)
+                                        targets[k][no + 6].append(0)
+                                    elif 3 == dn_cnt:
+                                        targets[k][no + 4].append(1)
+                                        targets[k][no + 6].append(1)
+                                        if float(data[m - 2].split(',')[10]) < float(data[m - 1].split(',')[10]):
+                                            targets[k][no + 2].append(1)
+                                        else:
+                                            targets[k][no + 2].append(0)
+                                    else:
+                                        targets[k][no + 2].append(0)
+                                        targets[k][no + 4].append(0)
+                                        targets[k][no + 6].append(0)
+
+                                else:
+                                    for n in range(1, 7):
+                                        targets[k][no + n].append(0)
 
                             else:
                                 targets[k][no + 1].append(0)
-                                targets[k][no + 2].append(0)
-                                targets[k][no + 3].append(0)
-                                targets[k][no + 4].append(0)
-                                targets[k][no + 5].append(0)
-                                targets[k][no + 6].append(0)
 
                         dfs.append(pd.DataFrame({header_names[n]: targets[k][n] for n in range(0, len(header_names))}))
 
@@ -341,6 +335,7 @@ class AnomalyData:
                             target = dfs[k][(mm == dfs[k]['Month']) & (dd == dfs[k]['Day']) & (hh == dfs[k]['Hour'])]
 
                             target_count = 0
+                            value_names = value_names_master + (sma_list if 0 <= path.find('D1') else vola_list)
                             vals = [0.0 for _ in value_names]
                             all_vals = [0.0 for _ in value_names]
 
@@ -354,9 +349,9 @@ class AnomalyData:
                                 if is_all:
                                     all_vals[target_count - 4] = target[key].sum()
 
-                            vals[3 - 3] = float('{:.2f}'.format(vals[3 - 3] / vals[4 - 3] * 100))
-                            vals[9 - 3] = (0.0 if 0 == vals[5 - 3] else float('{:.2f}'.format(vals[9 - 3] / vals[5 - 3] * 100)))
-                            vals[10 - 3] = (0.0 if 0 == vals[6 - 3] else float('{:.2f}'.format(vals[10 - 3] / vals[6 - 3] * 100)))
+                            vals[3 - 3] = float('{:.5f}'.format(vals[3 - 3] / vals[4 - 3] * 100))
+                            vals[7 - 3] = (0.0 if 0 == vals[5 - 3] else float('{:.5f}'.format(vals[7 - 3] / vals[5 - 3] * 100)))
+                            vals[8 - 3] = (0.0 if 0 == vals[6 - 3] else float('{:.5f}'.format(vals[8 - 3] / vals[6 - 3] * 100)))
                             val_data = {str(value_names[n]): str(vals[n]) for n in range(0, len(vals))}
 
                             try:
@@ -369,8 +364,8 @@ class AnomalyData:
 
                             if is_all:
                                 all_vals[3 - 3] += vals[3 - 3]
-                                all_vals[9 - 3] += vals[9 - 3]
-                                all_vals[10 - 3] += vals[10 - 3]
+                                all_vals[7 - 3] += vals[7 - 3]
+                                all_vals[8 - 3] += vals[8 - 3]
                                 all_val_data = {value_names[n]: str(all_vals[n]) for n in range(0, len(value_names))}
 
                                 try:
@@ -435,6 +430,59 @@ class AnomalyData:
                                 series[str(k)]['Month'][0] = {key: (
                                     str(int(vals[key])) if key in ['Total', 'UpCnt', 'DnCnt'] else
                                     str(vals[key])) for key in mon_names}
+                    else:
+
+                        # ベストボラ、ワーストボラ
+                        for mm in series:
+                            for dd in series[mm]:
+
+                                count = 0
+                                counts = [0 for _ in series[mm][dd]]
+                                total = len(counts)
+
+                                for h1 in series[mm][dd]:
+
+                                    if 0 <= path.find('H1'):
+                                        try:
+                                            for col in ['WinCnt', 'LoseCnt', 'WinSize', 'LoseSize']:
+                                                del series[mm][dd][h1][col]
+                                        except: pass
+
+                                    vola1 = series[mm][dd][h1]['Vola']
+                                    for h2 in series[mm][dd]:
+
+                                        if h1 == h2:
+                                            continue
+                                        vola2 = series[mm][dd][h2]['Vola']
+
+                                        if vola2 < vola1:
+                                            counts[count] += 1
+                                    count += 1
+
+                                end = int(total / 3)
+                                for k in range(0, len(counts) - 1):
+                                    check = counts[k]
+                                    for m in range(k + 1, len(counts)):
+                                        if check == counts[m]:
+                                            counts[k] += 1
+
+                                num = total - 1
+                                count = 1
+                                while count <= end:
+                                    try:
+                                        series[mm][dd][str(counts.index(num))]['VolaRank'] = str(count)
+                                        count += 1
+                                    except: pass
+                                    num -= 1
+
+                                num = 0
+                                count = 1
+                                while count <= end:
+                                    try:
+                                        series[mm][dd][str(counts.index(num))]['VolaRank'] = str(-count)
+                                        count += 1
+                                    except: pass
+                                    num += 1
 
                     with open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/anomaly/judge/' +
                               files[i].replace('\\', '/').split('/')[-1].replace('csv', 'js'), 'w') as out:
@@ -478,16 +526,12 @@ class AnomalyData:
                                         vals['Total'] += float(row['Total'])
                                         vals['WinCnt'] += float(row['LoseCnt'])
                                         vals['LoseCnt'] += float(row['WinCnt'])
-                                        vals['WinCnt_J'] += float(row['LoseCnt_J'])
-                                        vals['LoseCnt_J'] += float(row['WinCnt_J'])
                                         vals['WinSize'] += (-float(row['LoseSize']))
                                         vals['LoseSize'] += (-float(row['WinSize']))
-                                        vals['SMA_Up'] += float(row['SMA_Dn'])
-                                        vals['SMA_Dn'] += float(row['SMA_Up'])
-                                        vals['SMA3_Up'] += float(row['SMA3_Dn'])
-                                        vals['SMA3_Dn'] += float(row['SMA3_Up'])
-                                        vals['SMA4_Up'] += float(row['SMA4_Dn'])
-                                        vals['SMA4_Dn'] += float(row['SMA4_Up'])
+
+                                        if 0 <= path.find('D1'):
+                                            for sma in sma_list:
+                                                vals[sma] += float(row[sma])
 
                             if 'Month' == dd:
                                 for key in mon_vals:
@@ -500,14 +544,16 @@ class AnomalyData:
                                         '{:.0f}'.format(vals[key])
                                 all_targets[mm][dd][hh] = vals
 
-                with open(files[0].replace('\\', '/').split('Trender/')[0] + 'Trender/anomaly/judge/' +
-                          files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX.js', 'w') as out:
-                    out.write('const ' + files[0].replace('\\', '/').split('/')[-1][:3] +
-                              'USDIDX =\n' + json.dumps(all_targets, ensure_ascii=False, indent=4))
+                if 0 <= path.find('D1'):
+                    with open(files[0].replace('\\', '/').split('Trender/')[0] + 'Trender/anomaly/judge/' +
+                              files[0].replace('\\', '/').split('/')[-1][:3] + 'USDIDX.js', 'w') as out:
+                        out.write('const ' + files[0].replace('\\', '/').split('/')[-1][:3] +
+                                  'USDIDX =\n' + json.dumps(all_targets, ensure_ascii=False, indent=4))
 
                 window.close()
         except Exception as e:
-            return 'ゴトー日エラー発生: ' + str(e)
+            com.dialog('判定データエラー発生: ' + str(e), 'エラー発生', lv='W')
+            return ''
 
         finally:
             try: window.close()

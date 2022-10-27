@@ -24,9 +24,10 @@ class AnomalyWeb:
     def do(self):
 
         if 'tweet' == self.function:
-            if com.question('Tweet作成 開始しますか？', '開始確認') <= 0:
+            if com.question('Topic作成 & Tweet 開始しますか？', '開始確認') <= 0:
                 return
-            Anomaly(self.function).do(True)
+            Anomaly(self.function).write_topic()
+            Anomaly(self.function).tweet()
             return
 
         getattr(self, '_' + self.function)()
@@ -747,7 +748,10 @@ class AnomalyWeb:
                             else:
                                 reg_key = '1st'
                         else:
-                            reg_key = str(month)
+                            if '-99' == str(week):
+                                reg_key = str(month)
+                            else:
+                                continue
 
                         total = float(jsons[cur][month][week]['total'])
                         height_cnt = 0
@@ -762,7 +766,7 @@ class AnomalyWeb:
 
                             comp_data = [{
                                 'total': str(int(total)),
-                                'half_rate' :data['half_rate'],
+                                'half_rate' : data['half_rate'],
                                 'up_rate': data['up_rate'],
                                 'dn_rate': data['dn_rate'],
                                 'up_cnt': data['up_cnt'],

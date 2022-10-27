@@ -23,7 +23,7 @@ import subprocess
 """ PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
 PW_INPUT = False
 CHANGE_MENU = -1
-# CHANGE_MENU = 0
+CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
@@ -48,7 +48,7 @@ ANOMALY_MENU = {
     'アノマリ〜': 'windows.anomaly_data/edit_judge',
     'スペシャル': 'windows.anomaly_data/specials',
     'Webコンテンツ': 'windows.anomaly_web/contents',
-    'Tweet': 'windows.anomaly_web/tweet',
+    'トピック & Tweet': 'windows.anomaly_web/tweet',
 }
 FUNC_MENU = {
     '最適化セット': 'DEV',
@@ -57,7 +57,6 @@ FUNC_MENU = {
     'MQL編集': 'DEV',
     'EX4コピー': 'ALL',
     'MT4ログ削除': 'ALL',
-    '週間レート': 'DEV',
     'Winアップデート': 'ALL',
     'Tickヒストリー編集': 'DEV',
     'hstコピー(テスト)': 'DEV',

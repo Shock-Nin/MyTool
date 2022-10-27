@@ -23,11 +23,11 @@ class Function:
             if com.question(fnc + ' 開始しますか？', '開始確認') <= 0:
                 return
 
-        if fnc in ['最適化セット', '最適化起動', 'MT4起動', '週間レート']:
+        if fnc in ['最適化セット', '最適化起動', 'MT4起動']:
             self.set_optimize(
                 fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1_2', 'MT4_TEST/Test1_3'],
                 affinity=['F', '2', '4', '8'],
-                dev_path={'週間レート': 'MT4_RATE'},
+                dev_path={'MT4起動': 'MT4_DEV/OANDA'},
                 web_path=['OANDA', 'Rakuten'],
                 my_path=['OANDA'],  # 'FxPro', 'MyFx', 'XM'
             )
@@ -111,7 +111,7 @@ class Function:
                     com.sleep(1)
                 com.sleep(5)
             else:
-                com.log(fnc + ': MT4起動済み')
+                com.dialog('MT4起動済みです。', title=fnc)
 
             if '最適化セット' == fnc:
                 com.sleep(3)

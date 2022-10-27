@@ -90,27 +90,8 @@ class Batch:
             LogAnaly(self.myjob).get_log()
             jobs.append('解析ログ編集')
 
-        # 土曜日12時～月曜4時まで休止
-        if (5 == self.now.weekday() and 12 < self.now.hour) \
-                or 6 == self.now.weekday() \
-                or (0 == self.now.weekday() and self.now.hour < 4):
-            return ", ".join([job for job in jobs])
-
-        # 30分未満の場合にのみ実行
+        # 30分未満の場合に実行
         if self.now.minute < 30:
-
-            # 4で割れる時間、月曜6時〜金曜最終、元旦とクリスマス以外、にツイート実行
-            if (self.now.hour + 2) % 4 == 0 \
-                    and ((0 == self.now.weekday() and 6 < self.now.hour)
-                         or 0 < self.now.weekday()) \
-                    and not (1 == self.now.month and 1 == self.now.day) \
-                    and not (12 == self.now.month and 25 == self.now.day):
-
-                if 0 == len(jobs):
-                    com.log('Batch開始: ' + cst.IP)
-
-                Anomaly(self.myjob).do(5 != self.now.weekday())
-                jobs.append('アノマリーTweet')
 
             # 9・11時に実行
             if self.now.hour in [9, 11]:
@@ -121,6 +102,30 @@ class Batch:
                 SayaDaily(self.myjob).get_csv()
                 jobs.append('365日足更新')
 
+            # 0時にトピック作成
+            if 0 == self.now.hour:
+                if 0 == len(jobs):
+                    com.log('Batch開始: ' + cst.IP)
+
+                Anomaly(self.myjob).write_topic()
+                jobs.append('アノマリーTopic作成')
+
+        # 30分以上の場合に実行
+        else:
+            # 元旦とクリスマス以外の平日に実行
+            if self.now.weekday() < 5 \
+                    and not (1 == self.now.month and 1 == self.now.day) \
+                    and not (12 == self.now.month and 25 == self.now.day):
+
+                # 月曜〜金曜の3・6時・12時に実行
+                if self.now.hour in [0, 12, 3]:
+
+                    if 0 == len(jobs):
+                        com.log('Batch開始: ' + cst.IP)
+
+                    Anomaly(self.myjob).tweet()
+                    jobs.append('アノマリーTweet')
+
         # 30分間隔で実行
         if 0 == len(jobs):
             com.log('Batch開始: ' + cst.IP)
@@ -130,7 +135,7 @@ class Batch:
 
         return ", ".join([job for job in jobs])
 
-    # WindpwsServer Myバッチ(15・45分)
+    # WindowsServer Myバッチ(15・45分)
     def _windows_my(self):
         jobs = []
 
@@ -144,7 +149,7 @@ class Batch:
 
         return ", ".join([job for job in jobs])
 
-    # WindpwsServer DEVバッチ(20・50分)
+    # WindowsServer DEVバッチ(20・50分)
     def _windows_dev(self):
         jobs = []
 

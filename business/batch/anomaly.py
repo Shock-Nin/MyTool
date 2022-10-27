@@ -13,10 +13,9 @@ import urllib.parse
 
 INFO_TOPIC = '食人のアノマリ〜つまみ食い！<br><br>'
 ANM_URL = cst.BLOG_URL
-# ANM_URL = ('http://localhost:8080/' if 'Mac' == cst.PC else cst.BLOG_URL)
 ANM_URL += 'anomaly'
+# ANM_URL = 'file:///Users/dsk_nagaoka/MyToolTmp/test_root/MT4/Trender/anomaly/index.html'
 ANM_OUT_PATH = cst.ANM_OUT_PATH[cst.PC]
-# ANM_OUT_PATH += 'test'
 IS_TWEET = True
 # IS_TWEET = False
 
@@ -42,7 +41,8 @@ class Anomaly:
 
         self.anm_path = cst.ANM_PATH[cst.PC]
 
-    def do(self, is_tweet):
+    # トピック書き出し
+    def write_topic(self):
 
         self._get_now_span()
         self._get_week_count()
@@ -52,63 +52,115 @@ class Anomaly:
             str(cst.DAY_WEEK[self.trade_w]) + str(self.trade_w) + ') ' + str(self.week_count) + 'w [' +
             str(self.trade_h) + 'h-' + str(self.now_span) + ', ' + str(cst.ANM_SPAN[self.now_span]) + ']')
 
-        topic_texts = self._edit_topic_texts()
-        if 0 == len(topic_texts):
-            return ''
-
-        if is_tweet:
-            com.log('アノマリーTweet開始')
-            self._tweet(topic_texts)
-
-    def _tweet(self, topic_texts):
         try:
-            msg = ''
-            err_msg = ''
-
-            for topic in topic_texts:
-                topic = topic.replace('<br>', '\n')
-                while 0 <= topic.find('<'):
-                    topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
-
-                msg += topic.replace('&nbsp;', '')
-
-            msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
-            act = '1'
-
             # ウェブ操作スタート
             wd = web_driver.driver(headless=self.is_batch)
             if wd is None:
                 com.log('WebDriverエラー', 'E')
                 return None
 
-            wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
-                   '&text=' + urllib.parse.quote(msg, 'utf8'))
-            com.sleep(5)
-            act = '2, ' + wd.title
+            wd.get(ANM_URL)
+            com.sleep(1)
+            wd.get(ANM_URL)
+            com.sleep(1)
 
-            web_driver.find_element(wd, 'session[username_or_email]').send_keys(cst.TWITTER_ID)
-            web_driver.find_element(wd, 'session[password]').send_keys(cst.TWITTER_PW)
-            act = '3, ' + wd.title
+            topic_text = wd.page_source[wd.page_source.find('topicText'):]
+            topic_text = topic_text[topic_text.find('>') + 1: topic_text.find('</p>')]
 
-            web_driver.find_element(wd, '/html/body/div/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
-            com.sleep(5)
-            act = '4, ' + wd.title
+            shakaymado_str = wd.page_source[wd.page_source.find('topicShakaymadoText'):]
+            shakaymado_str = shakaymado_str[shakaymado_str.find('>') + 1: shakaymado_str.find('</p>')]
+            gotobe_str = wd.page_source[wd.page_source.find('topicGotobeText'):]
+            gotobe_str = gotobe_str[gotobe_str.find('>') + 1: gotobe_str.find('</p>')]
 
-            if IS_TWEET:
-                web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
-                com.sleep(3)
-                act = '5, ' + wd.title
-                com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
+            with open(ANM_OUT_PATH + '/topic.txt', 'w', encoding='utf8') as out:
+                out.write('食人のアノマリ〜つまみ食い！<br><br>' + topic_text)
+            with open(ANM_OUT_PATH + '/topic_special.txt', 'w', encoding='utf8') as out:
+                out.write(shakaymado_str + '\n\n' + gotobe_str)
 
         except Exception as e:
-            err_msg = ' エラー発生(' + act + ') ' + str(e)
-
+            com.log('Topic取得エラー: ' + str(e), 'E')
         finally:
             try: wd.quit()
             except: pass
 
-        com.log('アノマリーTweet [' + self.now_day_str + ' ' + self.my_span_str + 'h]' +
-                (' 完了' if 0 == len(err_msg) else err_msg), lv=('' if 0 == len(err_msg) else 'E'))
+        return ''
+
+    # ツイート
+    def tweet(self):
+
+        tweet_type = 0
+        # 月曜〜金曜の0時と12時に、通常アノマリーツイート実行
+        if self.trade_h in [0, 12]:
+            tweet_type = 1
+
+        # ゴトー日の2時に、ゴトー日アノマリー実行
+        elif 2 == self.trade_h and self.trade_d in [0, 5, 15, 20, 25]:
+            tweet_type = 2
+
+        # 月曜の4時に、社会のマドアノマリー実行
+        elif 4 == self.trade_h and 0 == self.trade_w:
+            tweet_type = 3
+
+        if 0 < tweet_type:
+            msg = ''
+            err_msg = ''
+            try:
+                with open(ANM_OUT_PATH + '/topic' + ('' if 1 == tweet_type else '_special') +
+                          '.txt', 'r', encoding='utf8') as read_file:
+                    topics = read_file.read().split('\n')
+
+                for i in range(0, len(topics)):
+                    if 1 != tweet_type and i != (0 if 2 == tweet_type else 2):
+                        continue
+
+                    topic = topics[i].replace('<br>', '\n')
+
+                    while 0 <= topic.find('<'):
+                        topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
+
+                    while 0 <= topic.find('('):
+                        topic = topic.replace(topic[topic.find('('): topic.find(')') + 1], '')
+
+                    msg += topic.replace('&nbsp;', '')
+
+                msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
+                msg = ('本日のゴト〜日は、' if 3 == tweet_type else '') + msg.replace('スタート', 'スタートでマド空けの場合')
+                act = '1'
+
+                # ウェブ操作スタート
+                wd = web_driver.driver(headless=self.is_batch)
+                if wd is None:
+                    com.log('WebDriverエラー', 'E')
+                    return None
+
+                wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
+                       '&text=' + urllib.parse.quote(msg, 'utf8'))
+                com.sleep(5)
+                act = '2, ' + wd.title
+
+                web_driver.find_element(wd, 'session[username_or_email]').send_keys(cst.TWITTER_ID)
+                web_driver.find_element(wd, 'session[password]').send_keys(cst.TWITTER_PW)
+                act = '3, ' + wd.title
+
+                web_driver.find_element(wd, '/html/body/div/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
+                com.sleep(5)
+                act = '4, ' + wd.title
+
+                if IS_TWEET:
+                    web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
+                    com.sleep(3)
+                    act = '5, ' + wd.title
+                    com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
+
+            except Exception as e:
+                err_msg = ' エラー発生(' + act + ') ' + str(e)
+
+            finally:
+                try: wd.quit()
+                except: pass
+
+            com.log('アノマリーTweet [' + self.now_day_str + ' ' + self.my_span_str + 'h]' +
+                    (' 完了' if 0 == len(err_msg) else err_msg), lv=('' if 0 == len(err_msg) else 'E'))
 
         return ''
 
@@ -145,39 +197,3 @@ class Anomaly:
             if w_date.weekday() == self.trade_now.weekday():
                 self.week_count += 1
             w_date = w_date + datetime.timedelta(days=1)
-
-    # アノマリー Topic
-    def _edit_topic_texts(self):
-
-        topic_texts = []
-        try:
-            # ウェブ操作スタート
-            wd = web_driver.driver(headless=self.is_batch)
-            if wd is None:
-                com.log('WebDriverエラー', 'E')
-                return None
-
-            wd.get(ANM_URL)
-            com.sleep(1)
-            wd.get(ANM_URL)
-            com.sleep(1)
-
-            top_str = wd.page_source[wd.page_source.find('topicText'):]
-            top_str = top_str[top_str.find('>') + 1: top_str.find('</p>')]
-            topic_texts.append(top_str)
-
-            # special_str = wd.page_source[wd.page_source.find('topicSpecialText'):]
-            # special_str = special_str[special_str.find('>') + 1: special_str.find('</p>')]
-
-            with open(ANM_OUT_PATH + '/topic.txt', 'w', encoding='utf8') as out:
-                topic = "".join([txt for txt in topic_texts])
-                out.write('食人のアノマリ〜つまみ食い！<br><br>' + topic)
-
-        except Exception as e:
-            com.log('Topic取得エラー: ' + str(e), 'E')
-            topic_texts = []
-        finally:
-            try: wd.quit()
-            except: pass
-
-        return topic_texts
