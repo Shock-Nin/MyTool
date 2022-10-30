@@ -12,10 +12,9 @@ import datetime
 import urllib.parse
 
 INFO_TOPIC = 'アノマリ〜食人の%sつまみ食い！<br>'
-ANM_URL = cst.BLOG_URL
-ANM_URL += 'anomaly'
-# ANM_URL = 'file:///Users/dsk_nagaoka/MyToolTmp/test_root/MT4/Trender/anomaly/index.html'
-TWEET_TEST_TYPE = 0
+# ANM_URL = cst.BLOG_URL + 'anomaly'
+ANM_URL = 'file:///Users/dsk_nagaoka/MyToolTmp/test_root/MT4/Trender/anomaly/index.html'
+TWEET_TEST_TYPE = 3
 ANM_OUT_PATH = cst.ANM_OUT_PATH[cst.PC]
 IS_TWEET = (0 == TWEET_TEST_TYPE)
 # IS_TWEET = True
@@ -72,11 +71,11 @@ class Anomaly:
 
             shakaymado_str = wd.page_source[wd.page_source.find('topicShakaymadoText'):]
             shakaymado_str = shakaymado_str[shakaymado_str.find('>') + 1: shakaymado_str.find('</p>')]
-            shakaymado_str = ('' if len(shakaymado_str) < 10 else shakaymado_str.replace('スタート', 'スタートでマド空けの場合'))
+            shakaymado_str = ('' if len(shakaymado_str) < 10 else shakaymado_str.replace('週目', '').replace('週', '').replace('スタート', '月曜日、スタートでマド空けの場合'))
 
             gotobe_str = wd.page_source[wd.page_source.find('topicGotobeText'):]
             gotobe_str = gotobe_str[gotobe_str.find('>') + 1: gotobe_str.find('</p>')]
-            gotobe_str = ('' if len(gotobe_str) < 10 else '本日のゴト〜日は、' + gotobe_str)
+            gotobe_str = ('' if len(gotobe_str) < 10 else '今回のゴト〜日は、' + gotobe_str)
 
             with open(ANM_OUT_PATH + '/topic.txt', 'w', encoding='utf8') as out:
                 out.write((INFO_TOPIC % topic_day) + '<br>' + topic_text)
@@ -100,7 +99,7 @@ class Anomaly:
             tweet_type = 1
 
         # ゴトー日の2時に、ゴトー日アノマリー実行
-        elif 2 == self.trade_h and self.trade_d in [0, 5, 15, 20, 25, 29, 30, 31]:
+        elif 2 == self.trade_h and self.trade_d in [0, 5, 10, 15, 20, 25, 29, 30, 31]:
             tweet_type = 2
 
         # 月曜の4時に、社会のマドアノマリー実行
@@ -131,6 +130,9 @@ class Anomaly:
                             topic = topic.replace(topic[topic.find('('): topic.find(')') + 1], '')
 
                     msg += topic.replace('&nbsp;', '')
+
+                if 0 == len(msg):
+                    return ''
 
                 if 1 < tweet_type:
                     with open(ANM_OUT_PATH + '/topic.txt', 'r', encoding='utf8') as read_file:

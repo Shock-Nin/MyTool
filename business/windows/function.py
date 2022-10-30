@@ -138,7 +138,6 @@ class Function:
                     # 最適化チェック
                     opt_x, opt_y = com.match(shot, gray, cst.MATCH_PATH + 'auto_test/' +
                                              cst.MATCH_IMG_MT4['最適化OFF'], (255, 0, 255))
-
                     try:
                         com.click_pos(read_x + 5, read_y + 5)
                     except:
