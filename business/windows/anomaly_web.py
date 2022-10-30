@@ -14,6 +14,7 @@ from business.batch.anomaly import Anomaly
 PATH = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/anomaly')
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 JPN_DAYWEEKS = ['', '月', '火', '水', '木', '金']
+SPREAD = 0.0002
 
 
 class AnomalyWeb:
@@ -35,16 +36,9 @@ class AnomalyWeb:
     # Webコンテンツ作成
     def _contents(self):
 
-        # if com.question('WEBコンテンツ作成 開始しますか？', '開始確認') <= 0:
-        #     return
+        if com.question('WEBコンテンツ作成 開始しますか？', '開始確認') <= 0:
+            return
 
-        # err_msg = self._edit_anomaly()
-        # if err_msg is None:
-        #     return
-        # elif len(err_msg):
-        #     com.dialog(err_msg, 'エラー発生', lv='W')
-        #     return
-        #
         err_msg = self._edit_gotobe()
         if err_msg is None:
             return
@@ -60,56 +54,6 @@ class AnomalyWeb:
             return
 
         com.dialog('WEBコンテンツ作成 完了しました。', 'コンテンツ作成完了')
-
-    # 通常アノマリ〜のコンテンツデータ作成
-    def _edit_anomaly(self):
-        files = glob.glob(PATH + '/judge/D1_*.js')
-
-        window = com.progress('WEB(アノマリ〜)作成中', [files[0].split('/')[-1], len(files)], interrupt=True)
-        event, values = window.read(timeout=0)
-
-        total_time = 0
-        try:
-            jsons = []
-            for i in range(0, len(files)):
-                data = open(files[i], 'r').read().split('\n')
-                cur = files[i].replace('\\', '/').split('/')[-1].split('_')[1]
-
-                window[files[0].split('/')[-1]].update(cur)
-                window[files[0].split('/')[-1] + '_'].update(i)
-                start_time = com.time_start()
-
-                for k in range(0, len(data)):
-
-
-
-
-
-
-
-
-
-
-
-
-
-                    pass
-
-                # jsons.append('"' + cur + '": ' + json.dumps(month_data, ensure_ascii=False, indent=4))
-                run_time = com.time_end(start_time)
-                total_time += run_time
-                com.log(files[i].replace('\\', '/').split('/')[-1] + '完了(' +
-                        com.conv_time_str(run_time) + ') ' + files[i].replace('\\', '/'))
-
-            with open(PATH + '/content/ShakayMado.js', 'w') as out:
-                out.write('{' + ", ".join([cur_data for cur_data in jsons]) + '}')
-
-        except Exception as e:
-            return 'エラー発生: ' + str(e)
-        finally:
-            try: window.close()
-            except: pass
-        return ''
 
     # ゴトー日のコンテンツデータ作成
     def _edit_gotobe(self):
@@ -210,7 +154,8 @@ class AnomalyWeb:
                                 if 99 == int(hour):
                                     continue
 
-                                close_val = (close - price if is_usd else price - close) / close * 100
+                                close_val = ((close - (close * SPREAD)) - price if is_usd else
+                                             price - (close + (close * SPREAD))) / close * 100
 
                                 if 0 < close_val:
                                     vals[hour]['win'] += close_val
@@ -297,7 +242,6 @@ class AnomalyWeb:
                                     del month_data[mm][wk][hh][key]
                                     continue
 
-
                                 if '-' == month_data[mm][wk][hh][key]:
                                     continue
 
@@ -360,7 +304,7 @@ class AnomalyWeb:
                                     if pf < float(jsons[cur][month][week][hour]['pf']):
                                         best = jsons[cur][month][week][hour]
                                         pf = float(best['pf'])
-                                        best_hour = int(hour) + 6 - (24 if 10 < int(hour) else 0)
+                                        best_hour = int(hour)
                                         count = int(best['win_cnt']) + int(best['lose_cnt'])
 
                         except:
@@ -499,15 +443,14 @@ class AnomalyWeb:
                                             high = float(data[yy][mm][wk][hh]['High'])
                                             low = float(data[yy][mm][wk][hh]['Low'])
                                             str_day = 'today' + str(comps[1][k])
+                                            spread = start * SPREAD
 
                                             # マドがオープンからの逆行が、埋まりより先の場合
                                             if not is_miss and not is_comp:
 
                                                 val = abs(start * misses[m] / 100)
-                                                if 'up' == updn:
-                                                    is_miss = start + val < high
-                                                else:
-                                                    is_miss = low < start - val
+                                                val = (val - spread if 'up' == updn else val + spread)
+                                                is_miss = (start + val < high if 'up' == updn else low < start - val)
 
                                                 if is_miss:
                                                     vals[height][str_day][str_miss]['lose_cnt'] += 1
@@ -515,10 +458,10 @@ class AnomalyWeb:
 
                                             # マド埋まりの●%が、逆光より先に達成した場合
                                             if not is_comp and not is_miss:
-                                                val = abs(mado * (comps[1][k] / 100))
 
-                                                is_comp = (low < start - val
-                                                               if 'up' == updn else start + val < high)
+                                                val = abs(mado * (comps[1][k] / 100))
+                                                val = (val + spread if 'up' == updn else val - spread)
+                                                is_comp = (low < start - val if 'up' == updn else start + val < high)
 
                                                 if is_comp:
                                                     vals[height][str_day][str_miss]['win_cnt'] += 1
@@ -665,7 +608,6 @@ class AnomalyWeb:
 
                                                 result['ratio'] = (0 if 0 == result['lose_avg'] else
                                                                    result['win_avg'] / result['lose_avg'])
-
                 # 出力データの文字整形
                 for mm in month_data:
                     for wk in month_data[mm]:

@@ -11,13 +11,14 @@ from common import web_driver
 import datetime
 import urllib.parse
 
-INFO_TOPIC = '食人のアノマリ〜つまみ食い！<br><br>'
+INFO_TOPIC = 'アノマリ〜食人の%sつまみ食い！<br>'
 ANM_URL = cst.BLOG_URL
 ANM_URL += 'anomaly'
 # ANM_URL = 'file:///Users/dsk_nagaoka/MyToolTmp/test_root/MT4/Trender/anomaly/index.html'
+TWEET_TEST_TYPE = 0
 ANM_OUT_PATH = cst.ANM_OUT_PATH[cst.PC]
-IS_TWEET = True
-# IS_TWEET = False
+IS_TWEET = (0 == TWEET_TEST_TYPE)
+# IS_TWEET = True
 
 
 class Anomaly:
@@ -66,16 +67,21 @@ class Anomaly:
 
             topic_text = wd.page_source[wd.page_source.find('topicText'):]
             topic_text = topic_text[topic_text.find('>') + 1: topic_text.find('</p>')]
+            topic_day = topic_text[: topic_text.find('の')]
+            topic_text = topic_text[topic_text.find('、') + 1:]
 
             shakaymado_str = wd.page_source[wd.page_source.find('topicShakaymadoText'):]
             shakaymado_str = shakaymado_str[shakaymado_str.find('>') + 1: shakaymado_str.find('</p>')]
+            shakaymado_str = ('' if len(shakaymado_str) < 10 else shakaymado_str.replace('スタート', 'スタートでマド空けの場合'))
+
             gotobe_str = wd.page_source[wd.page_source.find('topicGotobeText'):]
             gotobe_str = gotobe_str[gotobe_str.find('>') + 1: gotobe_str.find('</p>')]
+            gotobe_str = ('' if len(gotobe_str) < 10 else '本日のゴト〜日は、' + gotobe_str)
 
             with open(ANM_OUT_PATH + '/topic.txt', 'w', encoding='utf8') as out:
-                out.write('食人のアノマリ〜つまみ食い！<br><br>' + topic_text)
+                out.write((INFO_TOPIC % topic_day) + '<br>' + topic_text)
             with open(ANM_OUT_PATH + '/topic_special.txt', 'w', encoding='utf8') as out:
-                out.write(shakaymado_str + '\n\n' + gotobe_str)
+                out.write('<br><br>' + shakaymado_str + '<br><br>\n\n' + gotobe_str)
 
         except Exception as e:
             com.log('Topic取得エラー: ' + str(e), 'E')
@@ -94,16 +100,18 @@ class Anomaly:
             tweet_type = 1
 
         # ゴトー日の2時に、ゴトー日アノマリー実行
-        elif 2 == self.trade_h and self.trade_d in [0, 5, 15, 20, 25]:
+        elif 2 == self.trade_h and self.trade_d in [0, 5, 15, 20, 25, 29, 30, 31]:
             tweet_type = 2
 
         # 月曜の4時に、社会のマドアノマリー実行
         elif 4 == self.trade_h and 0 == self.trade_w:
             tweet_type = 3
 
+        tweet_type = (tweet_type if 0 == TWEET_TEST_TYPE else TWEET_TEST_TYPE)
         if 0 < tweet_type:
             msg = ''
             err_msg = ''
+
             try:
                 with open(ANM_OUT_PATH + '/topic' + ('' if 1 == tweet_type else '_special') +
                           '.txt', 'r', encoding='utf8') as read_file:
@@ -118,14 +126,27 @@ class Anomaly:
                     while 0 <= topic.find('<'):
                         topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
 
-                    while 0 <= topic.find('('):
-                        topic = topic.replace(topic[topic.find('('): topic.find(')') + 1], '')
+                    if 1 < tweet_type:
+                        while 0 <= topic.find('('):
+                            topic = topic.replace(topic[topic.find('('): topic.find(')') + 1], '')
 
                     msg += topic.replace('&nbsp;', '')
 
+                if 1 < tweet_type:
+                    with open(ANM_OUT_PATH + '/topic.txt', 'r', encoding='utf8') as read_file:
+                        topic = read_file.read().split('\n')[0].split('<br>')[0]
+
+                        while 0 <= topic.find('<'):
+                            topic = topic.replace(topic[topic.find('<'): topic.find('>') + 1], '')
+                        msg = topic + '\n' + msg
+
                 msg += '\n詳細・その他通貨、続きは ' + cst.BLOG_URL + '\n' + cst.TWITTER_TAG
-                msg = ('本日のゴト〜日は、' if 3 == tweet_type else '') + msg.replace('スタート', 'スタートでマド空けの場合')
+                msg = msg.replace('\n\n', '\n').replace('\n\n', '\n')
                 act = '1'
+
+                if 0 < TWEET_TEST_TYPE:
+                    print(msg)
+                    return ''
 
                 # ウェブ操作スタート
                 wd = web_driver.driver(headless=self.is_batch)
