@@ -12,9 +12,9 @@ import datetime
 import urllib.parse
 
 INFO_TOPIC = 'アノマリ〜食人の%sつまみ食い！<br>'
-# ANM_URL = cst.BLOG_URL + 'anomaly'
-ANM_URL = 'file:///Users/dsk_nagaoka/MyToolTmp/test_root/MT4/Trender/anomaly/index.html'
-TWEET_TEST_TYPE = 3
+ANM_URL = cst.BLOG_URL + 'anomaly'
+# ANM_URL = 'file:///Users/dsk_nagaoka/MyToolTmp/test_root/MT4/Trender/anomaly/index.html'
+TWEET_TEST_TYPE = 0
 ANM_OUT_PATH = cst.ANM_OUT_PATH[cst.PC]
 IS_TWEET = (0 == TWEET_TEST_TYPE)
 # IS_TWEET = True

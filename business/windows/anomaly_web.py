@@ -102,7 +102,7 @@ class AnomalyWeb:
 
                             vals = {str(int(hour)): {
                                 'win': 0.0, 'lose': 0.0, 'win_cnt': 0, 'lose_cnt': 0}
-                                for hour in hours + (['-1'] if 1 == week_num else []) if 21 < int(hour) or int(hour) < 3}
+                                for hour in hours + (['-1'] if 1 == week_num else []) if 16 < int(hour) or int(hour) < 3}
 
                             no_data = ''
                             try:
@@ -146,7 +146,7 @@ class AnomalyWeb:
                                         if 0 == yesterday:
                                             continue
 
-                                elif 21 < int(hh) or int(hh) < 3:
+                                elif 16 < int(hh) or int(hh) < 3:
 
                                     hour = str(int(hh))
                                     price = float(data[yy][mm][wk][hh]['Close'])
@@ -175,7 +175,8 @@ class AnomalyWeb:
                 month_data = {str(mm): {str(wk): {str(int(hour)): {
                     'win': 0.0, 'lose': 0.0, 'win_cnt': 0, 'lose_cnt': 0, 'win_avg': 0.0, 'lose_avg': 0.0,
                     'rate': 0.0, 'ratio': 0.0, 'pf': 0}
-                    for hour in ['-99'] + hours + (['-1'] if 1 == wk else []) if 21 < int(hour) or int(hour) < 3}
+                    for hour in ['-99'] + hours + (['-1'] if 1 == wk else [])
+                    if 16 < int(hour) or int(hour) < 3}
                     for wk in range(0, 6)} for mm in range(0, 13)}
 
                 # データの集計
