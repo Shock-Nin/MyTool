@@ -92,7 +92,7 @@ class EaAutoTest:
                                [['開始年', 2007, int(com.str_time()[:4])]], obj='spin')
         if inputs[0] <= 0:
             return
-        self.start_ym = inputs[1][0]
+        self.start_ym = str(inputs[1][0])
 
         total_time = 0
 
