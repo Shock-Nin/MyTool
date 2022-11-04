@@ -64,7 +64,7 @@ def question(msg, title, lv='', cancel=False):
     return flg
 
 # 確認ダイヤログ
-def input_box(msg, title, forms, cancel=False):
+def input_box(msg, title, forms, obj='', cancel=False):
 
     btn = [sg.Button('はい', key='はい', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777'),
            sg.Button('いいえ', key='いいえ', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
@@ -72,13 +72,21 @@ def input_box(msg, title, forms, cancel=False):
     if cancel:
         btn.append(sg.Button('中断', key='中断', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#555555'))
 
-    layout = [sg.Column([[
-        sg.Frame('', background_color='#77CCFF', layout=[
-            [(sg.Text(forms[i][k], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF')
-              if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(12, 1)))]
-             for k in range(0, len(forms[i]))
-        ])] for i in range(0, len(forms))], background_color='#77CCFF'
-    )]
+    if 'spin' == obj:
+        layout = [sg.Column([[
+            sg.Frame('', background_color='#77CCFF', layout=[
+                [sg.Text(forms[i][0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
+                 sg.Spin(values=[k for k in range(forms[i][1], forms[i][2] + 1)], font=('', 16), size=(12, 1))]
+            ])] for i in range(0, len(forms))], background_color='#77CCFF'
+        )]
+    else:
+        layout = [sg.Column([[
+            sg.Frame('', background_color='#77CCFF', layout=[
+                [(sg.Text(forms[i][k], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF')
+                  if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(12, 1)))]
+                 for k in range(0, len(forms[i]))
+            ])] for i in range(0, len(forms))], background_color='#77CCFF'
+        )]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color='#77CCFF',
                        icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',

@@ -294,7 +294,7 @@ class MyAsset:
         columns.append(before[0][6])
         values.append(af_rcard2)
 
-        af_vcard3 = rcard[3]
+        af_vcard3 = vcard[3]
         columns.append(before[0][7])
         values.append(af_vcard3)
         af_rcard3 = rcard[3]

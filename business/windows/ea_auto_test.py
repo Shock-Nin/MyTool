@@ -21,6 +21,7 @@ class EaAutoTest:
     def __init__(self, job):
         self.myjob = job
         self.pos_xy = cst.MATCH_IMG_MT4.copy()
+        self.start_ym = 0
 
     def do(self):
 
@@ -31,6 +32,12 @@ class EaAutoTest:
                                  'EA・通貨選択', obj='check')
         if 0 == len(checks):
             return
+
+        inputs = com.input_box('開始年を選択してください。', '開始年設定',
+                               [['開始年', 2007, int(com.str_time()[:4])]], obj='spin')
+        if inputs[0] <= 0:
+            return
+        self.start_ym = inputs[1][0]
 
         # パラメータ読み込み
         check_logics = []
@@ -332,9 +339,9 @@ class EaAutoTest:
             # 開始日～終了日
             for i in range(1, 3):
                 com.click_pos(self.pos_xy['開始日'][0] + 60, self.pos_xy['開始日'][1] + (5 * i))
-                pgui.write(cst.EA_START_YM[:4])
+                pgui.write(self.start_ym)
                 pgui.hotkey('right')
-                pgui.write(cst.EA_START_YM[5:])
+                pgui.write('01')
                 com.sleep(2)
                 com.click_pos(self.pos_xy['終了日'][0] + 60, self.pos_xy['終了日'][1] + (5 * i))
                 pgui.write(end_ym[:4])
