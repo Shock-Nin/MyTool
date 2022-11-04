@@ -33,12 +33,6 @@ class EaAutoTest:
         if 0 == len(checks):
             return
 
-        inputs = com.input_box('開始年を選択してください。', '開始年設定',
-                               [['開始年', 2007, int(com.str_time()[:4])]], obj='spin')
-        if inputs[0] <= 0:
-            return
-        self.start_ym = inputs[1][0]
-
         # パラメータ読み込み
         check_logics = []
         read_files = []
@@ -93,6 +87,12 @@ class EaAutoTest:
                                            ea_name.split('_')[0] + 'ロジック選択', obj='check')
             if 0 == len(check_logics):
                 return
+
+        inputs = com.input_box('開始年を選択してください。', '開始年設定',
+                               [['開始年', 2007, int(com.str_time()[:4])]], obj='spin')
+        if inputs[0] <= 0:
+            return
+        self.start_ym = inputs[1][0]
 
         total_time = 0
 
