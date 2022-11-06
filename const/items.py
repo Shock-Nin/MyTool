@@ -32,10 +32,10 @@ MATCH_IMG_RM = {'マージ': 'merge.png', '保存': 'save.png', 'ファイル': 
 
 # EA並び順
 EA_PATHS = {'AnomalyGoToBe': ['Other'], 'AnomalyShocknin': ['Main', 'Unit-']}
-CURRNCYS_EA = [['EUR', 'GBP', 'AUD', 'NZD', 'JPY', 'CHF', 'CAD', 'GOLD'],
-               ['25', '25', '25', '25', '25', '25', '25', '70']]
-CURRNCYS_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',
-                'ZAR', 'TRY', 'NOK', 'HKD', 'SEK', 'MXN', 'PLN']
+CURRENCIES_EA = [['EUR', 'GBP', 'AUD', 'JPY', 'GOLD'],
+                 ['25', '25', '25', '25', '70']]
+CURRENCIES_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',
+                  'ZAR', 'TRY', 'NOK', 'HKD', 'SEK', 'MXN', 'PLN']
 EA_DATA_NAMES = ['EA個別成績', 'EA統合成績', 'EA統合年率']
 EA_START_YM = '2007.01'
 # EA_START_YM = '2005.01'

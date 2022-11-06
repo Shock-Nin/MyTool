@@ -77,9 +77,9 @@ class SayaTimely:
             errs = ''
             err_count = 0
 
-            for i in range(0, len(cst.CURRNCYS_365) * 2):
+            for i in range(0, len(cst.CURRENCIES_365) * 2):
                 if len(rates[i]) <= 2:
-                    errs += (', ' if 0 < err_count else '') + cst.CURRNCYS_365[int(round((i + 1) / 2))] + '("－")'
+                    errs += (', ' if 0 < err_count else '') + cst.CURRENCIES_365[int(round((i + 1) / 2))] + '("－")'
                     err_count += 1
 
             if 0 < err_count:
@@ -88,7 +88,7 @@ class SayaTimely:
 
             # SQL用項目列作成
             columns = [('USD' if cur in ['JPY'] else '') + cur +
-                       ('' if cur in ['JPY'] else 'JPY') for cur in cst.CURRNCYS_365]
+                       ('' if cur in ['JPY'] else 'JPY') for cur in cst.CURRENCIES_365]
             columns.insert(0, 'DATE')
 
             # SQL用データ作成

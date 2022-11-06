@@ -79,7 +79,7 @@ def prm_list():
             files = os.listdir(PRM_PATH + path)
             set_file = []
 
-            for key2 in cst.CURRNCYS_EA[0]:
+            for key2 in cst.CURRENCIES_EA[0]:
                 for file in files:
                     # 並び順でなければパス
                     if file.find(key2) < 0:
@@ -98,7 +98,7 @@ def sort_paths(is_out):
     paths = []
     get_paths = os.listdir(cst.TEST_UNIT[cst.PC])
 
-    for key1 in cst.CURRNCYS_EA[0]:
+    for key1 in cst.CURRENCIES_EA[0]:
         for key2 in cst.EA_PATHS:
 
             for get_path in get_paths:

@@ -36,7 +36,7 @@ class EaMergeTest:
         for ea in cst.EA_PATHS:
             ea_fold = cst.EA_PATHS[ea][-1]
 
-            for cur in cst.CURRNCYS_EA[0]:
+            for cur in cst.CURRENCIES_EA[0]:
 
                 for path in paths:
 
@@ -194,7 +194,7 @@ class EaMergeTest:
 
                 # Allの読み込みの選択
                 else:
-                    for cur in cst.CURRNCYS_EA[0]:
+                    for cur in cst.CURRENCIES_EA[0]:
                         self._select_report(ea_fold + cur, target, True)
 
             # 読み込みの選択で、フォルダ内ファイル単独選択
@@ -203,7 +203,7 @@ class EaMergeTest:
                     return
 
                 # 個別に読み込みの選択
-                for cur in cst.CURRNCYS_EA[0]:
+                for cur in cst.CURRENCIES_EA[0]:
                     if not self._select_report(ea_fold + cur, "".join([file for file in target if 0 <= file.find(cur.lower())]), False):
                         return False
 
@@ -237,7 +237,7 @@ class EaMergeTest:
                 # 全結合の場合は、リスト全投入
                 if is_all:
                     is_cur = False
-                    for cur in cst.CURRNCYS_EA[0]:
+                    for cur in cst.CURRENCIES_EA[0]:
                         if 0 <= path.find(cur):
                             is_cur = True
                             break

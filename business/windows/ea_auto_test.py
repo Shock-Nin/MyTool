@@ -354,13 +354,13 @@ class EaAutoTest:
                 com.click_pos(self.pos_xy['通貨'][0] + 100, self.pos_xy['通貨'][1] + (5 * i))
                 com.sleep(1)
                 pgui.hotkey('home')
-                [pgui.hotkey('down') for _ in range(0, cst.CURRNCYS_EA[0].index(currency))]
+                [pgui.hotkey('down') for _ in range(0, cst.CURRENCIES_EA[0].index(currency))]
                 pgui.hotkey('enter')
             com.sleep(2)
 
             # スプレッド
-            spread = "".join([cst.CURRNCYS_EA[1][n] for n in range(0, len(cst.CURRNCYS_EA[0]))
-                              if currency == cst.CURRNCYS_EA[0][n]])
+            spread = "".join([cst.CURRENCIES_EA[1][n] for n in range(0, len(cst.CURRENCIES_EA[0]))
+                              if currency == cst.CURRENCIES_EA[0][n]])
 
             for i in range(1, 3):
                 com.click_pos(self.pos_xy['スプレッド'][0] + 100, self.pos_xy['スプレッド'][1] + 25 + (5 * i))

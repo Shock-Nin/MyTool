@@ -46,7 +46,7 @@ class SayaDaily:
 
             # SQL用項目列作成
             columns = [('USD' if cur in ['JPY'] else '') + cur +
-                       ('' if cur in ['JPY'] else 'JPY') for cur in cst.CURRNCYS_365]
+                       ('' if cur in ['JPY'] else 'JPY') for cur in cst.CURRENCIES_365]
             columns.insert(0, 'DATE')
 
             # 更新対象がある間繰り返し
