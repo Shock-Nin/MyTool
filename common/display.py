@@ -76,7 +76,8 @@ def input_box(msg, title, forms, obj='', cancel=False):
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
                 [sg.Text(forms[i][0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
-                 sg.Spin(values=[k for k in range(forms[i][1], forms[i][2] + 1)], font=('', 16), size=(12, 1))]
+                 sg.Spin(values=[k for k in range(forms[i][1], forms[i][2] + 1)],
+                         font=('', 16), size=(12, 1), readonly=True)]
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]
     else:
