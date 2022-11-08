@@ -21,7 +21,7 @@ class EaAutoTest:
     def __init__(self, job):
         self.myjob = job
         self.pos_xy = cst.MATCH_IMG_MT4.copy()
-        self.start_ym = 0
+        self.start_year = 0
 
     def do(self):
 
@@ -92,7 +92,7 @@ class EaAutoTest:
                                [['開始年', 2007, int(com.str_time()[:4])]], obj='spin')
         if inputs[0] <= 0:
             return
-        self.start_ym = str(inputs[1][0])
+        self.start_year = str(inputs[1][0])
 
         total_time = 0
 
@@ -339,7 +339,7 @@ class EaAutoTest:
             # 開始日～終了日
             for i in range(1, 3):
                 com.click_pos(self.pos_xy['開始日'][0] + 60, self.pos_xy['開始日'][1] + (5 * i))
-                pgui.write(self.start_ym)
+                pgui.write(self.start_year)
                 pgui.hotkey('right')
                 pgui.write('01')
                 com.sleep(2)
@@ -381,7 +381,7 @@ class EaAutoTest:
                 com.click_pos(self.pos_xy['最適化ON'][0] + 5, self.pos_xy['最適化ON'][1] + 5)
                 com.sleep(2)
 
-            com.log('MT4設定: ' + currency + '(' + cst.EA_START_YM + ' 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
+            com.log('MT4設定: ' + currency + '(' + str(self.start_year) + '.01 〜 ' + end_ym + ') 時間足 ' + time_frame + ', スプレッド ' + spread)
         except Exception as e:
             com.log('MT4初期設定エラー: ' + str(e), 'E')
             com.dialog('MT4初期設定で、エラーが発生しました。\n' + str(e), 'エラー発生', 'E')
