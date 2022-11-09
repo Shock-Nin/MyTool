@@ -5,7 +5,7 @@
 ENG1MIN_MONITOR = 20
 
 # MT4立ち上げ待機時間
-MT4_WAIT = [3, 10]
+MT4_WAIT = [3, 15]
 
 # MT4テンプレートマッチング
 MATCH_IMG_MT4 = {
