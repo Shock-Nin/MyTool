@@ -71,7 +71,8 @@ class Anomaly:
 
             shakaymado_str = wd.page_source[wd.page_source.find('topicShakaymadoText'):]
             shakaymado_str = shakaymado_str[shakaymado_str.find('>') + 1: shakaymado_str.find('</p>')]
-            shakaymado_str = ('' if len(shakaymado_str) < 10 else shakaymado_str.replace('週目', '').replace('週', '').replace('スタート', '月曜日、スタートでマド空けの場合'))
+            shakaymado_str = ('' if len(shakaymado_str) < 10 else
+                              shakaymado_str.replace('週目', '').replace('週', '').replace('スタートは', '月曜日、スタートで'))
 
             gotobe_str = wd.page_source[wd.page_source.find('topicGotobeText'):]
             gotobe_str = gotobe_str[gotobe_str.find('>') + 1: gotobe_str.find('</p>')]
