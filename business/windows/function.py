@@ -37,8 +37,8 @@ class Function:
                 fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2', 'Test3'],
                 web_path=['OANDA', 'Rakuten'],
                 my_path=['FxPro', 'OANDA', 'MyFx'],
-                target_ea=['AnomalyShocknin', 'AnomalyGoToBe'],
-                target_ind=['AnomalyShocknin', 'AnomalyGoToBe', 'sts', 'JikanDeGo', 'WheSitaDoch'],
+                target_ea=['Shocknin', 'Gotobies'],
+                target_ind=['Shocknin', 'Gotobies', 'sts', 'JikanDeGo', 'WheSitaDoch'],
                 remove_ea=[],
                 remove_ind=[]
             )
