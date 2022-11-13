@@ -332,7 +332,7 @@ class EaAutoTest:
                 com.click_pos(self.pos_xy['エキスパート'][0] - 200, self.pos_xy['エキスパート'][1] + (5 * i))
                 com.sleep(1)
                 [pgui.hotkey('up') for _ in range(10)]
-                [pgui.hotkey('down') for _ in range(0, ea_count)]
+                [pgui.hotkey('down') for _ in range(0, ea_count + 1)]
                 pgui.hotkey('enter')
             com.sleep(2)
 
