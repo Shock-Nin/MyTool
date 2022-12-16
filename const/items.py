@@ -31,7 +31,7 @@ MATCH_IMG_MT4 = {
 MATCH_IMG_RM = {'マージ': 'merge.png', '保存': 'save.png', 'ファイル': 'file.png', 'データ': 'data.png'}
 
 # EA並び順
-EA_PATHS = {'ShockninGotobies': ['Other'], 'Shocknin': ['Main', 'Unit-']}
+EA_PATHS = {'ShockninGotobies': ['Other'], 'ShockninIreguie': ['Main', 'Unit-']}
 CURRENCIES_EA = [['EUR', 'GBP', 'AUD', 'JPY', 'GOLD'],
                  ['25', '25', '25', '25', '70']]
 CURRENCIES_365 = ['JPY', 'EUR', 'GBP', 'AUD', 'CHF', 'CAD', 'NZD',

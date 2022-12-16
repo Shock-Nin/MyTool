@@ -14,10 +14,12 @@ import urllib.parse
 INFO_TOPIC = 'アノマリ〜食人の%sつまみ食い！<br>'
 ANM_URL = cst.BLOG_URL + 'anomaly'
 # ANM_URL = 'file:///Users/dsk_nagaoka/MyToolTmp/test_root/MT4/Trender/anomaly/index.html'
+
+# 0デフォルト、1通常アノマリー、2ゴトー日、3社会のマド
 TWEET_TEST_TYPE = 0
 ANM_OUT_PATH = cst.ANM_OUT_PATH[cst.PC]
 IS_TWEET = (0 == TWEET_TEST_TYPE)
-# IS_TWEET = True
+# IS_TWEET = False
 
 
 class Anomaly:
@@ -161,6 +163,9 @@ class Anomaly:
                        '&text=' + urllib.parse.quote(msg, 'utf8'))
                 com.sleep(5)
                 act = '2, ' + wd.title
+
+                web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
+                com.sleep(5)
 
                 web_driver.find_element(wd, 'session[username_or_email]').send_keys(cst.TWITTER_ID)
                 web_driver.find_element(wd, 'session[password]').send_keys(cst.TWITTER_PW)
