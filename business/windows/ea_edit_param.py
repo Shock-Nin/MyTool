@@ -135,7 +135,7 @@ def _edit_mqlfiles():
     for file in files:
         try:
             # .mq4ファイル以外とサンプルはパス
-            if file.find('.mq4') < 0 or 0 <= file.find(' '):
+            if file.find('.mq4') < 0 or file.find('Shocknin') < 0 or 0 <= file.find(' '):
                 continue
 
             is_start = False

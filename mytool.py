@@ -61,7 +61,6 @@ FUNC_MENU = {
     'Winアップデート': 'ALL',
     'Tickヒストリー編集': 'DEV',
     'hstコピー(テスト)': 'DEV',
-    'hst転送(Web)': 'DEV',
     'Tickstory': 'DEV',
 }
 WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])

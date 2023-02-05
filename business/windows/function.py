@@ -28,19 +28,23 @@ class Function:
                 fnc, opt_path=['MT4_DEV/OANDA', 'MT4_TEST/Test1', 'MT4_TEST/Test1_2', 'MT4_TEST/Test1_3'],
                 affinity=['F', '2', '4', '8'],
                 dev_path={'MT4起動': 'MT4_DEV/OANDA'},
-                web_path=['OANDA', 'Rakuten'],
-                my_path=['OANDA'],  # 'FxPro', 'MyFx', 'XM'
+                web_path=['ForexExchange', 'Rakuten'],
+                my_path=['OANDA', 'FXTF'],  # 'FxPro', 'MyFx', 'XM'
             )
         elif 'EX4コピー' == fnc:
             # コピー(target)はワイルドカード、削除(remove)は完全一致
             self.copy_ex4(
-                fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2', 'Test3'],
-                web_path=['OANDA', 'Rakuten'],
-                my_path=['FxPro', 'OANDA', 'MyFx'],
-                target_ea=['Shocknin', 'Gotobies'],
-                target_ind=['Shocknin', 'Gotobies', 'sts', 'JikanDeGo', 'WheSitaDoch'],
-                remove_ea=[],
-                remove_ind=[]
+                fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2'],
+                web_path=['OANDA', 'ForexExchange', 'FXTF', 'Rakuten'],
+                my_path=['OANDA', 'ForexExchange', 'FXTF', 'FxPro', 'MyFx'],
+                target_ea=['Shocknin'],
+                target_ind=['Shocknin', 'WheSitDoch'],
+                remove_ea=['ShockninWhesitdoch', 'ShockninMaster', 'AnomalyShocknin', 'AnomalyGoToBe'],
+                remove_ind=['AnomalyShocknin_AUDUSD', 'AnomalyShocknin_EURUSD', 'AnomalyShocknin_GBPUSD', 'AnomalyShocknin_GOLD',
+                            'AnomalyShocknin_NZDUSD','AnomalyShocknin_USDCAD','AnomalyShocknin_USDCHF','AnomalyShocknin_USDJPY',
+                            'ShockninMaster_AUDUSD','ShockninMaster_EURUSD','ShockninMaster_GBPUSD','ShockninMaster_GOLD','ShockninMaster_USDJPY',
+                            'sts_ind_JikanDeGo','sts_ind_WheSitaDoch','WheSitaDoch','WheSitaDoch_X','WheSitDoch - コピー','WheSitDoch_Box',
+                            'WheSitDoch_']
             )
         elif 'MT4ログ削除' == fnc:
             self.log_delete(fnc)
@@ -50,9 +54,9 @@ class Function:
 
         elif 'hstコピー(テスト)' == fnc:
             self.copy_history_test(
-                fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_TEST/Test2', 'MT4_RATE/MyFx'],
-                out_path=['Test1', 'Test1_2', 'Test1_3', 'Test2_2', 'Test3'],
-                hst_name=['Demo', 'Demo', 'Demo', 'Demo', 'Live']
+                fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_TEST/Test2'],
+                out_path=['Test1', 'Test1_2', 'Test1_3', 'Test2_2'],
+                hst_name=['Demo', 'Demo', 'Demo', 'Demo']
             )
         elif 'hst転送(Web)' == fnc:
             self.copy_history_web(fnc, in_path='MT4_DEV/OANDA', hst_name='Demo')
@@ -77,16 +81,13 @@ class Function:
             # MT4起動コマンドを設定
             commands = []
             if cst.IP == cst.DEV_IP:
-
                 if 0 <= fnc.find('最適化'):
                     for i in range(0, len(opt_path)):
                         commands.append(
                             'cmd /c start "" /affinity ' + (affinity[i] + ' "' + cst.MT4_PATH + opt_path[i] +
                                                             '/terminal.exe"').replace('/', '\\') + ' "/portable"')
                 else:
-                    mt4s = os.listdir(cst.MT4_PATH + dev_path[fnc])
-                    for i in range(0, len(mt4s)):
-                        commands.append(cst.MT4_PATH + dev_path[fnc] + '/' + mt4s[i] + '/terminal.exe /portable')
+                    commands.append(cst.MT4_PATH + dev_path[fnc] + '/terminal.exe /portable')
 
             elif cst.IP == cst.WEB_IP:
                 for i in range(0, len(web_path)):
@@ -234,8 +235,9 @@ class Function:
     # 削除の実行
     def _delete_ex4_sub(self, delete_path, file_type, target):
 
-        os.remove(delete_path + file_type + '/' + target + '.ex4')
-        com.log('ex4削除: ' + delete_path.replace(cst.MT4_PATH, '') + file_type + '/' + target + '.ex4')
+        if os.path.exists(delete_path + file_type + '/' + target + '.ex4'):
+            os.remove(delete_path + file_type + '/' + target + '.ex4')
+            com.log('ex4削除: ' + delete_path.replace(cst.MT4_PATH, '') + file_type + '/' + target + '.ex4')
 
     # ログとテストヒストリカルデータの削除
     def log_delete(self, fnc):
@@ -430,69 +432,69 @@ class Function:
 
         return True
 
-    # hstファイルのコピー(Web用)
-    def copy_history_web(self, fnc, in_path, hst_name):
-        if cst.IP == cst.DEV_IP:
-
-            is_interrupt = False
-            total_time = 0
-            try:
-                while True:
-                    start_time = com.time_start()
-
-                    hst_paths = os.listdir(cst.MT4_PATH + in_path + '/history')
-                    out_path = cst.GDRIVE_PATH['Win'] + '受け渡し/history'
-
-                    # ヒストリカルデータの対象サーバー名を検索
-                    if not os.path.exists(out_path):
-                        os.mkdir(out_path)
-
-                    # ヒストリカルデータの対象サーバー名を検索
-                    for hst_path in hst_paths:
-                        if 0 <= hst_path.find(hst_name):
-                            break
-
-                    files = os.listdir(cst.MT4_PATH + in_path + '/history/' + hst_path)
-                    files = [file for file in files if 0 <= file.find('240.hst') or 0 <= file.find('1440.hst')]
-
-                    # 進捗表示
-                    window = com.progress('ヒストリカルデータコピー中', [files[0], len(files)], interrupt=True)
-                    event, values = window.read(timeout=0)
-
-                    for k in range(0, len(files)):
-
-                        window[files[0]].update(files[k] + '(' + str(k) + ' / ' + str(len(files)) + ')')
-
-                        shutil.copy2(cst.MT4_PATH + in_path + '/history/' + hst_path + '/' + files[k], out_path)
-                        com.log('コピー中: ' + hst_path + '/' + files[k] + ' | ' + out_path)
-
-                        # 中断イベント
-                        if _is_interrupt(window, event):
-                            is_interrupt = True
-                            break
-
-                    # 中断
-                    if is_interrupt:
-                        break
-                    window.close()
-
-                    run_time = com.time_end(start_time)
-                    total_time += run_time
-                    com.log('コピー完了(' + com.conv_time_str(run_time) + ')  ' + cst.MT4_PATH[:-1] +
-                            in_path + ' → ' + out_path + '/history')
-
-                    break
-            finally:
-                try: window.close()
-                except: pass
-
-            com.log(fnc + ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')')
-            com.dialog(('中断' if is_interrupt else '完了') + 'しました。(' + com.conv_time_str(total_time) + ')', fnc)
-
-        else:
-            com.log(fnc + ': 端末対象外 ' + cst.IPS[cst.IP])
-
-        return True
+    # # hstファイルのコピー(Web用)
+    # def copy_history_web(self, fnc, in_path, hst_name):
+    #     if cst.IP == cst.DEV_IP:
+    #
+    #         is_interrupt = False
+    #         total_time = 0
+    #         try:
+    #             while True:
+    #                 start_time = com.time_start()
+    #
+    #                 hst_paths = os.listdir(cst.MT4_PATH + in_path + '/history')
+    #                 out_path = cst.GDRIVE_PATH['Win'] + '受け渡し/history'
+    #
+    #                 # ヒストリカルデータの対象サーバー名を検索
+    #                 if not os.path.exists(out_path):
+    #                     os.mkdir(out_path)
+    #
+    #                 # ヒストリカルデータの対象サーバー名を検索
+    #                 for hst_path in hst_paths:
+    #                     if 0 <= hst_path.find(hst_name):
+    #                         break
+    #
+    #                 files = os.listdir(cst.MT4_PATH + in_path + '/history/' + hst_path)
+    #                 files = [file for file in files if 0 <= file.find('240.hst') or 0 <= file.find('1440.hst')]
+    #
+    #                 # 進捗表示
+    #                 window = com.progress('ヒストリカルデータコピー中', [files[0], len(files)], interrupt=True)
+    #                 event, values = window.read(timeout=0)
+    #
+    #                 for k in range(0, len(files)):
+    #
+    #                     window[files[0]].update(files[k] + '(' + str(k) + ' / ' + str(len(files)) + ')')
+    #
+    #                     shutil.copy2(cst.MT4_PATH + in_path + '/history/' + hst_path + '/' + files[k], out_path)
+    #                     com.log('コピー中: ' + hst_path + '/' + files[k] + ' | ' + out_path)
+    #
+    #                     # 中断イベント
+    #                     if _is_interrupt(window, event):
+    #                         is_interrupt = True
+    #                         break
+    #
+    #                 # 中断
+    #                 if is_interrupt:
+    #                     break
+    #                 window.close()
+    #
+    #                 run_time = com.time_end(start_time)
+    #                 total_time += run_time
+    #                 com.log('コピー完了(' + com.conv_time_str(run_time) + ')  ' + cst.MT4_PATH[:-1] +
+    #                         in_path + ' → ' + out_path + '/history')
+    #
+    #                 break
+    #         finally:
+    #             try: window.close()
+    #             except: pass
+    #
+    #         com.log(fnc + ': ' + ('中断' if is_interrupt else '全終了') + '(' + com.conv_time_str(total_time) + ')')
+    #         com.dialog(('中断' if is_interrupt else '完了') + 'しました。(' + com.conv_time_str(total_time) + ')', fnc)
+    #
+    #     else:
+    #         com.log(fnc + ': 端末対象外 ' + cst.IPS[cst.IP])
+    #
+    #     return True
 
 
 # 中断イベント
