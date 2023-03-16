@@ -138,15 +138,22 @@ class MyAsset:
         # 金額取得(未確定・1月前・2月前・3月前)
         try:
             results.append(web_driver.find_element(wd, 'LblSumUseValue').text.replace(',', ''))
-            for i in range(1, 4):
+        except Exception as e:
+            results.append(0)
+        for i in range(1, 4):
+            try:
                 web_driver.find_element(wd, 'vucV0300MonthList_LiClaimYm' + str(i)).click()
                 com.sleep(1)
                 results.append(web_driver.find_element(wd, 'div#payment td strong').text.replace(',', ''))
-        except Exception as e:
-            com.log('WebDriverエラー: Viewカード, ' + str(e), 'E')
-            com.dialog('Viewカードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
-            return None, None
-
+            except:
+                try:
+                    web_driver.find_element(wd, 'LnkClaimYm' + str(i)).click()
+                    com.sleep(1)
+                    results.append(web_driver.find_element(wd, 'div#payment td strong').text.replace(',', ''))
+                except Exception as e:
+                    com.log('WebDriverエラー: Viewカード, ' + str(e), 'E')
+                    com.dialog('Viewカードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+                    return None, None
         return results, wd
 
     # 楽天カード
