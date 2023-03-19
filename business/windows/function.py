@@ -249,7 +249,7 @@ class Function:
             paths1 = os.listdir(cst.MT4_PATH)
             for path1 in paths1:
 
-                if os.path.exists(cst.MT4_PATH + path1 + '/terminal.exe'):
+                if path1.endswith('.txt') or os.path.exists(cst.MT4_PATH + path1 + '/terminal.exe'):
                     paths.append(cst.MT4_PATH + path1)
                     continue
 
