@@ -37,7 +37,7 @@ class Function:
                 fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2'],
                 web_path=['OANDA', 'ForexExchange', 'FXTF', 'Rakuten'],
                 my_path=['OANDA', 'ForexExchange', 'FXTF', 'FxPro', 'MyFx'],
-                target_ea=['Shocknin'],
+                target_ea=['Shocknin', 'WheSitDoch'],
                 target_ind=['Shocknin', 'WheSitDoch'],
                 remove_ea=['ShockninWhesitdoch', 'ShockninMaster', 'AnomalyShocknin', 'AnomalyGoToBe'],
                 remove_ind=['AnomalyShocknin_AUDUSD', 'AnomalyShocknin_EURUSD', 'AnomalyShocknin_GBPUSD', 'AnomalyShocknin_GOLD',
@@ -58,8 +58,8 @@ class Function:
                 out_path=['Test1', 'Test1_2', 'Test1_3', 'Test2_2'],
                 hst_name=['Demo', 'Demo', 'Demo', 'Demo']
             )
-        elif 'hst転送(Web)' == fnc:
-            self.copy_history_web(fnc, in_path='MT4_DEV/OANDA', hst_name='Demo')
+        # elif 'hst転送(Web)' == fnc:
+        #     self.copy_history_web(fnc, in_path='MT4_DEV/OANDA', hst_name='Demo')
         else:
             target = ''
             if 'MQL編集' == fnc:

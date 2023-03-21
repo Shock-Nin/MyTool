@@ -1675,6 +1675,13 @@ class EnglishDict:
                             if 0 < len(changes[change][0]) + len(changes[change][1]):
                                 change_irregular[change] = changes[change]
 
+                    for i in reversed(range(0, len(words[key]['partspeech']))):
+                        if not words[key]['partspeech'][i].startswith('動詞'):
+                            continue
+
+                        if str(words[key]['changes']).find('過去形') < 0:
+                            del words[key]['partspeech'][i]
+
                     mp3s[key] = words[key]['mp3']
                     del words[key]['mp3']
 
