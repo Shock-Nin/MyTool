@@ -38,7 +38,7 @@ class KeepDisplay:
         while True:
 
             event, values = window.read(timeout=0)
-            is_normal, is_stop, window = self._is_evwnt(window, event, is_stop)
+            is_normal, is_stop, window = self._is_event(window, event, is_stop)
 
             # 画面のイベント監視
             if is_normal is None:
@@ -59,7 +59,7 @@ class KeepDisplay:
                          [[sg.Button(stop_btn, key='replay', font=('', 12), pad=((0, 0), (0, 0)))]])
 
     # イベントのアクション
-    def _is_evwnt(self, window, event, is_stop):
+    def _is_event(self, window, event, is_stop):
 
         if event == sg.WIN_CLOSED:
             window.close()

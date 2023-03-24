@@ -33,13 +33,16 @@ def dialog(msg, title, lv=''):
 
 
 # 確認ダイヤログ
-def question(msg, title, lv='', cancel=False):
+def question(msg, title, lv='', btn_no=1):
 
     color = '#FF7777' if 'E' == lv else '#FFFF77' if 'W' == lv else '#77CCFF'
-    btn = [sg.Button('はい', key='はい', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777'),
-           sg.Button('いいえ', key='いいえ', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
-    if cancel:
-        btn.append(sg.Button('中断', key='中断', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#555555'))
+    if 0 == btn_no:
+        btn = [sg.Button('OK', key='OK', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
+    else:
+        btn = [sg.Button('はい', key='はい', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777'),
+               sg.Button('いいえ', key='いいえ', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
+        if 2 == btn_no:
+            btn.append(sg.Button('中断', key='中断', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#555555'))
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
                        icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[[sg.Text(msg, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])
@@ -53,7 +56,7 @@ def question(msg, title, lv='', cancel=False):
 
         if event in [sg.WIN_CLOSED, '中断']:
             break
-        elif event in ['はい', '\r', 'Return:603979789']:
+        elif event in ['はい', 'OK', '\r', 'Return:603979789']:
             flg = 1
             break
         elif 'いいえ' == event:

@@ -37,6 +37,7 @@ BTNS = {cst.DEV_IP: {
     'Pochi': 'multiple.blog_pochi',
     '資産': 'mac.my_asset',
     '画面キープ': 'mac.keep_display',
+    '1Hタイマー': 'mac.alert_timer',
     }}
 EA_MENU = {
     'EAデータ編集': 'windows.ea_edits',
