@@ -18,10 +18,27 @@ class AlertTimer:
 
     def do(self):
 
+        spin = self._time()
+        try:
+            # イベントループ
+            while True:
+                event, values = spin.read(timeout=0)
+
+                # 画面のイベント監視
+                is_event = self._is_event(event)
+                if is_event is None or event in ['開始', '\r', 'Return:603979789']:
+                    if event in ['開始', '\r', 'Return:603979789']:
+                        limit_min = values[0]
+                        break
+                    return
+        finally:
+            spin.close()
+
         time_start = datetime.datetime.now()
-        limit_min = LIMIT_MIN
         end_time = time_start + datetime.timedelta(minutes=limit_min)
         msg = str(com.str_time()) + ' - ' + str(end_time)[:-7]
+
+        playsound(cst.CURRENT_PATH['Mac'] + 'MyTool/item/alert.mp3')
 
         is_event = False
         window = self._window(msg, limit_min)
@@ -53,6 +70,8 @@ class AlertTimer:
 
                 # イベントループ
                 while True:
+                    com.sleep(1)
+
                     event, values = window.read(timeout=0)
                     playsound(cst.CURRENT_PATH['Mac'] + 'MyTool/item/alert.mp3')
 
@@ -60,6 +79,14 @@ class AlertTimer:
                     is_event = self._is_event(event)
                     if is_event is None:
                         return
+
+    def _time(self):
+        btn = [sg.Button('開始', key='開始', font=('', 16), pad=((10, 10), (10, 20)), size=(6, 1), button_color='#777777')]
+        return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color='#AAFFFF',
+                         element_justification='c', margins=(5, 5), icon=(os.getcwd() + cst.ICON_FILE), layout=
+                         [[sg.Spin(values=[i for i in range(30, 360, 10)], initial_value=60, text_color='#000000',
+                                   font=('', 12), size=(6, 1), background_color='#FFFFFF')], btn],
+                         return_keyboard_events=True)
 
     def _window(self, text, limit_min):
         return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color='#AAFFFF',
