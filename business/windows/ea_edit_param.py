@@ -7,6 +7,7 @@ from const import cst
 from business. windows import ea_edits as inheritance
 
 import os
+import glob
 import pandas as pd
 
 PRM_PATH = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
@@ -29,6 +30,11 @@ class EaEditParam:
 
         # 照合用test.setファイルをCSV化
         is_end = _edit_test_file()
+        if 0 < len(is_end):
+            return com.close(is_end)
+
+        # .htmファイルをCSV化
+        is_end = _edit_htmfiles()
         if 0 < len(is_end):
             return com.close(is_end)
 
@@ -59,7 +65,7 @@ def _edit_setfiles():
 
             except Exception as e:
                 err_msg += '\n　' + path[0] + file + '\n　　' + str(e)
-                com.log(str(e))
+                com.log(str(e), 'W')
 
         read_files.append(read_file)
 
@@ -240,6 +246,122 @@ def _edit_test_file():
     return []
 
 
+# .htmファイルをCSV化
+def _edit_htmfiles():
+    ea_name = 'WheSitDoch'
+
+    # .htmファイル名のリストを取得
+    htm_lists = glob.glob(cst.MT4_DEV[cst.PC] + 'MQL4/Files/' + ea_name + '/Test_*/*.htm')
+    read_files = []
+    err_msg = ''
+
+    # htmファイルの読み込み
+    tf = ['M5', 'M15', 'M30', 'H1']
+    for i in range(0, len(tf)):
+        cur_file = []
+
+        for k in range(0, len(cst.CURRENCIES_EA[0])):
+            trade_file = []
+
+            for file in htm_lists:
+                if file.find('_' + tf[i] + '_') < 0:
+                    continue
+                if ('GOLD' != cst.CURRENCIES_EA[0][k] and file.find(cst.CURRENCIES_EA[0][k]) < 0) \
+                        or ('GOLD' == cst.CURRENCIES_EA[0][k] and file.find('XAU') < 0):
+                    continue
+                try:
+                    trade_file.append(open(file, 'r', encoding='utf16').read())
+
+                except Exception as e:
+                    err_msg += '\n　' + file + '\n　　' + str(e)
+                    com.log(str(e), 'W')
+
+            if 0 < len(trade_file):
+                cur_file.append(trade_file)
+
+        if 0 < len(cur_file):
+            read_files.append(cur_file)
+
+    # エラーファイルが1つでもあれば中断
+    if 0 < len(err_msg):
+        return ['以下のファイルでエラーが発生しました。' + err_msg, '読み込みエラー', 'E']
+
+    logic_no = 0
+    prm = {}
+    result = {tf[i]: {} for i in range(0, len(tf))}
+    for i in range(0, len(tf)):
+
+        for k in range(0, len(cst.CURRENCIES_EA[0])):
+            cur_data = {}
+
+            for m in range(0, len(read_files)):
+                for n in range(0, len(read_files[m])):
+                    data = {}
+
+                    for p in range(0, len(read_files[m][n])):
+
+                        html = read_files[m][n][p]
+                        title = html[html.find('<title>'):]
+                        title = title[title.find('>') + 1: title.find(' :')]
+                        title = title.split('_')
+
+                        if tf[i] != title[1]:
+                            continue
+
+                        if ('GOLD' != cst.CURRENCIES_EA[0][k] and title[0].find(cst.CURRENCIES_EA[0][k]) < 0) \
+                                or ('GOLD' == cst.CURRENCIES_EA[0][k] and title[0].find('XAU') < 0):
+                            continue
+
+                        html = html[html.find('パラメーター'):]
+                        html = html[html.find('title'):]
+                        html = html[html.find('"') + 1: html.find('">')]
+                        html = html.split('; ')[:-1]
+
+                        if 0 == logic_no:
+                            for q in range(-2, 3):
+                                if 0 == q:
+                                    continue
+
+                                for r in range(1, len(html)):
+                                    prm['[' + ('+' if 0 < q else '') + str(q) + ']' + html[r].split('=')[0]] = ''
+                        if data is None:
+                            data = prm
+
+                        logic_no = html[0].split('=')[1]
+                        logic_no = ('+' if 0 < int(logic_no) else '') + str(logic_no)
+
+                        for r in range(1, len(html)):
+                            prms = html[r].split('=')
+                            data['[' + logic_no + ']' + str(prms[0])] = str(prms[1])
+
+                        cur_data = data
+
+                    if 0 < len(cur_data):
+                        result[title[1]][title[0]] = cur_data
+                        break
+
+
+    # 整形データの書き出し
+    path = cst.DATA_PATH[cst.PC] + 'Set_' + ea_name + '.csv'
+    with open(path, 'w') as f:
+        f.write('TimeFrame,Currency,' + ",".join(key for key in prm) + '\n')
+
+        for tf in result:
+            for cur in result[tf]:
+                vals = ''
+
+                for key in prm:
+                    try:
+                        vals += ',' + result[tf][cur][key]
+                    except:
+                        vals += ', '
+
+                f.write(tf +','+ cur + vals + '\n')
+
+    com.log('ファイル作成: ' + path)
+    return []
+
+
 # CSVファイルからHTML化
 def _output_html():
 
@@ -275,58 +397,100 @@ def _output_html():
         mqls = pd.DataFrame.transpose(read_mqls[i][1])
         set_cur = ''
 
+        if 'WheSitDoch' != ea_name:
+            continue
+
+        set_html = ''
+        prm_html = ''
+        total = 1
+
         for key in prms.index:
 
-            # test.setは、「Comments」に含まれるEA名と通貨を分割
-            if 'Comments' == key:
-                val = read_set[key].item()
+            if 'WheSitDoch' == ea_name:
+                prm_html = ''
+                time_frame = ''
+                count = -1
 
-                if val.split('_')[0] == ea_name:
-                    set_cur = val.split('_')[1]
+                # パラメータ
+                for prm in prms:
 
-            # 表示させないパラメータ項目
-            if 0 <= key.find('Logic') or key in ['TradeMargin', 'Positions', 'Safety']:
-                continue
+                    if 'TimeFrame' != key:
+                        continue
+                    count += 1
+                    total += 1
 
-            set_html = ''
-            prm_html = ''
+                    if 0 < len(time_frame) and time_frame != str(prms[prm][key]):
+                        prm_html += '<td class="prm" align="center"'
+                        prm_html += ' colspan="' + str(count) + '">' + time_frame + '</td>'
+                        count = 0
 
-            # パラメータ
-            for k in range(0, len(prms)):
+                    time_frame = str(prms[prm][key])
 
-                # .setのパラメータは、0値をグレーアウト
-                zero = ''
-                try: zero = (' zero' if 0 == float(prms[k][key]) else '')
-                except: pass
+                if 'TimeFrame' == key:
+                    prm_html += '<td class="prm" align="center"'
+                    prm_html += ' colspan="' + str(count + 1) + '">' + time_frame + '</td>'
 
-                try:
-                    # test.setのパラメータ、.setとパラメータが相違の場合は黄枠表示
-                    if 0 < len(set_cur) and set_cur == prms[k]['Comments']:
-                        item = str(read_set[key].item())
-                        set_html += '<td class="prm' + ('' if str(prms[k][key]) == item else ' ng_set') + \
-                                    (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H'] else '') + \
-                                    '" align="' + ('center">' + set_cur if 'Comments' == key else 'right">' + item) + '</td>'
+                for prm in prms:
+                    if 'TimeFrame' == key:
+                        continue
 
-                    ng_mql = ''
-                    for n in range(0, len(mqls)):
-                        if prms[k]['Comments'] != mqls[n]['Comments']:
-                            continue
+                    prm_html += '<td class="prm'  + (' zero' if 0 == len(str(prms[prm][key]).strip()) else '')
+                    prm_html += '" align="'  + ('center' if 'Currency' == key else 'right')
+                    prm_html += '">' + str(prms[prm][key]) + '</td>'
 
-                        # .mq4と.setのパラメータを照合、相違の場合は赤枠表示
-                        for mql_key in mqls.index:
-                            if key == mql_key:
-                                ng_mql = ('' if mqls[n][mql_key] == prms[k][key] else ' ng_mql')
+                if 0 <= key.find('Currency') or 0 <= key.find('OpenWait'):
+                    prm_html += '<tr><td bgcolor="#CCCCCC" height="5" colspan="' + str(total) + '"></td></tr>'
 
-                        # .setのパラメータ
-                        prm_html += '<td class="prm' + zero + ng_mql + \
-                                    (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H'] else '') + \
-                                    '" align="' + ('center' if 'Comments' == key else 'right') + \
-                                    '">' + str(prms[k][key]) + '</td>'
-                except: pass
+                html += '<tr><td class="col'
+                html += '" align="left">' + key + '</td>' + prm_html.replace('USD', '').replace('XAU', 'GOLD') + '</tr>'
+            else:
+                # test.setは、「Comments」に含まれるEA名と通貨を分割
+                if 'Comments' == key:
+                    val = read_set[key].item()
 
-            html += '<tr>' + set_html + '<td class="col'
-            html += (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H'] else '')
-            html += '" align="left">' + key + '</td>' + prm_html + '</tr>'
+                    if val.split('_')[0] == ea_name:
+                        set_cur = val.split('_')[1]
+
+                # 表示させないパラメータ項目
+                if 0 <= key.find('Logic') or key in ['TradeMargin', 'Positions', 'Safety']:
+                    continue
+
+                # パラメータ
+                for k in range(0, len(prms)):
+
+                    # .setのパラメータは、0値をグレーアウト
+                    zero = ''
+                    try: zero = (' zero' if 0 == float(prms[k][key]) else '')
+                    except: pass
+
+                    try:
+                        # test.setのパラメータ、.setとパラメータが相違の場合は黄枠表示
+                        if 0 < len(set_cur) and set_cur == prms[k]['Comments']:
+                            item = str(read_set[key].item())
+                            set_html += '<td class="prm' + ('' if str(prms[k][key]) == item else ' ng_set') + \
+                                        (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H'] else '') + \
+                                        '" align="' + ('center">' + set_cur if 'Comments' == key else 'right">' + item) + '</td>'
+
+                        ng_mql = ''
+                        for n in range(0, len(mqls)):
+                            if prms[k]['Comments'] != mqls[n]['Comments']:
+                                continue
+
+                            # .mq4と.setのパラメータを照合、相違の場合は赤枠表示
+                            for mql_key in mqls.index:
+                                if key == mql_key:
+                                    ng_mql = ('' if mqls[n][mql_key] == prms[k][key] else ' ng_mql')
+
+                            # .setのパラメータ
+                            prm_html += '<td class="prm' + zero + ng_mql + \
+                                        (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H'] else '') + \
+                                        '" align="' + ('center' if 'Comments' == key else 'right') + \
+                                        '">' + str(prms[k][key]) + '</td>'
+                    except: pass
+
+                html += '<tr>' + set_html + '<td class="col'
+                html += (' up_line' if 0 <= key.find('Lot') or key in ['Trend4H'] else '')
+                html += '" align="left">' + key + '</td>' + prm_html + '</tr>'
 
         # HTMLフッター(スタイル)
         html += '</table></td></tr></table></div><style type="text/css">'

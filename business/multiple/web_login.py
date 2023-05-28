@@ -80,7 +80,7 @@ class WebLogin:
                     web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
 
                     if '三井住友' == name:
-                        for i in range(2, 5):
+                        for i in range(3, 5):
                             try:
                                 web_driver.find_element(self.wd, btn + '[' + str(i) + ']/a').click()
                             except: pass

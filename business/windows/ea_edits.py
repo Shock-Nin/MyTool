@@ -21,7 +21,7 @@ class EaEdits:
 
     def do(self):
 
-        yesno = com.question('開始しますか？\n「いいえ」でパラメータのみ更新します。', '開始確認', cancel=True)
+        yesno = com.question('開始しますか？\n「いいえ」でパラメータのみ更新します。', '開始確認', btn_no=2)
         if 0 == yesno:
             return
 
