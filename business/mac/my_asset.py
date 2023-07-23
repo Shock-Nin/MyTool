@@ -56,11 +56,13 @@ class MyAsset:
         targets = targets[('資産' == targets['Type'])]
 
         try:
-            # ViewCard取得
-            target = targets[('ViewCard' == targets['Name'])]
-            vcard, wd1 = self._get_view_card(target)
-            if vcard is None:
-                return
+            # # ViewCard取得
+            # target = targets[('ViewCard' == targets['Name'])]
+            # vcard, wd1 = self._get_view_card(target)
+            # if vcard is None:
+            #     return
+
+            vcard = [0, 0, 0, 0]
 
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]

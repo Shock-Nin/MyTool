@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import chromedriver_binary
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
@@ -19,9 +20,19 @@ def driver(headless=False):
             wd = webdriver.Chrome(ChromeDriverManager().install(), options=options)
         else:
             wd = webdriver.Chrome(ChromeDriverManager().install())
-    except: pass
+    except:
+        print('Change WebDriver local')
+        try:
+            if headless:
+                wd = webdriver.Chrome(options=options)
+            else:
+                wd = webdriver.Chrome()
+        except Exception as e:
+            print('WebDriver local error: ' + str(e))
 
-    wd.implicitly_wait(5)
+    if wd is not None:
+        wd.implicitly_wait(5)
+
     return wd
 
 

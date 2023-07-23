@@ -29,9 +29,13 @@ class BlogPochi:
         try:
             # ブログランキング
             ok_cnt, err_msg, wdRank = self.pochiBrank(menu, ok_cnt, max_cnt, err_msg)
+            if wdRank is None:
+                return
 
             # ブログ村
             ok_cnt, err_msg, wdMura = self.pochiBmura(menu, ok_cnt, max_cnt, err_msg)
+            if wdMura is None:
+                return
 
             run_time = com.time_end(start_time)
 
@@ -61,7 +65,7 @@ class BlogPochi:
         if wdRank is None:
             if not self.is_batch:
                 com.dialog('WebDriver(ランキング)で異常が発生しました。', 'WebDriver異常', 'E')
-            return
+            return None, None, None
         try:
             wdRank.get(cst.BLOG_URL)
             wdRank.maximize_window()
@@ -138,7 +142,7 @@ class BlogPochi:
         if wdMura is None:
             if not self.is_batch:
                 com.dialog('WebDriver(ブログ村)で異常が発生しました。', 'WebDriver異常', 'E')
-            return
+            return None, None, None
         try:
             try:
                 wdMura.get(cst.BLOG_URL)
