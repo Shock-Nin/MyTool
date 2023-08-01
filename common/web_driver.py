@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from common import com
 import chromedriver_binary
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -21,14 +22,14 @@ def driver(headless=False):
         else:
             wd = webdriver.Chrome(ChromeDriverManager().install())
     except:
-        print('Change WebDriver local')
+        com.log('Change WebDriver local')
         try:
             if headless:
                 wd = webdriver.Chrome(options=options)
             else:
                 wd = webdriver.Chrome()
         except Exception as e:
-            print('WebDriver local error: ' + str(e))
+            com.log('WebDriver local error: ' + str(e))
 
     if wd is not None:
         wd.implicitly_wait(5)
