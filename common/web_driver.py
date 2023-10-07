@@ -4,7 +4,7 @@ import os
 
 from common import com
 from const import cst
-import chromedriver_binary
+# import chromedriver_binary
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
