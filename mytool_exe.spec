@@ -18,7 +18,7 @@ a = Analysis(['mytool.py'],
              cipher=block_cipher,
              noarchive=False)
 
-a.datas += [('item/img/logo.ico', '.\\item\\img\\logo.ico', 'Data')]
+# a.datas += [('item/img/logo.ico', '.\\item\\img\\logo.ico', 'Data')]
 
 Key = ['mkl']
 def remove_from_list(input, keys):

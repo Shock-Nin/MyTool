@@ -6,6 +6,9 @@ Windowsアプリ化コマンド
 
 Macアプリ化コマンド
   python mytool_app.py py2app
+
+Gitキーチェーン
+　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
 """
 from const import cst
 from common import com
@@ -226,7 +229,7 @@ def main():
                     is_run = 5 < int(com.conv_time_str(com.time_start() - event_time).replace(':', ''))
 
                 window['act'].update('  ' + event)
-
+                print(cst.RUN_PATH[cst.PC])
                 # 動的モジュールを実行
                 if is_run:
                     processes.append(subprocess.Popen(
