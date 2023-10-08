@@ -31,7 +31,7 @@ playsound==1.2.2
 PyAutoGUI==0.9.54
 pycparser==2.21
 PyGetWindow==0.0.9
-pyinstaller==6.0.0
+pyinstaller==5.13.2
 pyinstaller-hooks-contrib==2023.9
 pykakasi==2.2.1
 PyMsgBox==1.0.9
