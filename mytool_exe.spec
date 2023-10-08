@@ -1,7 +1,7 @@
 # -*- mode: python ;coding: utf-8 -*-
 """
 Windowsアプリ化コマンド
-  pyinstaller mytool_exe.spec --clean --icon=item/img/logo.ico
+  pyinstaller mytool_exe.spec --clean
 """
 block_cipher = None
 a = Analysis(['mytool.py'],
@@ -18,8 +18,6 @@ a = Analysis(['mytool.py'],
              cipher=block_cipher,
              noarchive=False)
 
-# a.datas += [('item/img/logo.ico', '.\\item\\img\\logo.ico', 'Data')]
-
 Key = ['mkl']
 def remove_from_list(input, keys):
     outlist = []
@@ -35,7 +33,8 @@ def remove_from_list(input, keys):
 
 a.binaries = remove_from_list(a.binaries, Key)
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
+#pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 exe = EXE(pyz,
           a.scripts,
           a.binaries,
@@ -48,4 +47,5 @@ exe = EXE(pyz,
           strip=False,
           upx=True,
           runtime_tmpdir=None,
+          icon='item/img/logo.ico',
           console=False )

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Windowsアプリ化コマンド
-  pyinstaller mytool_exe.spec --clean --icon=item/img/logo.ico
+  pyinstaller mytool_exe.spec --clean
 
 Macアプリ化コマンド
   python mytool_app.py py2app
