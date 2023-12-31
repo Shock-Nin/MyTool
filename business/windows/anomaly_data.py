@@ -69,7 +69,7 @@ class AnomalyData:
             # 日足から月初と月末10営業日を取得
             files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'Trender/Calc/D1_*.csv'))
 
-            target_days = {files[i].split('/')[- 1].replace('.csv', '').replace('D1_', '') :
+            target_days = {files[i].split('/')[- 1].replace('.csv', '').replace('D1_', '').replace('Calc\\', '') :
                                {} for i in range(0, len(files))}
 
             for i in range(0, len(files)):
@@ -78,7 +78,7 @@ class AnomalyData:
 
                 days = []
                 ymd = {}
-                for k in range(start_num, end_num + 1):
+                for k in range(start_num, end_num):
                     rows = data[k].split(',')
 
                     week_num = datetime.date(int(rows[0]), int(rows[1]), int(rows[2])).weekday() + 1
@@ -121,16 +121,16 @@ class AnomalyData:
                     if -1 == start_num:
                         if int(rows[: 4]) == int(inputs[1][0]):
                             start_num = k
-                    if -1 == end_num:
-                        if int(inputs[1][1]) + 1 == int(data[k + 1].split(',')[0][: 4]):
-                            end_num = k
+
+                    if 0 < len(data[k]) and 2 < len(data[k].split(',')):
+                        end_num = k
 
                     if int(rows[: 4]) < int(inputs[1][0]):
                         continue
                     elif int(inputs[1][1]) < int(rows[: 4]):
                         break
 
-                for k in range(start_num, end_num):
+                for k in range(start_num, end_num + 1):
                     rows = data[k].split(',')
 
                     if not day1st:
@@ -143,7 +143,7 @@ class AnomalyData:
                     mon_data['Low'] = min(mon_data['Low'], float(rows[4]))
                     mon_data['Close'] = float(rows[5])
 
-                    if k == end_num - 1 or rows[0][4: 6] != data[k + 1].split(',')[0][4: 6]:
+                    if rows[0][4: 6] != data[k + 1].split(',')[0][4: 6]:
                         day1st = False
                         mon_datas.append(mon_data)
 
@@ -181,9 +181,9 @@ class AnomalyData:
                         if -1 == start_num:
                             if int(rows[0]) == int(inputs[1][0]):
                                 start_num = k
-                        if -1 == end_num:
-                            if int(inputs[1][1]) + 1 == int(data[k + 1].split(',')[0]):
-                                end_num = k
+
+                        if 0 < len(data[k]) and 2 < len(data[k].split(',')):
+                            end_num = k
 
                         if int(rows[0]) < int(inputs[1][0]):
                             continue
@@ -202,7 +202,7 @@ class AnomalyData:
                             return None
 
                         count = 0
-                        for m in range(start_num, end_num):
+                        for m in range(start_num, end_num + 1):
                             rows = data[m].split(',')
 
                             week_num = datetime.date(int(rows[0]), int(rows[1]), int(rows[2])).weekday() + 1
@@ -865,20 +865,16 @@ def _get_start_end(data, inputs):
 
     start_num = -1
     end_num = -1
-    for k in range(0, len(data) - 1):
+
+    for k in range(0, len(data)):
         rows = data[k].split(',')
 
         if -1 == start_num:
             if int(rows[0][:4]) == int(inputs[1][0]):
                 start_num = k
-        if -1 == end_num:
-            if int(inputs[1][1]) + 1 == int(data[k + 1].split(',')[0][:4]):
-                end_num = k
 
-        if int(rows[0][:4]) < int(inputs[1][0]):
-            continue
-        elif int(inputs[1][1]) < int(rows[0][:4]):
-            break
+        if 0 < len(data[k]) and 2 < len(data[k].split(',')):
+            end_num = k
 
     return start_num, end_num
 

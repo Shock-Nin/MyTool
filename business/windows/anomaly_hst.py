@@ -97,13 +97,14 @@ class AnomalyHst:
                 hi_h4 = 0
                 lo_h4 = 9999999
                 count_h4 = 0
+                latest_h4 = -1
 
                 out_d1 = ''
                 hi_d1 = 0
                 lo_d1 = 9999999
                 count_d1 = 0
 
-                for k in range(1, len(data)):
+                for k in range(1, len(data) - 1):
                     rows = data[k].split(',')
 
                     op_hour_h4 = (rows[1] if 0 == count_h4 else op_hour_h4)
@@ -118,20 +119,22 @@ class AnomalyHst:
                     lo_d1 = min(float(rows[4]), lo_d1)
                     count_d1 += 1
 
-                    if k == len(data) - 2 or 0 == int(data[k + 1].split(',')[1]) % 4:
-                        out_h4 += str(rows[0]) + ',' + str(op_hour_h4) + ','
-                        out_h4 += str(op_h4) + ',' + str(hi_h4) + ',' + str(lo_h4) + ',' + rows[5] + '\n'
-                        if k == len(data) - 2:
-                            break
+                    if (k == len(data) - 2 or 0 == int(data[k + 1].split(',')[1]) % 4
+                            or (0 != latest_h4 and 1 == int(data[k + 1].split(',')[1]))):
+
+                        if not (0 == latest_h4 and int(op_hour_h4) < 4):
+                            out_h4 += str(rows[0]) + ',' + ('00' if int(op_hour_h4) < 4 else str(op_hour_h4)) + ','
+                            out_h4 += str(op_h4) + ',' + str(hi_h4) + ',' + str(lo_h4) + ',' + rows[5] + '\n'
+
                         count_h4 = 0
                         hi_h4 = 0
                         lo_h4 = 9999999
+                        latest_h4 = int(op_hour_h4)
 
                     if k == len(data) - 2 or int(rows[0]) != int(data[k + 1].split(',')[0]):
                         out_d1 += str(rows[0]) + ',-,'
                         out_d1 += str(op_d1) + ',' + str(hi_d1) + ',' + str(lo_d1) + ',' + rows[5] + '\n'
-                        if k == len(data) - 2:
-                            break
+
                         count_d1 = 0
                         hi_d1 = 0
                         lo_d1 = 9999999
