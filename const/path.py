@@ -31,7 +31,9 @@ GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
                'Win': CURRENT_PATH['Win'] + 'Google ドライブ/'}
 TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
              'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/'}
-RUN_PATH = {'Mac': '/usr/local/bin/python3.12',
+RUN_PATH = {'Mac': '/opt/anaconda3/envs/py39/bin/python',
+# RUN_PATH = {'Mac': '/Library/Frameworks/Python.framework/Versions/3.12/Python',
+# RUN_PATH = {'Mac': '/usr/local/bin/python3.12',
             'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe'}
 # MT4のパス
 MT4_PATH = CURRENT_PATH['Win'] + 'Documents/MT4/'
