@@ -136,6 +136,11 @@ class EaAutoTest:
                         is_interrupt = True
                         break
 
+                    pgui.hotkey('esc')
+                    com.sleep(1)
+                    pgui.hotkey('esc')
+                    com.sleep(1)
+
                     # MT4初回起動は、テンプレートマッチング
                     if not is_start:
                         com.log('初回マッチング開始')
