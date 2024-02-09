@@ -375,36 +375,36 @@ def _edit_unit_list():
             try: window.close()
             except: pass
 
-    # エラーファイルが1つでもあれば中断
-    if 0 < len(err_msg):
-        return ['以下のファイルでエラーが発生しました。' + err_msg, '読み込みエラー', 'E']
+        # エラーファイルが1つでもあれば中断
+        if 0 < len(err_msg):
+            return ['以下のファイルでエラーが発生しました。' + err_msg, '読み込みエラー', 'E']
 
-    # HTML書き出し
-    outpath = cst.DATA_PATH[cst.PC] + (ea if 'WheSitDoch' == ea else '') + 'Unit.html'
-    with open(outpath, 'w', encoding='utf8') as outfile:
+        # HTML書き出し
+        outpath = cst.DATA_PATH[cst.PC] + (ea if 'WheSitDoch' == ea else '') + 'Unit.html'
+        with open(outpath, 'w', encoding='utf8') as outfile:
 
-        # HTMLヘッダー
-        html = '<html><head><title>' + (ea if 'WheSitDoch' == ea else 'EA') + '個別成績</title>'
-        html += '<meta charset="utf-8"/></head><body><div align="center">'
-        html += '<table cellspacing="0" cellpadding="0"><tr align="center">'
-        html += "".join(['<td class="col">' + col + '</td>' for col in LIST_HEADER]) + '</tr>'
+            # HTMLヘッダー
+            html = '<html><head><title>' + (ea if 'WheSitDoch' == ea else 'EA') + '個別成績</title>'
+            html += '<meta charset="utf-8"/></head><body><div align="center">'
+            html += '<table cellspacing="0" cellpadding="0"><tr align="center">'
+            html += "".join(['<td class="col">' + col + '</td>' for col in LIST_HEADER]) + '</tr>'
 
-        html += html_data
+            html += html_data
 
-        # HTMLフッター(スタイル)
-        html += '</table></div><style type="text/css">'
-        html += '.col      {border: 1px solid #DDDDDD; padding: 5px 15px; background: #FFFFAA;}'
-        html += '.ea_row   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #FFFFFF;}'
-        html += '.ea_all   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #CCFFCC;}'
-        html += '.prm      {border: 1px solid #DDDDDD; padding: 5px 10px;}'
-        html += '.dd       {color: #FF00FF;}'
-        html += '.good     {color: #0000FF;}'
-        html += '.warning  {color: #FF0000;}'
-        html += '.alert    {background: #FF0000; color: #FFFFFF;}'
-        html += '.up_line  {border-top: 2px solid #000000;}'
-        html += '</style></body></html>'
+            # HTMLフッター(スタイル)
+            html += '</table></div><style type="text/css">'
+            html += '.col      {border: 1px solid #DDDDDD; padding: 5px 15px; background: #FFFFAA;}'
+            html += '.ea_row   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #FFFFFF;}'
+            html += '.ea_all   {border: 1px solid #DDDDDD; padding: 5px 10px; background: #CCFFCC;}'
+            html += '.prm      {border: 1px solid #DDDDDD; padding: 5px 10px;}'
+            html += '.dd       {color: #FF00FF;}'
+            html += '.good     {color: #0000FF;}'
+            html += '.warning  {color: #FF0000;}'
+            html += '.alert    {background: #FF0000; color: #FFFFFF;}'
+            html += '.up_line  {border-top: 2px solid #000000;}'
+            html += '</style></body></html>'
 
-        outfile.write(html)
+            outfile.write(html)
 
     com.log('ファイル作成: ' + outpath)
     return []

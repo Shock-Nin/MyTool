@@ -14,6 +14,7 @@ from business. windows import ea_edits as inheritance
 
 PRM_PATH = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
 EA_EXE = cst.MT4_DEV[cst.PC] + '/terminal.exe /portable'
+EA_COUNT = 0
 
 
 class EaAutoTest:
@@ -337,7 +338,7 @@ class EaAutoTest:
                 com.click_pos(self.pos_xy['エキスパート'][0] - 200, self.pos_xy['エキスパート'][1] + (5 * i))
                 com.sleep(1)
                 [pgui.hotkey('up') for _ in range(10)]
-                [pgui.hotkey('down') for _ in range(0, ea_count + 1)]
+                [pgui.hotkey('down') for _ in range(0, ea_count + EA_COUNT)]
                 pgui.hotkey('enter')
             com.sleep(2)
 
