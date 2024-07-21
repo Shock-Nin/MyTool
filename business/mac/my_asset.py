@@ -70,15 +70,15 @@ class MyAsset:
             if rcard is None:
                 return
 
-            banks = []
+            banks = [0]
 
-            # 三井住友銀行取得
-            target = targets[('三井住友' == targets['Name'])]
-            result, wd3 = self._get_smbc_bank(target)
-            if result is None:
-                return
-            else:
-                banks.append(result)
+            # # 三井住友銀行取得
+            # target = targets[('三井住友' == targets['Name'])]
+            # result, wd3 = self._get_smbc_bank(target)
+            # if result is None:
+            #     return
+            # else:
+            #     banks.append(result)
 
             # 三菱UFJ銀行取得
             target = targets[('三菱UFJ' == targets['Name'])]
@@ -217,7 +217,7 @@ class MyAsset:
         # 金額取得
         try:
             result = web_driver.find_element(
-                wd, '/html/body/div/main/form/section/div/div[1]/div/div[2]/section[1]/a/div[1]/div[3]/span[1]') \
+                wd, '/html/body/app-root/app-lgpu01-wf/div/main/div/app-lgpu01-lg0002-m00-c01/form/section/div/div[1]/div/div[2]/section[1]/a/div[1]/div[3]/span[1]') \
                 .text.replace(',', '').replace('円', '')
         except Exception as e:
             com.log('WebDriverエラー: 三菱UFJ, ' + str(e), 'E')

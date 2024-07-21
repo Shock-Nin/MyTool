@@ -119,7 +119,7 @@ class WebLogin:
                             pgui.hotkey('tab')
                             pgui.hotkey('tab')
                             com.clip_copy('ああああ')
-                            web_driver.find_element(self.wd, 'INPUT_FORM:_idJsp83').click()
+                            web_driver.find_element(self.wd, 'INPUT_FORM:j_id_28').click()
                             com.sleep(1)
                         except: pass
                         try:
@@ -161,7 +161,7 @@ def _get_info(name):
     elif '三菱UFJ' == name:
         info = ['ID1', 'tx-contract-number'], ['', ''], 'tx-ib-password', 'button.gonext'
     elif '楽天銀行' == name:
-        info = ['ID1', 'LOGIN:USER_ID'], ['', ''], 'LOGIN:LOGIN_PASSWORD', '//*[@id="LOGIN:_idJsp43"]'
+        info = ['ID1', 'LOGIN:USER_ID'], ['', ''], 'LOGIN:LOGIN_PASSWORD', '//*[@id="LOGIN"]/div[7]/a'
     # 生活
     elif '水道' == name:
         info = ['ID1', 'userName'], ['', ''], 'password', '//*[@id="loginForm"]/table/tbody/tr[4]/td/input'

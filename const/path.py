@@ -20,7 +20,8 @@ else:
 DEV_IP = '164.70.84.254'
 WEB_IP = '164.70.84.131'
 MY_IP = '164.70.84.169'
-MAC_IP = ('IP??? ' if IP.find('133.32.') < 0 or '' else '') + IP
+# MAC_IP = ('IP??? ' if IP.find('133.32.') < 0 or '' else '') + IP
+MAC_IP = IP
 
 IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MY_IP: 'My', MAC_IP: 'Mac'}
 IP_LIST = [DEV_IP, WEB_IP, MY_IP, MAC_IP]
