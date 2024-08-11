@@ -38,7 +38,7 @@ def driver(headless=False):
                 if headless:
                     wd = webdriver.Chrome(options=options)
                 else:
-                    wd = webdriver.Chrome()
+                    wd = webdriver.Chrome(options=None)
             except Exception as e:
                 com.log('WebDriver local error: ' + str(e))
 

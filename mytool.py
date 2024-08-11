@@ -248,12 +248,12 @@ def main():
     # 機能単独起動の場合
     elif 0 < len(args.Function):
         com.log('Function開始: ' + args.Function)
-        _run(args.Function)
+        __run(args.Function)
         com.log('Function終了: ' + args.Function)
 
 
 # 動的モジュールの実行
-def _run(event):
+def __run(event):
     fnc = BTN[event]
     module_name = 'business.' + fnc
 

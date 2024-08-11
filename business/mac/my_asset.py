@@ -66,7 +66,7 @@ class MyAsset:
 
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
-            rcard, wd2 = self._get_rakuten_card(target)
+            rcard, wd2 = self.__get_rakuten_card(target)
             if rcard is None:
                 return
 
@@ -82,7 +82,7 @@ class MyAsset:
 
             # 三菱UFJ銀行取得
             target = targets[('三菱UFJ' == targets['Name'])]
-            result, wd4 = self._get_mufg_bank(target)
+            result, wd4 = self.__get_mufg_bank(target)
             if result is None:
                 return
             else:
@@ -90,7 +90,15 @@ class MyAsset:
 
             # 楽天銀行取得
             target = targets[('楽天銀行' == targets['Name'])]
-            result, wd5 = self._get_rakuten_bank(target)
+            result, wd5 = self.__get_rakuten_bank(target)
+            if result is None:
+                return
+            else:
+                banks.append(result)
+
+            # JREBANK取得
+            target = targets[('JREBANK' == targets['Name'])]
+            result, wd6 = self.__get_jre_bank(target)
             if result is None:
                 return
             else:
@@ -102,7 +110,7 @@ class MyAsset:
             com.log('資産情報取得完了(' + com.conv_time_str(run_time) + '): ')
 
             # 取得データと前回データの差分計算
-            is_change, layout, columns, values = self._edit_data(before, vcard, rcard, banks)
+            is_change, layout, columns, values = _edit_data(before, vcard, rcard, banks)
 
             # DB接続
             self.cnx = my_sql.MySql('data_my')
@@ -128,7 +136,7 @@ class MyAsset:
                         ')\n完了しました。(' + com.conv_time_str(total_time) + ')', layout, ['l', 'r', 'c', 'r'], self.myjob)
 
     # Viewカード
-    def _get_view_card(self, target):
+    def __get_view_card(self, target):
 
         # ログイン
         results = []
@@ -159,7 +167,7 @@ class MyAsset:
         return results, wd
 
     # 楽天カード
-    def _get_rakuten_card(self, target):
+    def __get_rakuten_card(self, target):
 
         # ログイン
         results = []
@@ -170,7 +178,7 @@ class MyAsset:
 
         # 金額取得(未確定・1月前・2月前・3月前)
         try:
-            for i in range(0, 4):
+            for i in range(0, 2):
                 wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(i))
                 com.sleep(1)
                 try:
@@ -185,7 +193,7 @@ class MyAsset:
         return results, wd
 
     # 三井住友
-    def _get_smbc_bank(self, target):
+    def __get_smbc_bank(self, target):
 
         # ログイン
         result = ''
@@ -205,7 +213,7 @@ class MyAsset:
         return result, wd
 
     # 三菱UFJ
-    def _get_mufg_bank(self, target):
+    def __get_mufg_bank(self, target):
 
         # ログイン
         result = ''
@@ -227,7 +235,7 @@ class MyAsset:
         return result, wd
 
     # 楽天銀行
-    def _get_rakuten_bank(self, target):
+    def __get_rakuten_bank(self, target):
 
         # ログイン
         result = ''
@@ -249,110 +257,76 @@ class MyAsset:
 
         return result, wd
 
-    # ダイヤログ用差分とINSERTのSQLデータ作成
-    def _edit_data(self, before, vcard, rcard, banks):
+    # JREBANK
+    def __get_jre_bank(self, target):
 
-        is_change = False
-        layout = [['Viewカード', '楽天カード', '三井住友', '三菱UFJ', '楽天銀行'], [], [], []]
+        # ログイン
+        result = ''
+        wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
+        if wd is None:
+            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+            return None, None
 
-        # 日付
-        columns = [before[0][0]]
-        values = [com.str_time()[:10]]
+        # 金額取得
+        try:
+            com.sleep(2)
+            result = web_driver.find_element(wd, 'amount-displayed').text.replace(',', '')
+        except Exception as e:
+            com.log('WebDriverエラー: JREBANK, ' + str(e), 'E')
+            com.dialog('JREBANKで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+            return None, None
 
-        # Viewカード未確定
-        bf_vcard0 = before[1][1]
-        af_vcard0 = vcard[0]
-        columns.append(before[0][1])
-        layout[1].append(format(bf_vcard0, ','))
-        if int(bf_vcard0) == int(af_vcard0):
-            layout[2].append('')
-            layout[3].append('')
-            values.append(bf_vcard0)
-        else:
-            is_change = True
-            layout[2].append('→')
-            layout[3].append(format(int(af_vcard0), ','))
-            values.append(af_vcard0)
+        return result, wd
 
-        # 楽天カード未確定
-        bf_rcard0 = before[1][2]
-        af_rcard0 = rcard[0]
-        columns.append(before[0][2])
-        layout[1].append(format(bf_rcard0, ','))
-        if int(bf_rcard0) == int(af_rcard0):
-            layout[2].append('')
-            layout[3].append('')
-            values.append(bf_rcard0)
-        else:
-            is_change = True
-            layout[2].append('→')
-            layout[3].append(format(int(af_rcard0), ','))
-            values.append(af_rcard0)
+# ダイヤログ用差分とINSERTのSQLデータ作成
+def _edit_data(before, vcard, rcard, banks):
 
-        af_vcard1 = vcard[1]
-        columns.append(before[0][3])
-        values.append(af_vcard1)
-        af_rcard1 = rcard[1]
-        columns.append(before[0][4])
-        values.append(af_rcard1)
+    is_change = False
+    layout = [['Viewカード', '楽天カード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK'], [], [], []]
 
-        af_vcard2 = vcard[2]
-        columns.append(before[0][5])
-        values.append(af_vcard2)
-        af_rcard2 = rcard[2]
-        columns.append(before[0][6])
-        values.append(af_rcard2)
+    # 日付
+    columns = [before[0][0]]
+    values = [com.str_time()[:10]]
 
-        af_vcard3 = vcard[3]
-        columns.append(before[0][7])
-        values.append(af_vcard3)
-        af_rcard3 = rcard[3]
-        columns.append(before[0][8])
-        values.append(af_rcard3)
+    # Viewカード未確定
+    # __append_data(before[1][1], vcard[0], before[0][1], is_change, layout, columns, values)
 
-        # 三井住友
-        bf_smbc = before[1][9]
-        af_smbc = banks[0]
-        columns.append(before[0][9])
-        layout[1].append(format(bf_smbc, ','))
-        if int(bf_smbc) == int(af_smbc):
-            layout[2].append('')
-            layout[3].append('')
-            values.append(bf_smbc)
-        else:
-            is_change = True
-            layout[2].append('→')
-            layout[3].append(format(int(af_smbc), ','))
-            values.append(af_smbc)
+    # 楽天カード未確定
+    __append_data(before[1][2], rcard[0], before[0][2], is_change, layout, columns, values)
 
-        # 三菱UFJ
-        bf_mufg = before[1][10]
-        af_mufg = banks[1]
-        columns.append(before[0][10])
-        layout[1].append(format(bf_mufg, ','))
-        if int(bf_mufg) == int(af_mufg):
-            layout[2].append('')
-            layout[3].append('')
-            values.append(bf_mufg)
-        else:
-            is_change = True
-            layout[2].append('→')
-            layout[3].append(format(int(af_mufg), ','))
-            values.append(af_mufg)
+    af_vcard1 = vcard[1]
+    columns.append(before[0][3])
+    values.append(af_vcard1)
+    af_rcard1 = rcard[1]
+    columns.append(before[0][4])
+    values.append(af_rcard1)
 
-        # 楽天銀行
-        bf_rbank = before[1][11]
-        af_rbank = banks[2]
-        columns.append(before[0][11])
-        layout[1].append(format(bf_rbank, ','))
-        if int(bf_rbank) == int(af_rbank):
-            layout[2].append('')
-            layout[3].append('')
-            values.append(bf_rbank)
-        else:
-            is_change = True
-            layout[2].append('→')
-            layout[3].append(format(int(af_rbank), ','))
-            values.append(af_rbank)
+    # 三井住友
+    # __append_data(before[1][9], banks[0], before[0][9], is_change, layout, columns, values)
 
-        return is_change, layout, columns, [values]
+    # 三菱UFJ
+    __append_data(before[1][10], banks[1], before[0][10], is_change, layout, columns, values)
+
+    # 楽天銀行
+    __append_data(before[1][11], banks[2], before[0][11], is_change, layout, columns, values)
+
+    # JREBANK
+    __append_data(before[1][12], banks[3], before[0][12], is_change, layout, columns, values)
+
+    return is_change, layout, columns, [values]
+
+def __append_data(before, now, col, is_change, layout, columns, values):
+
+    columns.append(col)
+    layout[1].append(format(before, ','))
+    if int(before) == int(now):
+        layout[2].append('')
+        layout[3].append('')
+        values.append(before)
+    else:
+        is_change = True
+        layout[2].append('→')
+        layout[3].append(format(int(now), ','))
+        values.append(now)
+
+    return is_change, layout, columns, values

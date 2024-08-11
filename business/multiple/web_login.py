@@ -6,7 +6,7 @@ from const import cst
 from common import web_driver
 
 import pyautogui as pgui
-
+from selenium.webdriver.support.select import Select
 
 class WebLogin:
 
@@ -44,7 +44,7 @@ class WebLogin:
                 # 特殊ログインパターン
                 if 'ViewCard' == name:
 
-                    for i in range(0, 5):
+                    for _ in range(0, 5):
                         try:
                             web_driver.find_element(self.wd, id1[1]).send_keys('')
                             web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
@@ -106,6 +106,34 @@ class WebLogin:
                             except:
                                 web_driver.find_element(self.wd, 'top').click()
 
+                    if 'JREBANK' == name:
+
+                        try:
+                            com.sleep(1)
+                            account = menu['ID2'].values[0].split('_')
+                            select = web_driver.find_element(self.wd, 'j_id_1h:INPUT_BRANCH_CODE')
+
+                            options = Select(select).options
+                            num = -1
+                            for k in range(len(options)):
+                                if options[k].text.endswith(account[0]):
+                                    num = k
+                                    break
+                            Select(select).select_by_index(num)
+
+                            elm = '//*[@id="j_id_1h"]/section[2]/div[1]/div/fieldset[2]/label/input'
+                            web_driver.find_element(self.wd, elm).send_keys('')
+                            web_driver.find_element(self.wd, elm).send_keys(account[1])
+
+                            elm = '//*[@id="j_id_1h"]/section[2]/div[2]/div/fieldset[1]/input'
+                            web_driver.find_element(self.wd, elm).send_keys('')
+                            web_driver.find_element(self.wd, elm).send_keys('ああああ')
+
+                            com.sleep(1)
+                            web_driver.find_element(self.wd, 'j_id_7d').click()
+                        except:
+                            pass
+
                 # 事後画面あり
                 if name in ['楽天銀行', '楽天カード', '岡三総合', 'リクルート']:
                     com.sleep(1)
@@ -127,6 +155,7 @@ class WebLogin:
                         except: pass
 
                     elif name in ['楽天カード', 'リクルート']:
+
                         url = ('https://www.rakuten-card.co.jp/e-navi/members/statement/' +
                                'index.xhtml?l-id=enavi_all_glonavi_statement' if '楽天カード' == name else
                                'https://www.r-staffing.co.jp/sol/op65/sd01/' if 'リクルート' == name else '')
@@ -162,6 +191,8 @@ def _get_info(name):
         info = ['ID1', 'tx-contract-number'], ['', ''], 'tx-ib-password', 'button.gonext'
     elif '楽天銀行' == name:
         info = ['ID1', 'LOGIN:USER_ID'], ['', ''], 'LOGIN:LOGIN_PASSWORD', '//*[@id="LOGIN"]/div[7]/a'
+    elif 'JREBANK' == name:
+        info = ['ID1', '//*[@id="j_id_t"]/div[1]/div[2]/fieldset/p[1]/input'], ['', ''], 'j_id_t:LOGIN_PASSWORD', 'j_id_22'
     # 生活
     elif '水道' == name:
         info = ['ID1', 'userName'], ['', ''], 'password', '//*[@id="loginForm"]/table/tbody/tr[4]/td/input'

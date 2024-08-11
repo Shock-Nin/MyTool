@@ -15,11 +15,9 @@ Windowsタスクスケジューラ
 from common import com
 from const import cst
 
-from business.multiple.blog_pochi import BlogPochi
 from business.batch.anomaly import Anomaly
 from business.batch.saya_daily import SayaDaily
 from business.batch.saya_timely import SayaTimely
-from business.batch.log_analy import LogAnaly
 
 import datetime
 
@@ -34,32 +32,32 @@ class Batch:
         jobs = []
 
         if 'Win' == cst.PC:
-            job = self._windows()
+            job = self.__windows()
             if 0 < len(job):
                 jobs.append(job)
 
             # Web端末(5・35分)
             if cst.WEB_IP == cst.IP:
-                job = self._windows_web()
+                job = self.__windows_web()
                 if 0 < len(job):
                     jobs.append(job)
 
             # My端末(15・45分)
             if cst.MY_IP == cst.IP:
-                job = self._windows_my()
+                job = self.__windows_my()
                 if 0 < len(job):
                     jobs.append(job)
 
             # DEV端末(20・50分)
             if cst.DEV_IP == cst.IP:
-                job = self._windows_dev()
+                job = self.__windows_dev()
                 if 0 < len(job):
                     jobs.append(job)
 
         return ", ".join([job for job in jobs])
 
     # WindowsServer 共通バッチ
-    def _windows(self):
+    def __windows(self):
         jobs = []
 
         # 30分未満の場合にのみ実行
@@ -68,27 +66,14 @@ class Batch:
 
         # 30分以上の場合にのみ実行
         else:
-
-            # 毎朝3時にブログポチ
-            if 3 == self.now.hour:
-                if 0 == len(jobs):
-                    com.log('Batch開始: ' + cst.IP)
-                BlogPochi(self.myjob).do()
-                jobs.append('ブログポチ')
+            pass
 
         return ", ".join([job for job in jobs])
 
     # WindowsServer Webバッチ(5・35分)
-    def _windows_web(self):
+    def __windows_web(self):
         jobs = []
 
-        # 2:30に実行
-        if 2 == self.now.hour and 30 <= self.now.minute:
-            if 0 == len(jobs):
-                com.log('Batch開始: ' + cst.IP)
-
-            LogAnaly(self.myjob).get_log()
-            jobs.append('解析ログ編集')
 
         # 30分未満の場合に実行
         if self.now.minute < 30:
@@ -136,21 +121,13 @@ class Batch:
         return ", ".join([job for job in jobs])
 
     # WindowsServer Myバッチ(15・45分)
-    def _windows_my(self):
+    def __windows_my(self):
         jobs = []
-
-        # 2:00に実行
-        if 2 == self.now.hour and self.now.minute < 30:
-            if 0 == len(jobs):
-                com.log('Batch開始: ' + cst.IP)
-
-            LogAnaly(self.myjob).get_log()
-            jobs.append('解析ログ編集')
 
         return ", ".join([job for job in jobs])
 
     # WindowsServer DEVバッチ(20・50分)
-    def _windows_dev(self):
+    def __windows_dev(self):
         jobs = []
 
         # 30分未満の場合にのみ実行

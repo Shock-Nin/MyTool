@@ -46,8 +46,8 @@ class Anomaly:
     # トピック書き出し
     def write_topic(self):
 
-        self._get_now_span()
-        self._get_week_count()
+        self.__get_now_span()
+        self.__get_week_count()
 
         com.log('アノマリーTopic作成開始: ' +
             str(self.trade_y) + '-' + str(self.trade_m) + '-' + str(self.trade_d) + '(' +
@@ -194,7 +194,7 @@ class Anomaly:
         return ''
 
     # 時間帯変換
-    def _get_now_span(self):
+    def __get_now_span(self):
         self.now_span = (4 if self.trade_h < 2 else 5 if self.trade_h < 6 else 0 if self.trade_h < 10 else
                          1 if self.trade_h < 14 else 2 if self.trade_h < 18 else 3 if self.trade_h < 22 else 4)
 
@@ -215,7 +215,7 @@ class Anomaly:
         self.trade_w = self.trade_now.weekday()
 
     # 月の週目算出
-    def _get_week_count(self):
+    def __get_week_count(self):
 
         self.week_count = 1
         w_date = self.trade_now.strftime('%Y%m')
