@@ -62,7 +62,7 @@ class MyAsset:
             # if vcard is None:
             #     return
 
-            vcard = [0, 0, 0, 0]
+            vcard = [0, 0]
 
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
@@ -145,12 +145,12 @@ class MyAsset:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
             return None, None
 
-        # 金額取得(未確定・1月前・2月前・3月前)
+        # 金額取得(未確定・1月前)
         try:
             results.append(web_driver.find_element(wd, 'LblSumUseValue').text.replace(',', ''))
         except Exception as e:
             results.append(0)
-        for i in range(1, 4):
+        for i in range(1, 2):
             try:
                 web_driver.find_element(wd, 'vucV0300MonthList_LiClaimYm' + str(i)).click()
                 com.sleep(1)
@@ -176,7 +176,7 @@ class MyAsset:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
             return None, None
 
-        # 金額取得(未確定・1月前・2月前・3月前)
+        # 金額取得(未確定・1月前)
         try:
             for i in range(0, 2):
                 wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(i))
@@ -289,29 +289,29 @@ def _edit_data(before, vcard, rcard, banks):
     values = [com.str_time()[:10]]
 
     # Viewカード未確定
-    # __append_data(before[1][1], vcard[0], before[0][1], is_change, layout, columns, values)
+    __append_data(before[1][1], vcard[0], before[0][1], is_change, layout, columns, values)
 
     # 楽天カード未確定
     __append_data(before[1][2], rcard[0], before[0][2], is_change, layout, columns, values)
 
-    af_vcard1 = vcard[1]
+    # Viewカード1月前
     columns.append(before[0][3])
-    values.append(af_vcard1)
-    af_rcard1 = rcard[1]
+    values.append(vcard[1])
+    # 楽天カード1月前
     columns.append(before[0][4])
-    values.append(af_rcard1)
+    values.append(rcard[1])
 
     # 三井住友
-    # __append_data(before[1][9], banks[0], before[0][9], is_change, layout, columns, values)
+    __append_data(before[1][5], banks[0], before[0][5], is_change, layout, columns, values)
 
     # 三菱UFJ
-    __append_data(before[1][10], banks[1], before[0][10], is_change, layout, columns, values)
+    __append_data(before[1][6], banks[1], before[0][6], is_change, layout, columns, values)
 
     # 楽天銀行
-    __append_data(before[1][11], banks[2], before[0][11], is_change, layout, columns, values)
+    __append_data(before[1][7], banks[2], before[0][7], is_change, layout, columns, values)
 
     # JREBANK
-    __append_data(before[1][12], banks[3], before[0][12], is_change, layout, columns, values)
+    __append_data(before[1][8], banks[3], before[0][8], is_change, layout, columns, values)
 
     return is_change, layout, columns, [values]
 
