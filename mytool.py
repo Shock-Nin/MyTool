@@ -30,14 +30,14 @@ CHANGE_MENU = -1
 # CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
-    'Pochi': 'multiple.blog_pochi',
+    'Tweet': 'batch.anomaly/tweet',
     }, cst.WEB_IP: {
-    'Pochi': 'multiple.blog_pochi',
+    'Tweet': 'batch.anomaly/tweet',
     }, cst.MY_IP: {
-    'Pochi': 'multiple.blog_pochi',
+    'Tweet': 'batch.anomaly/tweet',
     }, cst.MAC_IP: {
     '英単語辞書': 'mac.english_dict',
-    'Pochi': 'multiple.blog_pochi',
+    'Tweet': 'batch.anomaly',
     '資産': 'mac.my_asset',
     '画面キープ': 'mac.keep_display',
     'タイマー': 'mac.alert_timer',

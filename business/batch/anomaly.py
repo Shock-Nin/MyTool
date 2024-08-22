@@ -94,7 +94,7 @@ class Anomaly:
         return ''
 
     # ツイート
-    def tweet(self):
+    def do(self):
 
         tweet_type = 0
         # 月曜〜金曜の0時と12時に、通常アノマリーツイート実行
@@ -155,30 +155,33 @@ class Anomaly:
 
                 # ウェブ操作スタート
                 wd = web_driver.driver(headless=self.is_batch)
+                # wd = web_driver.driver()
                 if wd is None:
                     com.log('WebDriverエラー', 'E')
                     return None
 
-                wd.get('https://twitter.com/intent/tweet?=' + cst.BLOG_URL +
+                # wd.get('https://x.com/intent/tweet?=https://shock-nin.info/&text=aaaaa')
+                wd.get('https://x.com/intent/tweet?=' + cst.BLOG_URL +
                        '&text=' + urllib.parse.quote(msg, 'utf8'))
                 com.sleep(5)
                 act = '2, ' + wd.title
 
-                web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
+                web_driver.find_element(wd, '//*[@id="layers"]/div[3]/div/div/div/div/div/div[2]/div[2]/div/div[2]/button[2]/div/span/span/span').click()
                 com.sleep(5)
 
-                web_driver.find_element(wd, 'session[username_or_email]').send_keys(cst.TWITTER_ID)
-                web_driver.find_element(wd, 'session[password]').send_keys(cst.TWITTER_PW)
+                xpath = '//*[@id="layers"]/div/div/div/div/div/div/div[2]/div[2]/div/div/div[2]/div[2]/'
+                web_driver.find_element(wd, xpath + 'div/div/div/div[4]/label/div/div[2]/div/input').send_keys(cst.TWITTER_ID)
+                web_driver.find_element(wd, xpath + 'div/div/div/button[2]').click()
+                com.sleep(3)
+                web_driver.find_element(wd, xpath + 'div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input').send_keys(cst.TWITTER_PW)
+                web_driver.find_element(wd, xpath + 'div[2]/div/div[1]/div/div/button').click()
+                com.sleep(3)
                 act = '3, ' + wd.title
 
-                web_driver.find_element(wd, '/html/body/div/div/div/div[1]/div[3]/div/div/div/div/div/div[2]/div[2]/div/div[2]/div[2]/div/span/span/span').click()
-                com.sleep(5)
-                act = '4, ' + wd.title
-
                 if IS_TWEET:
-                    web_driver.find_element(wd, '//*[@id="layers"]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div/div[1]/div/div/div/div/div[2]/div[3]/div/div/div[2]/div[4]/div/span/span').click()
+                    web_driver.find_element(wd, xpath + 'div/div/div/div[3]/div[2]/div[1]/div/div/div/div[2]/div[2]/div/div/div/button[2]').click()
                     com.sleep(3)
-                    act = '5, ' + wd.title
+                    act = '4, ' + wd.title
                     com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
 
             except Exception as e:
