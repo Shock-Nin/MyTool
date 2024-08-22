@@ -37,7 +37,7 @@ BTNS = {cst.DEV_IP: {
     'Tweet': 'batch.anomaly/tweet',
     }, cst.MAC_IP: {
     '英単語辞書': 'mac.english_dict',
-    'Tweet': 'batch.anomaly',
+    'Tweet': 'batch.anomaly/tweet',
     '資産': 'mac.my_asset',
     '画面キープ': 'mac.keep_display',
     'タイマー': 'mac.alert_timer',

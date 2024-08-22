@@ -94,7 +94,7 @@ class Anomaly:
         return ''
 
     # ツイート
-    def do(self):
+    def tweet(self):
 
         tweet_type = 0
         # 月曜〜金曜の0時と12時に、通常アノマリーツイート実行
