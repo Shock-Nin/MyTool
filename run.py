@@ -15,7 +15,7 @@ if __name__ == '__main__':
 
     class_name = args.module.split('.')[len(args.module.split('.')) - 1]
     class_name = "".join([name[0].upper() + name[1:] for name in class_name.split('_')])
-    print(args)
+
     instance = importlib.import_module('business.' + (args.module.split('/')[0] if 'Tweet' == args.event else args.module))
     module = getattr(instance, class_name.split('/')[0])
 
