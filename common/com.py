@@ -107,11 +107,6 @@ def send_mail(subject, body, to, account=cst.BLOG_MAIL, password=cst.BLOG_MAIL_P
         msg['To'] = to
         msg['From'] = account
 
-        # prop.put("mail.smtp.auth", "true");
-
-        # prop.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        # prop.put("mail.smtp.socketFactory.fallback", "false");
-
         # サーバを指定する
         server = smtplib.SMTP('smtp.gmail.com', 587)
         # server.auth()

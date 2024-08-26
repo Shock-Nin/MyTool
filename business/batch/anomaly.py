@@ -180,7 +180,9 @@ class Anomaly:
                 act = '4, ' + wd.title
 
                 if IS_TWEET:
-                    web_driver.find_element('/html/body/div[1]/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div[2]/div[1]/div/div/div/div[2]/div[2]/div/div/div/button[2]').click()
+                    web_driver.find_element(wd,
+                        '/html/body/div[1]/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div[2]/ div/div/div/'
+                        + 'div[3]/div[2]/div[1]/div/div/div/div[2]/div[2]/div/div/div/button[2]').click()
                     com.sleep(3)
                     act = '5, ' + wd.title
                     com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
