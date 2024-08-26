@@ -29,11 +29,7 @@ PW_INPUT = False
 CHANGE_MENU = -1
 # CHANGE_MENU = 0
 """ ---------------------------------- """
-BTNS = {cst.DEV_IP: {
-    'Tweet': 'batch.anomaly/tweet',
-    }, cst.WEB_IP: {
-    'Tweet': 'batch.anomaly/tweet',
-    }, cst.MY_IP: {
+BTNS = {cst.WEB_IP: {
     'Tweet': 'batch.anomaly/tweet',
     }, cst.MAC_IP: {
     '英単語辞書': 'mac.english_dict',

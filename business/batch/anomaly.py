@@ -173,15 +173,16 @@ class Anomaly:
                 web_driver.find_element(wd, xpath + 'div/div/div/div[4]/label/div/div[2]/div/input').send_keys(cst.TWITTER_ID)
                 web_driver.find_element(wd, xpath + 'div/div/div/button[2]').click()
                 com.sleep(3)
+                act = '3, ' + wd.title
                 web_driver.find_element(wd, xpath + 'div[1]/div/div/div[3]/div/label/div/div[2]/div[1]/input').send_keys(cst.TWITTER_PW)
                 web_driver.find_element(wd, xpath + 'div[2]/div/div[1]/div/div/button').click()
                 com.sleep(3)
-                act = '3, ' + wd.title
+                act = '4, ' + wd.title
 
                 if IS_TWEET:
-                    web_driver.find_element(wd, xpath + 'div/div/div/div[3]/div[2]/div[1]/div/div/div/div[2]/div[2]/div/div/div/button[2]').click()
+                    web_driver.find_element('/html/body/div[1]/div/div/div[1]/div[2]/div/div/div/div/div/div[2]/div[2]/div/div/div/div[3]/div[2]/div[1]/div/div/div/div[2]/div[2]/div/div/div/button[2]').click()
                     com.sleep(3)
-                    act = '4, ' + wd.title
+                    act = '5, ' + wd.title
                     com.log('アノマリーTweet(' + act + ')' + msg.replace('\n', '<br>'))
 
             except Exception as e:

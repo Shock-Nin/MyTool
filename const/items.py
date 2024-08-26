@@ -51,7 +51,7 @@ BLOG_URL = 'https://shock-nin.info/'
 BLOG_MAIL = 'shocknin7@gmail.com'
 BLOG_MAIL_PW = 'Shock19800226'
 ERROR_MAIL = 'shocknin7@gmail.com'
-ERROR_MAIL_PW = 'Shock19800226'
+ERROR_MAIL_PW = 'kejm gyuz yczk dfcx'
 
 # アノマリー Twitter
 TWITTER_ID = BLOG_MAIL

@@ -154,12 +154,25 @@ class WebLogin:
                             web_driver.find_element(self.wd, 'INPUT_FORM_P:_idJsp176').click()
                         except: pass
 
-                    elif name in ['楽天カード', 'リクルート']:
+                    elif name in ['楽天カード']:
 
-                        url = ('https://www.rakuten-card.co.jp/e-navi/members/statement/' +
-                               'index.xhtml?l-id=enavi_all_glonavi_statement' if '楽天カード' == name else
-                               'https://www.r-staffing.co.jp/sol/op65/sd01/' if 'リクルート' == name else '')
-                        self.wd.get(url)
+                        try:
+                            web_driver.find_element(self.wd, id1[1]).send_keys('')
+                            web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+
+                            web_driver.find_element(self.wd, pw).send_keys('')
+                            web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+
+                            web_driver.find_element(self.wd, 'loginInner_birthday').send_keys('')
+                            web_driver.find_element(self.wd, 'loginInner_birthday').send_keys(menu['19800226'].values[0])
+
+                            web_driver.find_element(self.wd, btn).click()
+                            com.sleep(2)
+                        except:
+                            pass
+
+                    elif name in ['リクルート']:
+                        self.wd.get('https://www.r-staffing.co.jp/sol/op65/sd01/')
 
                     else:
                         url = ('buttonOK' if '岡三総合' == name else '')

@@ -67,7 +67,8 @@ class MyAsset:
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
             rcard, wd2 = self.__get_rakuten_card(target)
-            if rcard is None:
+            if rcard is None or '0' == str(rcard[0]):
+                com.dialog('データ取得に失敗しました', '楽天カード', 'W')
                 return
 
             banks = [0]
