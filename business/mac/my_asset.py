@@ -43,7 +43,14 @@ class MyAsset:
             try: self.cnx.close()
             except: pass
 
-        if com.question(self.myjob + ' 開始しますか？', '開始確認') <= 0:
+        # if com.question(self.myjob + ' 開始しますか？', '開始確認') <= 0:
+        #     return
+        before_view = before[1][1]
+        before_smbc = before[1][5]
+
+        flg, inputs = com.input_box(self.myjob + ' 開始しますか？', '開始確認',
+                                    [['Viewカード', str(before_view)], ['三井住友', str(before_smbc)]], 'input')
+        if flg <= 0:
             return
 
         start_time = com.time_start()
@@ -56,13 +63,13 @@ class MyAsset:
         targets = targets[('資産' == targets['Type'])]
 
         try:
-            # # ViewCard取得
+            # ViewCard取得
+            vcard = [inputs[1], before_view]
+
             # target = targets[('ViewCard' == targets['Name'])]
             # vcard, wd1 = self._get_view_card(target)
             # if vcard is None:
             #     return
-
-            vcard = [0, 0]
 
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
@@ -71,9 +78,9 @@ class MyAsset:
                 com.dialog('データ取得に失敗しました', '楽天カード', 'W')
                 return
 
-            banks = [0]
+            # 三井住友銀行取得
+            banks = [inputs[1]]
 
-            # # 三井住友銀行取得
             # target = targets[('三井住友' == targets['Name'])]
             # result, wd3 = self._get_smbc_bank(target)
             # if result is None:
