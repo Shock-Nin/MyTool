@@ -55,7 +55,7 @@ class KeepDisplay:
 
     def _window(self, stop_btn):
         return sg.Window(self.myjob, keep_on_top=True, modal=True, background_color=self.bgcolor,
-                         location=(self.win_x - 50, 0), margins=(5, 5), icon=(os.getcwd() + cst.ICON_FILE), layout=
+                         location=(self.win_x - 50, self.win_y), margins=(5, 5), icon=(os.getcwd() + cst.ICON_FILE), layout=
                          [[sg.Button(stop_btn, key='replay', font=('', 12), pad=((0, 0), (0, 0)))]])
 
     # イベントのアクション

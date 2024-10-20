@@ -62,6 +62,41 @@ class WebLogin:
                     com.sleep(1)
                     web_driver.find_element(self.wd, 'LnkYotei').click()
 
+                elif name in ['楽天カード']:
+
+                    try:
+                        web_driver.find_element(self.wd, id1[1]).send_keys('')
+                        web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                        web_driver.find_element(self.wd, 'cta001').click()
+                        com.sleep(2)
+
+                        web_driver.find_element(self.wd, pw).send_keys('')
+                        web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                        web_driver.find_element(self.wd, 'cta011').click()
+
+                        # web_driver.find_element(self.wd, 'loginInner_birthday').send_keys('')
+                        # web_driver.find_element(self.wd, 'loginInner_birthday').send_keys(menu['19800226'].values[0])
+
+                        com.sleep(2)
+                    except:
+                        pass
+
+                elif name in ['PayPayカード']:
+
+                    try:
+                        web_driver.find_element(self.wd, id1[1]).send_keys('')
+                        web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                        web_driver.find_element(self.wd, '//*[@id="content"]/div[1]/div/form/div[1]/div[1]/div[2]/div/button').click()
+                        com.sleep(2)
+
+                        # web_driver.find_element(self.wd, pw).send_keys('')
+                        # web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                        # web_driver.find_element(self.wd, 'cta011').click()
+
+                        com.sleep(2)
+                    except:
+                        pass
+
                 else:
                     if '三菱UFJ' == name:
                         com.sleep(3)
@@ -135,7 +170,7 @@ class WebLogin:
                             pass
 
                 # 事後画面あり
-                if name in ['楽天銀行', '楽天カード', '岡三総合', 'リクルート']:
+                if name in ['楽天銀行', '岡三総合', 'リクルート']:
                     com.sleep(1)
 
                     if '楽天銀行' == name:
@@ -153,23 +188,6 @@ class WebLogin:
                         try:
                             web_driver.find_element(self.wd, 'INPUT_FORM_P:_idJsp176').click()
                         except: pass
-
-                    elif name in ['楽天カード']:
-
-                        try:
-                            web_driver.find_element(self.wd, id1[1]).send_keys('')
-                            web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
-
-                            web_driver.find_element(self.wd, pw).send_keys('')
-                            web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
-
-                            web_driver.find_element(self.wd, 'loginInner_birthday').send_keys('')
-                            web_driver.find_element(self.wd, 'loginInner_birthday').send_keys(menu['19800226'].values[0])
-
-                            web_driver.find_element(self.wd, btn).click()
-                            com.sleep(2)
-                        except:
-                            pass
 
                     elif name in ['リクルート']:
                         self.wd.get('https://www.r-staffing.co.jp/sol/op65/sd01/')
@@ -197,7 +215,9 @@ def _get_info(name):
     if 'ViewCard' == name:
         info = ['ID1', 'id'], ['', ''], 'pass', '//input[@alt=\'ログイン\']'
     elif '楽天カード' == name:
-        info = ['ID1', 'u'], ['', ''], 'p', 'loginButton'
+        info = ['ID1', 'user_id'], ['', ''], 'password_current', ''
+    elif 'PayPayカード' == name:
+        info = ['ID1', 'login_handle'], ['', ''], 'password_current', ''
     elif '三井住友' == name:
         info = ['ID1', 'userId1'], ['ID2', 'userId2'], 'password', '//*[@id="main-area"]/div/section/div'
     elif '三菱UFJ' == name:

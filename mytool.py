@@ -36,11 +36,11 @@ BTNS = {cst.DEV_IP: {
     }, cst.WEB_IP: {
     'Tweet': 'batch.anomaly/tweet',
     }, cst.MAC_IP: {
-    '英単語辞書': 'mac.english_dict',
-    'Tweet': 'batch.anomaly/tweet',
+    # '英単語辞書': 'mac.english_dict',
+    # 'Tweet': 'batch.anomaly/tweet',
     '資産': 'mac.my_asset',
     '画面キープ': 'mac.keep_display',
-    'タイマー': 'mac.alert_timer',
+    # 'タイマー': 'mac.alert_timer',
     }}
 EA_MENU = {
     'EAデータ編集': 'windows.ea_edits',
@@ -76,7 +76,7 @@ DP_XY_WIDTH = {
     cst.MY_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
     # cst.WEB_IP: [0, 0, 20, 2],
     # cst.MY_IP: [0, 0, 20, 2],
-    cst.MAC_IP: [150, 80 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
+    cst.MAC_IP: [150, 40 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
 
@@ -158,7 +158,7 @@ def main():
         location = (None, None) if 0 == DP[0] + DP[1] else (
             win_x - DP[0] if 0 < DP[0] else 70, win_y - DP[1] if 0 < DP[1] else 0)
 
-        window = sg.Window(cst.PC, modal=True, keep_on_top=(cst.MAC_IP == WORK_IP), element_justification='c',
+        window = sg.Window(cst.PC, modal=True, element_justification='c',
                            icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
                            element_padding=((0, 0), (0, 0)), margins=(0, 0), location=location, layout=layout)

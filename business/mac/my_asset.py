@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 from common import com
 from common import my_sql
 from common import web_driver
@@ -10,7 +9,9 @@ from business.multiple.web_login import WebLogin
 import datetime
 
 TARGET_TABLES = ['asset_history']
-
+MESSAGE = '家賃\t66,165円\tポイント\t 4,000円\n英語教室\t19,470円\t投信積立\t30,000円\n' \
+          + '光熱水料\t12,000円\t保険\t10,000円\n通信費\t12,151円'
+BANKS = ['Viewカード', '楽天カード', 'PayPayカード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK']
 
 class MyAsset:
 
@@ -21,11 +22,16 @@ class MyAsset:
     def do(self):
 
         try:
+            # targets = cst.MENU_CSV['Web']
+            # target = targets[('PayPayカード' == targets['Name'])]
+            # pcard, wd3 = self.__get_paypay_card(target)
+            # return
+
 
             # 7時未満はNG
-            if datetime.datetime.now().hour < 7:
-                com.dialog('時間外、7時未満です。', '時間外', 'W')
-                return
+            # if datetime.datetime.now().hour < 7:
+            #     com.dialog('時間外、7時未満です。', '時間外', 'W')
+            #     return
 
             # DB接続
             self.cnx = my_sql.MySql('data_my')
@@ -35,7 +41,13 @@ class MyAsset:
 
             # 本日のデータ取得済みなら中断
             if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
-                com.dialog('本日は取得済です。', '本日取得済', 'W')
+                layout = [[], []]
+                for i in range(0, len(BANKS)):
+                    layout[0].append(BANKS[i])
+                    layout[1].append(format(before[1][i + 1 + (0 if i < 3 else 3)], ','))
+
+                com.dialog_cols(MESSAGE + '\n\n' + '本日は取得済です。',
+                    layout, ['l', 'r', 'c', 'r'], self.myjob, lv='W')
                 return
 
         # 最後はDBを閉じる
@@ -43,13 +55,13 @@ class MyAsset:
             try: self.cnx.close()
             except: pass
 
-        # if com.question(self.myjob + ' 開始しますか？', '開始確認') <= 0:
-        #     return
         before_view = before[1][1]
-        before_smbc = before[1][5]
+        before_paypay = before[1][3]
+        before_smbc = before[1][7]
 
-        flg, inputs = com.input_box(self.myjob + ' 開始しますか？', '開始確認',
-                                    [['Viewカード', str(before_view)], ['三井住友', str(before_smbc)]], 'input')
+        flg, inputs = com.input_box(
+            MESSAGE + '\n\n' + self.myjob + ' 開始しますか？', '開始確認',
+            [['Viewカード', str(before_view)], ['PayPay', str(before_paypay)], ['三井住友', str(before_smbc)]], 'input')
         if flg <= 0:
             return
 
@@ -64,7 +76,7 @@ class MyAsset:
 
         try:
             # ViewCard取得
-            vcard = [inputs[1], before_view]
+            vcard = [inputs[0], before_view]
 
             # target = targets[('ViewCard' == targets['Name'])]
             # vcard, wd1 = self._get_view_card(target)
@@ -78,11 +90,16 @@ class MyAsset:
                 com.dialog('データ取得に失敗しました', '楽天カード', 'W')
                 return
 
+            # Paypayカード取得
+            pcard = [inputs[1], before_paypay]
+
+            cards = [vcard, rcard, pcard]
+
             # 三井住友銀行取得
-            banks = [inputs[1]]
+            banks = [inputs[2]]
 
             # target = targets[('三井住友' == targets['Name'])]
-            # result, wd3 = self._get_smbc_bank(target)
+            # result, wd4 = self._get_smbc_bank(target)
             # if result is None:
             #     return
             # else:
@@ -90,7 +107,7 @@ class MyAsset:
 
             # 三菱UFJ銀行取得
             target = targets[('三菱UFJ' == targets['Name'])]
-            result, wd4 = self.__get_mufg_bank(target)
+            result, wd5 = self.__get_mufg_bank(target)
             if result is None:
                 return
             else:
@@ -98,7 +115,7 @@ class MyAsset:
 
             # 楽天銀行取得
             target = targets[('楽天銀行' == targets['Name'])]
-            result, wd5 = self.__get_rakuten_bank(target)
+            result, wd6 = self.__get_rakuten_bank(target)
             if result is None:
                 return
             else:
@@ -106,7 +123,7 @@ class MyAsset:
 
             # JREBANK取得
             target = targets[('JREBANK' == targets['Name'])]
-            result, wd6 = self.__get_jre_bank(target)
+            result, wd7 = self.__get_jre_bank(target)
             if result is None:
                 return
             else:
@@ -118,7 +135,7 @@ class MyAsset:
             com.log('資産情報取得完了(' + com.conv_time_str(run_time) + '): ')
 
             # 取得データと前回データの差分計算
-            is_change, layout, columns, values = _edit_data(before, vcard, rcard, banks)
+            is_change, layout, columns, values = _edit_data(before, cards, banks)
 
             # DB接続
             self.cnx = my_sql.MySql('data_my')
@@ -141,7 +158,8 @@ class MyAsset:
             except: pass
 
         com.dialog_cols(com.str_time()[:10] + '(前回 ' + datetime.datetime.strftime(before[1][0], '%Y-%m-%d') +
-                        ')\n完了しました。(' + com.conv_time_str(total_time) + ')', layout, ['l', 'r', 'c', 'r'], self.myjob)
+                        ')\n\n' + MESSAGE + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
+                        layout, ['l', 'r', 'c', 'r'], self.myjob)
 
     # Viewカード
     def __get_view_card(self, target):
@@ -196,6 +214,32 @@ class MyAsset:
         except Exception as e:
             com.log('WebDriverエラー: 楽天カード, ' + str(e), 'E')
             com.dialog('楽天カードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+            return None, None
+
+        return results, wd
+
+    # PayPayカード
+    def __get_paypay_card(self, target):
+
+        # ログイン
+        results = []
+        wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
+        if wd is None:
+            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+            return None, None
+
+        # 金額取得(未確定・1月前)
+        try:
+            for i in range(0, 2):
+                wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(i))
+                com.sleep(1)
+                try:
+                    results.append(web_driver.find_element(wd, 'span.stmt-u-font-roboto').text.replace(',', ''))
+                except:
+                    results.append('0')
+        except Exception as e:
+            com.log('WebDriverエラー: PayPayカード, ' + str(e), 'E')
+            com.dialog('PayPayカードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
             return None, None
 
         return results, wd
@@ -287,39 +331,27 @@ class MyAsset:
         return result, wd
 
 # ダイヤログ用差分とINSERTのSQLデータ作成
-def _edit_data(before, vcard, rcard, banks):
+def _edit_data(before, cards, banks):
 
     is_change = False
-    layout = [['Viewカード', '楽天カード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK'], [], [], []]
+    layout = [BANKS, [], [], []]
 
     # 日付
     columns = [before[0][0]]
     values = [com.str_time()[:10]]
 
-    # Viewカード未確定
-    __append_data(before[1][1], vcard[0], before[0][1], is_change, layout, columns, values)
+    # 未確定(Viewカード, 楽天カード, PayPayカード)
+    for i in range(1, 4):
+        __append_data(before[1][i], cards[i - 1][0], before[0][i], is_change, layout, columns, values)
 
-    # 楽天カード未確定
-    __append_data(before[1][2], rcard[0], before[0][2], is_change, layout, columns, values)
+    # 1月前(Viewカード, 楽天カード, PayPayカード)
+    for i in range(4, 7):
+        columns.append(before[0][i])
+        values.append(cards[i - 4][1])
 
-    # Viewカード1月前
-    columns.append(before[0][3])
-    values.append(vcard[1])
-    # 楽天カード1月前
-    columns.append(before[0][4])
-    values.append(rcard[1])
-
-    # 三井住友
-    __append_data(before[1][5], banks[0], before[0][5], is_change, layout, columns, values)
-
-    # 三菱UFJ
-    __append_data(before[1][6], banks[1], before[0][6], is_change, layout, columns, values)
-
-    # 楽天銀行
-    __append_data(before[1][7], banks[2], before[0][7], is_change, layout, columns, values)
-
-    # JREBANK
-    __append_data(before[1][8], banks[3], before[0][8], is_change, layout, columns, values)
+    # 銀行(三井住友, 三菱UFJ, 楽天銀行, JREBANK)
+    for i in range(7, 11):
+        __append_data(before[1][i], banks[i - 7], before[0][i], is_change, layout, columns, values)
 
     return is_change, layout, columns, [values]
 

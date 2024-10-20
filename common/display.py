@@ -87,7 +87,7 @@ def input_box(msg, title, forms, obj='', cancel=False):
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
                 [sg.Text(forms[i][0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
-                 sg.InputText(default_text=forms[i][1], font=('', 16), size=(12, 1), readonly=True)]
+                 sg.InputText(default_text=forms[i][1], font=('', 16), size=(12, 1))]
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]
     else:
@@ -155,10 +155,10 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
                                     pad=((20, 20), (10, 10)))], center, btn])
 
     while True:
-        if 'Mac' == cst.PC:
-            event, values = window.read(timeout=0)
-        else:
+        if 'Win' == cst.PC:
             event, values = window.read()
+        else:
+            event, values = window.read(timeout=0)
 
         # 全チェック外し
         if 'check_out' == event:
