@@ -57,7 +57,7 @@ class MySql:
             return '', ''
 
         cols = [[col[0] for col in show_cols]]
-        res = [[row for row in rows] for rows in result][0]
+        res = [[row for row in rows] for rows in result]
 
         cols.append(res)
         com.log('SQL: ' + sql.replace('\n', ' '))
@@ -81,7 +81,7 @@ class MySql:
     def update(self, columns, values, table, where):
 
         sql = 'UPDATE ' + table + ' SET '
-        sql += ",".join([columns[i] + ' = \'' + values[i] + '\'' for i in range(0, values)]) + ' WHERE ' + where
+        sql += ",".join([columns[i] + ' = \'' + values[i] + '\'' for i in range(0, len(values))]) + ' WHERE ' + where
         try:
             cursor = self.cnx.cursor()
             cursor.execute(sql)

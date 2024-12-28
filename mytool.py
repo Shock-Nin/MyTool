@@ -38,8 +38,8 @@ BTNS = {cst.DEV_IP: {
     }, cst.MAC_IP: {
     # '英単語辞書': 'mac.english_dict',
     # 'Tweet': 'batch.anomaly/tweet',
-    '資産': 'mac.my_asset',
     '画面キープ': 'mac.keep_display',
+    '資産': 'mac.my_asset',
     # 'タイマー': 'mac.alert_timer',
     }}
 EA_MENU = {

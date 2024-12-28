@@ -8,9 +8,7 @@ from business.multiple.web_login import WebLogin
 
 import datetime
 
-TARGET_TABLES = ['asset_history']
-MESSAGE = '家賃\t66,165円\tポイント\t 4,000円\n英語教室\t19,470円\t投信積立\t30,000円\n' \
-          + '光熱水料\t12,000円\t保険\t10,000円\n通信費\t12,151円'
+TARGET_TABLES = ['per_month', 'asset_balance', 'asset_history']
 BANKS = ['Viewカード', '楽天カード', 'PayPayカード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK']
 
 class MyAsset:
@@ -36,17 +34,42 @@ class MyAsset:
             # DB接続
             self.cnx = my_sql.MySql('data_my')
 
+            invests = self.cnx.select('*', TARGET_TABLES[1], '0 < 積立金額', '')
+            if invests[1][0][7].month != datetime.datetime.now().month:
+                if 1 == com.question('積立金額の最終更新が[' + str(invests[1][0][7]) + ']です。\n更新しますか？', '積立更新'):
+                    for i in range(len(invests[1])):
+                        columns = ['積立金額', '更新日']
+                        values = [int(invests[1][i][k]) for k in range(len(invests[0])) if invests[0][k] in ['金額', '積立金額']]
+                        values = [str(values[0] + values[1]), str(datetime.datetime.now()).split(' ')[0]]
+                        self.cnx.update(columns, values, TARGET_TABLES[1], '\'' + str(invests[1][i][0]) + '\' = ソート番号')
+                        self.cnx.commit()
+
+            summary = self.cnx.select('*', TARGET_TABLES[0], '', '')
+            summary[0] = '　　 '.join(['　 ' + summary[0][i] for i in range(len(summary[0]))])
+
+            str_summary = '\n'.join(['　'.join([(''.join(
+                ['  ' for _ in range(len(str(int(summary[1][i][k]))) + int(len(str(int(summary[1][i][k]))) / 3), 10)])
+                                                if 0 < k < len(summary[1][i]) - 1 else '')
+                + (format(int(str(summary[1][i][k]).replace('.0', '  ')), ',')
+                   if 0 < k < len(summary[1][i]) - 1 else str(summary[1][i][k]))
+                                               + (''.join(['  ' for _ in range(len(summary[1][i][k]), 5)]) if 0 == k else '')
+                for k in range(len(summary[1][i]))]) for i in range(len(summary[1]))])
+
             # 最新日のデータ取得
-            before = self.cnx.select('*', TARGET_TABLES[0], '', 'ORDER BY 日付 DESC LIMIT 1')
+            before = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1')
+            before = [before[0], before[1][0]]
+
+            str_summary = ''.join(summary[0][i] for i in range(len(summary[0]))) + '\n' + str_summary \
+                          + '\n\n楽天カード支払　' + format(before[1][5], ',') \
 
             # 本日のデータ取得済みなら中断
             if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
                 layout = [[], []]
-                for i in range(0, len(BANKS)):
+                for i in range(len(BANKS)):
                     layout[0].append(BANKS[i])
                     layout[1].append(format(before[1][i + 1 + (0 if i < 3 else 3)], ','))
 
-                com.dialog_cols(MESSAGE + '\n\n' + '本日は取得済です。',
+                com.dialog_cols(str_summary + '\n' + '本日は取得済です。',
                     layout, ['l', 'r', 'c', 'r'], self.myjob, lv='W')
                 return
 
@@ -55,13 +78,14 @@ class MyAsset:
             try: self.cnx.close()
             except: pass
 
-        before_view = before[1][1]
-        before_paypay = before[1][3]
+        before_view = before[1][4]
+        before_paypay = before[1][6]
         before_smbc = before[1][7]
 
         flg, inputs = com.input_box(
-            MESSAGE + '\n\n' + self.myjob + ' 開始しますか？', '開始確認',
-            [['Viewカード', str(before_view)], ['PayPay', str(before_paypay)], ['三井住友', str(before_smbc)]], 'input')
+            str_summary + '\n' + self.myjob + ' 開始しますか？', '開始確認',
+            [['Viewカード', str(before_view)], ['PayPay', str(before_paypay)], ['三井住友', str(before_smbc)]],
+            'input')
         if flg <= 0:
             return
 
@@ -141,7 +165,7 @@ class MyAsset:
             self.cnx = my_sql.MySql('data_my')
 
             # 取得データを登録
-            if self.cnx.insert(columns, values, TARGET_TABLES[0]):
+            if self.cnx.insert(columns, values, TARGET_TABLES[2]):
                 self.cnx.commit()
             else:
                 self.cnx.rollback()
@@ -158,7 +182,7 @@ class MyAsset:
             except: pass
 
         com.dialog_cols(com.str_time()[:10] + '(前回 ' + datetime.datetime.strftime(before[1][0], '%Y-%m-%d') +
-                        ')\n\n' + MESSAGE + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
+                        ')\n\n' + str_summary + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
                         layout, ['l', 'r', 'c', 'r'], self.myjob)
 
     # Viewカード
