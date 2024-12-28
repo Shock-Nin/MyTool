@@ -196,7 +196,7 @@ class AnomalyHst:
 
                         out += rows[0][:4] + ',' + rows[0][4: -2] + ',' + rows[0][-2:] + ',' + str(rows[1]) + ','
                         out += str(cl) + ',' + str(float(rows[3]) - float(rows[4])) + ',' + str(float(rows[5]) - float(rows[2])) + ','
-                        out += ",".join(['{:.6f}'.format(ma) for ma in ma_lists]) + '\n'
+                        out += ','.join(['{:.6f}'.format(ma) for ma in ma_lists]) + '\n'
 
                     open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/Calc/' +
                          files[i].replace('\\', '/').split('/')[-1], 'w').write(out)

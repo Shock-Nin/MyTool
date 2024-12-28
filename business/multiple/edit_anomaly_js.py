@@ -23,7 +23,6 @@ class EditHistory:
     def do(self):
         pass
 
-
     def create_h1(self):
 
         files = glob.glob(cst.HST_PATH[cst.PC] + '/??????.csv')

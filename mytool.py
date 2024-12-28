@@ -48,6 +48,8 @@ EA_MENU = {
     'EAテスト結合': 'windows.ea_merge_test',
 }
 ANOMALY_MENU = {
+    'DBヒストリカル': 'windows.db_hst/update',
+    'データ作成': 'windows.db_hst/create',
     'H1データ作成': 'windows.anomaly_hst/create_h1',
     'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
     'アノマリ〜': 'windows.anomaly_data/edit_judge',
@@ -82,6 +84,25 @@ XY_SIZE = (DP[2], 1)
 
 
 def main():
+
+    # import snowflake.connector
+    # con = snowflake.connector.connect(
+    #     user='DAISUKE_NAGAOKA.XC@NTT.DOCOMO.COM',
+    #     password='Dai19801980@',
+    #     account='NTTDOCOMO-NTTDOCOMO_IS_DL_PRO',
+    #     # user='CTCTEST',
+    #     # password='Ctccircus2024',
+    #     # account='TAOUSVU-QG29146',
+    #     session_parameters={
+    #         'QUERY_TAG': 'EndOfMonthFinancials',
+    #     }
+    # )
+    # print(con.cmd_query())
+    #
+    #
+    # con.close()
+    #
+    # return
 
     processes = []
     # メニュー系CSV読み込み
