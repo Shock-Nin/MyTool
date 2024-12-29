@@ -26,8 +26,8 @@ import subprocess
 """ PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
 PW_INPUT = False
 # -1デフォルト、0DEV
-CHANGE_MENU = -1
-# CHANGE_MENU = 0
+# CHANGE_MENU = -1
+CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Tweet': 'batch.anomaly/tweet',
