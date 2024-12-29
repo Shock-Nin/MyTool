@@ -23,10 +23,11 @@ class DbHst:
         getattr(self, '_' + self.function)()
 
     def _update(self):
-        if com.question('DBヒストリカル更新 開始しますか？', '開始確認') <= 0:
+        inputs = com.input_box('DBヒストリカル更新 開始しますか？', '開始確認', [['対象年', int(com.str_time()[:4]) - 1]])
+        if inputs[0] <= 0:
             return 0
 
-        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/*.csv')
+        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '_h1/*.csv')
         total_time = 0
 
         try:
@@ -51,9 +52,10 @@ class DbHst:
                 start_time = com.time_start()
 
                 inserts = []
-                for k in range(1, len(data) - 1):
+                for k in range(len(data) - 1):
                     rows = data[k].split(',')
-                    inserts.append([rows[0][:4] + '-' + rows[0][4:6] + '-' + rows[0][6:] + ' ' + rows[1],
+                    inserts.append([rows[0][:4] + '-' + rows[0][4:6] + '-' + rows[0][6:] + ' '
+                                    + ('0' if int(rows[1]) < 10 else '') + rows[1] + ':00:00',
                                     rows[2], rows[3], rows[4], rows[5]])
 
                     if k % 10000 == 0:
@@ -62,7 +64,6 @@ class DbHst:
 
                 if 0 < len(inserts):
                     con.insert(['Time', 'Open', 'High', 'Low', 'Close'], inserts, table)
-
                 con.commit()
 
                 run_time = com.time_end(start_time)

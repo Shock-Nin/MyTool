@@ -21,11 +21,12 @@ class AnomalyHst:
         if com.question('H1ヒストリカル編集 開始しますか？', '開始確認') <= 0:
             return 0
 
-        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/??????.csv')
+        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/*.csv')
+        # files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/??????.csv')
         total_time = 0
 
         try:
-            for i in range(0, len(files)):
+            for i in range(len(files)):
                 data = open(files[i], 'r').read().split('\n')
 
                 window = com.progress('H1データ作成中', [files[i].split('/')[-1], len(files)], interrupt=True)
@@ -55,8 +56,8 @@ class AnomalyHst:
                         count = 0
                         hi = 0
                         lo = 9999999
-
                 open(files[i].replace('\\', '/').replace('history/', 'Trender/H1_'), 'w').write(out)
+                open(files[i].replace('\\', '/').replace('history/', 'history_h1/'), 'w').write(out)
 
                 run_time = com.time_end(start_time)
                 total_time += run_time

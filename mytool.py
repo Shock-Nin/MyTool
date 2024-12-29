@@ -26,8 +26,8 @@ import subprocess
 """ PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
 PW_INPUT = False
 # -1デフォルト、0DEV
-# CHANGE_MENU = -1
-CHANGE_MENU = 0
+CHANGE_MENU = -1
+# CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Tweet': 'batch.anomaly/tweet',
@@ -48,9 +48,9 @@ EA_MENU = {
     'EAテスト結合': 'windows.ea_merge_test',
 }
 ANOMALY_MENU = {
-    'DBヒストリカル': 'windows.db_hst/update',
-    'データ作成': 'windows.db_hst/create',
     'H1データ作成': 'windows.anomaly_hst/create_h1',
+    'H1データDB格納': 'windows.db_hst/update',
+    'データ作成': 'windows.db_hst/create',
     'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
     'アノマリ〜': 'windows.anomaly_data/edit_judge',
     'スペシャル': 'windows.anomaly_data/specials',
