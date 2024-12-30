@@ -26,8 +26,8 @@ import subprocess
 """ PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
 PW_INPUT = False
 # -1デフォルト、0DEV
-CHANGE_MENU = -1
-# CHANGE_MENU = 0
+# CHANGE_MENU = -1
+CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     'Tweet': 'batch.anomaly/tweet',
@@ -49,9 +49,10 @@ EA_MENU = {
 }
 ANOMALY_MENU = {
     'H1データ作成': 'windows.anomaly_hst/create_h1',
-    'H1データDB格納': 'windows.db_hst/update',
-    'データ作成': 'windows.db_hst/create',
+    'H1データDB格納': 'windows.anomaly_hst/insert_db',
     'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
+    'モデル用テーブル作成': 'windows.anomaly_data/create_table',
+    'モデル作成': 'windows.anomaly_data/create_model',
     'アノマリ〜': 'windows.anomaly_data/edit_judge',
     'スペシャル': 'windows.anomaly_data/specials',
     'Webコンテンツ': 'windows.anomaly_web/contents',

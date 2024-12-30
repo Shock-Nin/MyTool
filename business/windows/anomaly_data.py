@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from common import com
+from common import my_sql
 from const import cst
 
 import json
@@ -9,10 +10,22 @@ import datetime
 import pandas as pd
 import PySimpleGUI as sg
 
+# from sklearn.model_selection import train_test_split
+# from sklearn.linear_model import LinearRegression
+import numpy as np
+import matplotlib.pyplot as plt
+
+import statsmodels.api  as sm
+import tensorflow       as tf
+# import tensorflow.keras as keras
+import statsmodels.datasets.co2 as co2
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+
 PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1]]
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
+MODEL_SKIP_DAYS = ['1225', '1231', '0101', '0102']
 
 class AnomalyData:
 
@@ -21,6 +34,214 @@ class AnomalyData:
 
     def do(self):
         getattr(self, '_' + self.function)()
+
+    def _create_table(self):
+        inputs = com.input_box('モデル用テーブル作成 開始しますか？', '開始確認', [
+            ['対象年', int(com.str_time()[:4]) - 1], ['1=H, 2=D, 3=M', '1']])
+        if inputs[0] <= 0:
+            return
+
+        if inputs[1][1] not in ['1', '2', '3']:
+            com.dialog('選択が不正です。', '選択不正')
+            return
+
+        total_time = 0
+        start_time = com.time_start()
+        try:
+            con = my_sql.MySql('fx_history')
+            tables = con.free('SHOW TABLES')
+
+            res = {}
+            for i in range(len(tables)):
+            # for i in range(2):
+
+                window = com.progress(
+                    'データ抽出中', [tables[i][0] + ' ' + str(i + 1) + ' / ' + str(len(tables)), len(tables)], interrupt=True)
+                event, values = window.read(timeout=0)
+                res[tables[i][0]] = con.select('*', tables[i][0])
+                window.close()
+
+        except Exception as e:
+            com.dialog('エラーが発生しました。\n' + str(e), 'データ抽出エラー発生', lv='W')
+            return
+
+        finally:
+            con.close()
+            try:
+                window.close()
+            except:
+                pass
+
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log('データ抽出完了(' + com.conv_time_str(total_time) + ')')
+
+        if inputs[1][1] in ['2', '3']:
+            try:
+                start_time = com.time_start()
+                cnt = 0
+                len_date = (10 if '2' == inputs[1][1] else 7)
+
+                for table in res:
+                    cnt += 1
+
+                    window = com.progress('H1時間足変換中', [table, len(res)], interrupt=True)
+                    event, values = window.read(timeout=0)
+                    window[table + '_'].update(cnt)
+                    start_time = com.time_start()
+
+                    old_date = '1999-01-01'
+                    is_middle = False
+                    rates = []
+
+                    for i in range(len(res[table][1])):
+                        data = res[table][1][i]
+                        middle = (14 if '02' == str(data[0])[5:7] else 15)
+
+                        if str(data[0])[:len_date] == str(old_date)[:len_date]:
+                            if '2' == inputs[1][1]:
+                                continue
+
+                            if int(str(data[0])[8:10]) <= middle or is_middle:
+                                continue
+                            is_middle = True
+                        else:
+                            is_middle = False
+
+                        old_date = data[0]
+                        op = data[1]
+                        hi = 0
+                        lo = 9999999
+
+                        for k in range(i + 1, len(res[table][1])):
+                            rows = res[table][1][k]
+
+                            if str(rows[0])[:len_date] != str(old_date)[:len_date]:
+                                break
+
+                            if '3' == inputs[1][1]:
+                                if not is_middle and middle < int(str(rows[0])[8:10]):
+                                    break
+
+                            hi = max(float(rows[2]), hi)
+                            lo = min(float(rows[3]), lo)
+                            cl = rows[4]
+
+                        rates.append([datetime.datetime(
+                            int(str(old_date)[:4]), int(str(old_date)[5:7]), int(str(old_date)[8:10])),
+                            op, hi, lo, cl])
+
+                    res[table][1] = rates
+                    window.close()
+
+            except Exception as e:
+                com.dialog('エラーが発生しました。\n' + str(e), '時間足編集エラー発生', lv='W')
+                return
+            finally:
+                try:
+                    window.close()
+                except:
+                    pass
+
+            run_time = com.time_end(start_time)
+            total_time += run_time
+            com.log('H1時間足変換完了(' + com.conv_time_str(total_time) + ')')
+
+        try:
+            times = []
+            for table in res:
+                for i in range(len(res[table][1])):
+                    times.append(res[table][1][i][0])
+            times = sorted(list(set(times)))
+
+            target_times = []
+            for year in range(int(inputs[1][0]), int(com.str_time()[:4])):
+                for i in range(len(times)):
+                    if int(times[i].strftime('%Y')) == year \
+                        and times[i].strftime('%m%d') not in MODEL_SKIP_DAYS:
+                        target_times.append(times[i])
+
+            cnt = 0
+            for year in range(int(inputs[1][0]), int(com.str_time()[:4])):
+
+                start_time = com.time_start()
+
+                window = com.progress('データ編集中', [str(year), len(target_times)], interrupt=True)
+                event, values = window.read(timeout=0)
+
+                out_file = open(cst.HST_PATH[cst.PC].replace('\\', '/') + '_'
+                                + {'1': 'h1', '2': 'd1', '3': 'mn'}[inputs[1][1]]
+                                + '_updn/' + str(year) + '.csv', 'w')
+                out_file.write('Time,' + ','.join(table for table in res) + '\n')
+
+                for i in range(cnt, len(target_times)):
+                    window[str(year) + '_'].update(i)
+                    data = ''
+
+                    if year < int(target_times[i].strftime('%Y')):
+                        break
+
+                    for table in res:
+
+                        is_time = False
+                        for k in range(len(res[table][1])):
+
+                            row = res[table][1][k]
+                            if target_times[i] < row[0]:
+                                break
+                            elif target_times[i] == row[0]:
+                                data += str(round(
+                                    (row[1] - row[4] if table.startswith('usd') else row[4] - row[1]) / row[4] * 100, 3)) + ','
+                                del res[table][1][k]
+                                is_time = True
+                                break
+
+                        if not is_time:
+                            data += ','
+
+                    out_file.write(target_times[i].strftime('%Y/%m/%d %H:%M:%S') + ',' + data[:-1] + '\n')
+                    cnt += 1
+
+                window.close()
+
+                run_time = com.time_end(start_time)
+                total_time += run_time
+                com.log(str(year) + '年 書き出し完了(' + com.conv_time_str(total_time) + ')')
+
+        except Exception as e:
+            com.dialog('エラーが発生しました。\n' + str(e), 'データ編集エラー発生', lv='W')
+            return
+        finally:
+            try:
+                window.close()
+            except:
+                pass
+
+        com.log('モデル用テーブル作成完了(' + com.conv_time_str(total_time) + ')')
+        com.dialog('モデル用テーブル作成完了しました。(' + com.conv_time_str(total_time) + ')', 'モデル用テーブル作成完了')
+
+        return ''
+
+    def _create_model(self):
+        inputs = com.input_box('モデル作成 開始しますか？', '開始確認', [
+            ['開始年', int(com.str_time()[:4]) - 10], ['1=H, 2=D, 3=M', '1']])
+        if inputs[0] <= 0:
+            return
+
+        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '_'
+                          + {'1': 'h1', '2': 'd1', '3': 'mn'}[inputs[1][1]] + '_updn/*.csv')
+        print(files)
+
+
+
+        # x_train = ''
+        # x_test = ''
+        # y_train = ''
+        # y_test = ''
+        #
+        # model = LinearRegression()
+        # model.fit(x_train, y_train)
+        return ''
 
     # ゴトー日とマド空けの実行
     def _specials(self):

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from common import com
+from common import my_sql
 from const import cst
 
 import glob
@@ -8,6 +9,13 @@ import glob
 PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 MTF_INPUTS = [['SMA', 5, 25, 50, 100]]
 
+RENAME_CSV = {
+    'JPNIDXJPY': 'z_jn',
+    'USA30IDXUSD': 'z_dj',
+    'USA500IDXUSD': 'z_sp',
+    'USATECHIDXUSD': 'z_nq',
+    'XAUUSD': 'z_gold',
+}
 
 class AnomalyHst:
 
@@ -19,10 +27,9 @@ class AnomalyHst:
 
     def _create_h1(self):
         if com.question('H1ヒストリカル編集 開始しますか？', '開始確認') <= 0:
-            return 0
+            return
 
         files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/*.csv')
-        # files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '/??????.csv')
         total_time = 0
 
         try:
@@ -56,6 +63,7 @@ class AnomalyHst:
                         count = 0
                         hi = 0
                         lo = 9999999
+
                 open(files[i].replace('\\', '/').replace('history/', 'Trender/H1_'), 'w').write(out)
                 open(files[i].replace('\\', '/').replace('history/', 'history_h1/'), 'w').write(out)
 
@@ -70,6 +78,70 @@ class AnomalyHst:
 
         com.log('H1作成完了(' + com.conv_time_str(total_time) + ')')
         com.dialog('H1作成完了しました。(' + com.conv_time_str(total_time) + ')', 'H1作成完了')
+
+        return
+
+    def _insert_db(self):
+        inputs = com.input_box('DBヒストリカル更新 開始しますか？', '開始確認', [['対象年', int(com.str_time()[:4]) - 1]])
+        if inputs[0] <= 0:
+            return
+
+        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '_h1/*.csv')
+        total_time = 0
+
+        try:
+            con = my_sql.MySql('fx_history')
+
+            for i in range(len(files)):
+                table = files[i].split('\\')[-1].replace('.csv', '')
+                for key in RENAME_CSV:
+                    if key == table:
+                        table = RENAME_CSV[key]
+
+                data = open(files[i], 'r').read().split('\n')
+
+                window = com.progress('H1ヒストリカル INSERT中', [files[i].split('/')[-1], len(files)], interrupt=True,)
+                event, values = window.read(timeout=0)
+
+                window[files[i].split('/')[-1] + '_'].update(i)
+                start_time = com.time_start()
+
+                inserts = []
+                for k in range(len(data) - 1):
+                    rows = data[k].split(',')
+
+                    if int(rows[0][:4]) < int(inputs[1][0]):
+                        continue
+
+                    inserts.append([rows[0][:4] + '-' + rows[0][4:6] + '-' + rows[0][6:] + ' '
+                                    + ('0' if int(rows[1]) < 10 else '') + rows[1] + ':00:00',
+                                    rows[2], rows[3], rows[4], rows[5]])
+
+                    if k % 10000 == 0:
+                        con.insert(['Time', 'Open', 'High', 'Low', 'Close'], inserts, table)
+                        inserts = []
+
+                if 0 < len(inserts):
+                    con.insert(['Time', 'Open', 'High', 'Low', 'Close'], inserts, table)
+                con.commit()
+
+                run_time = com.time_end(start_time)
+                total_time += run_time
+                com.log(files[i].replace('\\', '/').split('/')[-1]
+                        + '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                window.close()
+        except:
+            con.rollback()
+
+        finally:
+            con.close()
+            try:
+                window.close()
+            except:
+                pass
+
+        com.log('H1ヒストリカルINSERT完了(' + com.conv_time_str(total_time) + ')')
+        com.dialog('H1ヒストリカルINSERT完了しました。(' + com.conv_time_str(total_time) + ')', 'H1データDB格納完了')
 
         return 0
 
@@ -199,7 +271,7 @@ class AnomalyHst:
                         out += str(cl) + ',' + str(float(rows[3]) - float(rows[4])) + ',' + str(float(rows[5]) - float(rows[2])) + ','
                         out += ','.join(['{:.6f}'.format(ma) for ma in ma_lists]) + '\n'
 
-                    open(files[i].replace('\\', '/').split('Trender/')[0] + 'Trender/Calc/' +
+                    open(cst.HST_PATH[cst.PC].replace('\\', '/') + 'Trender/Calc/' +
                          files[i].replace('\\', '/').split('/')[-1], 'w').write(out)
 
                     run_time = com.time_end(start_time)
