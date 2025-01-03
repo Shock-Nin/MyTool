@@ -7,7 +7,7 @@ end tell
 END
 
 cd /Users/dsk_nagaoka/MyTool
-python mytool.py
+python3 mytool.py
 
 # pip install pyperclip
 # pip install pyautogui

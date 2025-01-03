@@ -93,7 +93,7 @@ def input_box(msg, title, forms, obj='', cancel=False):
     else:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [(sg.Text(forms[i][k], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF')
+                [(sg.Text(forms[i][k], font=('', 16), size=(16, 1), text_color='#000000', background_color='#77CCFF')
                   if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(12, 1)))]
                  for k in range(0, len(forms[i]))
             ])] for i in range(0, len(forms))], background_color='#77CCFF'

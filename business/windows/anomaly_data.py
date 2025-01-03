@@ -7,25 +7,15 @@ from const import cst
 import json
 import glob
 import datetime
+import numpy as np
 import pandas as pd
 import PySimpleGUI as sg
-
-# from sklearn.model_selection import train_test_split
-# from sklearn.linear_model import LinearRegression
-import numpy as np
-import matplotlib.pyplot as plt
-
-import statsmodels.api  as sm
-import tensorflow       as tf
-# import tensorflow.keras as keras
-import statsmodels.datasets.co2 as co2
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 
 PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1]]
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
-MODEL_SKIP_DAYS = ['1225', '1231', '0101', '0102']
+MODEL_SKIP_DAYS = ['1225', '0101']
 
 class AnomalyData:
 
@@ -35,13 +25,13 @@ class AnomalyData:
     def do(self):
         getattr(self, '_' + self.function)()
 
-    def _create_table(self):
-        inputs = com.input_box('モデル用テーブル作成 開始しますか？', '開始確認', [
-            ['対象年', int(com.str_time()[:4]) - 1], ['1=H, 2=D, 3=M', '1']])
+    def _create_stat_csv(self):
+        inputs = com.input_box('統計CSV作成 開始しますか？', '開始確認', [
+            ['開始年', int(com.str_time()[:4]) - 1], ['1=H, 2=D, 3=M, 4=W', '1']])
         if inputs[0] <= 0:
             return
 
-        if inputs[1][1] not in ['1', '2', '3']:
+        if inputs[1][1] not in ['1', '2', '3', '4']:
             com.dialog('選択が不正です。', '選択不正')
             return
 
@@ -49,16 +39,28 @@ class AnomalyData:
         start_time = com.time_start()
         try:
             con = my_sql.MySql('fx_history')
+            if con.cnx is None:
+                com.dialog('DB接続エラーが発生しました。', 'DB接続エラー発生', lv='W')
+                return
+
             tables = con.free('SHOW TABLES')
 
             res = {}
             for i in range(len(tables)):
             # for i in range(2):
 
-                window = com.progress(
-                    'データ抽出中', [tables[i][0] + ' ' + str(i + 1) + ' / ' + str(len(tables)), len(tables)], interrupt=True)
+                info = tables[i][0] + ' ' + str(i + 1) + ' / ' + str(len(tables))
+                window = com.progress('データ抽出中', [info, len(tables)], interrupt=True)
                 event, values = window.read(timeout=0)
-                res[tables[i][0]] = con.select('*', tables[i][0])
+                window[info + '_'].update(i + 1)
+                res[tables[i][0]] = con.select(
+                    '*', tables[i][0],
+                    where=('\'' + str(int(inputs[1][0])) + '-01-01\' <= Time AND WEEKDAY(Time) < 5'))
+
+                # 中断イベント
+                if _is_interrupt(window, event):
+                    return
+
                 window.close()
 
         except Exception as e:
@@ -76,11 +78,11 @@ class AnomalyData:
         total_time += run_time
         com.log('データ抽出完了(' + com.conv_time_str(total_time) + ')')
 
-        if inputs[1][1] in ['2', '3']:
+        if inputs[1][1] in ['2', '3', '4']:
             try:
                 start_time = com.time_start()
                 cnt = 0
-                len_date = (10 if '2' == inputs[1][1] else 7)
+                len_date = (10 if inputs[1][1] in ['2', '4'] else 7)
 
                 for table in res:
                     cnt += 1
@@ -95,23 +97,30 @@ class AnomalyData:
                     rates = []
 
                     for i in range(len(res[table][1])):
+
+                        # 中断イベント
+                        if _is_interrupt(window, event):
+                            return
+
                         data = res[table][1][i]
                         middle = (14 if '02' == str(data[0])[5:7] else 15)
 
+                        if int(str(data[0])[8:10]) <= middle:
+                            is_middle = False
+
                         if str(data[0])[:len_date] == str(old_date)[:len_date]:
-                            if '2' == inputs[1][1]:
+
+                            if inputs[1][1] in ['2', '4']:
                                 continue
 
                             if int(str(data[0])[8:10]) <= middle or is_middle:
                                 continue
                             is_middle = True
-                        else:
-                            is_middle = False
 
                         old_date = data[0]
                         op = data[1]
-                        hi = 0
-                        lo = 9999999
+                        hi = data[2]
+                        lo = data[3]
 
                         for k in range(i + 1, len(res[table][1])):
                             rows = res[table][1][k]
@@ -123,12 +132,13 @@ class AnomalyData:
                                 if not is_middle and middle < int(str(rows[0])[8:10]):
                                     break
 
-                            hi = max(float(rows[2]), hi)
-                            lo = min(float(rows[3]), lo)
+                            hi = max(rows[2], hi)
+                            lo = min(rows[3], lo)
                             cl = rows[4]
 
                         rates.append([datetime.datetime(
-                            int(str(old_date)[:4]), int(str(old_date)[5:7]), int(str(old_date)[8:10])),
+                            int(str(old_date)[:4]), int(str(old_date)[5:7]),
+                            (int(str(old_date)[8:10])) if inputs[1][1] in ['2', '4'] else 16 if is_middle else 1),
                             op, hi, lo, cl])
 
                     res[table][1] = rates
@@ -157,23 +167,23 @@ class AnomalyData:
             target_times = []
             for year in range(int(inputs[1][0]), int(com.str_time()[:4])):
                 for i in range(len(times)):
-                    if int(times[i].strftime('%Y')) == year \
-                        and times[i].strftime('%m%d') not in MODEL_SKIP_DAYS:
-                        target_times.append(times[i])
+                    if int(times[i].strftime('%Y')) == year:
 
+                        if inputs[1][1] in ['3'] or times[i].strftime('%m%d') not in MODEL_SKIP_DAYS:
+                            target_times.append(times[i])
             cnt = 0
             for year in range(int(inputs[1][0]), int(com.str_time()[:4])):
 
                 start_time = com.time_start()
-
                 window = com.progress('データ編集中', [str(year), len(target_times)], interrupt=True)
                 event, values = window.read(timeout=0)
 
-                out_file = open(cst.HST_PATH[cst.PC].replace('\\', '/') + '_'
-                                + {'1': 'h1', '2': 'd1', '3': 'mn'}[inputs[1][1]]
-                                + '_updn/' + str(year) + '.csv', 'w')
-                out_file.write('Time,' + ','.join(table for table in res) + '\n')
+                out_file = open(cst.HST_PATH[cst.PC].replace('\\', '/') + '_stat/' + str(year)
+                                + {'1': 'H', '2': 'D', '3': 'M', '4': 'W'}[inputs[1][1]] + '.csv', 'w')
+                out_file.write('Time,' + ','.join(''.join(
+                    table.upper() + col for col in [',', '_Vola,', '_UpDn']) for table in res) + '\n')
 
+                old = {table: -1 for table in res}
                 for i in range(cnt, len(target_times)):
                     window[str(year) + '_'].update(i)
                     data = ''
@@ -182,26 +192,39 @@ class AnomalyData:
                         break
 
                     for table in res:
-
                         is_time = False
+
                         for k in range(len(res[table][1])):
 
+                            # 中断イベント
+                            if _is_interrupt(window, event):
+                                return
+
                             row = res[table][1][k]
-                            if target_times[i] < row[0]:
+
+                            if year < int(row[0].strftime('%Y')) or target_times[i] < row[0]:
                                 break
+
                             elif target_times[i] == row[0]:
-                                data += str(round(
-                                    (row[1] - row[4] if table.startswith('usd') else row[4] - row[1]) / row[4] * 100, 3)) + ','
-                                del res[table][1][k]
+                                op = (row[1] if -1 == old[table] else old[table])
+                                data += str(row[4]) + ',' + '{:.6f}'.format(row[2] - row[3]) + ',' \
+                                    + '{:.6f}'.format(op - row[4] if table.startswith('usd') else row[4] - op) + ','
+
+                                old[table] = row[4]
                                 is_time = True
+
+                                del res[table][1][k]
                                 break
 
                         if not is_time:
-                            data += ','
+                            data += (',,,' if -1 == old[table] else str(old[table]) + ',0,0,')
 
-                    out_file.write(target_times[i].strftime('%Y/%m/%d %H:%M:%S') + ',' + data[:-1] + '\n')
+                    out_file.write(target_times[i].strftime('%Y-%m'
+                        + ('|' + DAYWEEKS[target_times[i].weekday() + 1] if inputs[1][1] in ['4'] else '-%d')
+                        + (' %H:%M:%S' if '1' == inputs[1][1] else '')) + ',' + data[:-1] + '\n')
                     cnt += 1
 
+                out_file.close()
                 window.close()
 
                 run_time = com.time_end(start_time)
@@ -213,35 +236,195 @@ class AnomalyData:
             return
         finally:
             try:
+                out_file.close()
+            except:
+                pass
+            try:
                 window.close()
             except:
                 pass
 
-        com.log('モデル用テーブル作成完了(' + com.conv_time_str(total_time) + ')')
-        com.dialog('モデル用テーブル作成完了しました。(' + com.conv_time_str(total_time) + ')', 'モデル用テーブル作成完了')
+        com.log('統計CSV作成完了(' + com.conv_time_str(total_time) + ')')
+        com.dialog('統計CSV作成完了しました。(' + com.conv_time_str(total_time) + ')', '統計CSV作成完了')
 
         return ''
 
-    def _create_model(self):
-        inputs = com.input_box('モデル作成 開始しますか？', '開始確認', [
-            ['開始年', int(com.str_time()[:4]) - 10], ['1=H, 2=D, 3=M', '1']])
+    def _edit_forecast(self):
+        inputs = com.input_box('予測データ編集 開始しますか？', '開始確認', [
+            # ['対象年', int(com.str_time()[:4])], ['モデル期間', 15]])
+            ['対象年', int(com.str_time()[:4]) - 1], ['モデル期間', 15]])
         if inputs[0] <= 0:
             return
+        try:
+            start_time = com.time_start()
+            total_time = 0
 
-        files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '_'
-                          + {'1': 'h1', '2': 'd1', '3': 'mn'}[inputs[1][1]] + '_updn/*.csv')
-        print(files)
+            year_target = int(inputs[1][0])
+            forecasts = [[], [], []]
 
+            for i in range(len(forecasts)):
+                date = datetime.datetime(year_target - 1 + i, 1, 1)
 
+                while date.year == year_target - 1 + i:
 
-        # x_train = ''
-        # x_test = ''
-        # y_train = ''
-        # y_test = ''
-        #
-        # model = LinearRegression()
-        # model.fit(x_train, y_train)
-        return ''
+                    if ('0' if date.month < 10 else '') + str(date.month) + ('0' if date.day < 10 else '') + str(date.day) \
+                            not in MODEL_SKIP_DAYS and date.weekday() < 5:
+                        forecasts[i].append(date)
+
+                    date += datetime.timedelta(days=1)
+
+            dfs = [[], []]
+            for i in range(len(dfs)):
+                for span in ['H', 'D', 'M', 'W']:
+
+                    files = glob.glob(cst.HST_PATH[cst.PC].replace('\\', '/') + '_stat/????' + span + '.csv')
+                    files = sorted(files)
+
+                    try:
+                        years = [year for year in range(year_target - int(inputs[1][1]) - 2 + i, year_target - 2 + i)]
+                        cnt = 0
+                        while cnt < len(files):
+                            if int(files[cnt].split('/')[-1].replace(span + '.csv', '')) in years:
+                                cnt += 1
+                            else:
+                                del files[cnt]
+                    except:
+                        pass
+
+                    df = pd.read_csv(files[0])
+                    if 1 < len(files):
+                        for k in range(1, len(files)):
+                            df = pd.concat([df, pd.read_csv(files[k])])
+
+                    # pd.to_datetime(df['Time'])
+                    [df.rename(columns={key: key.replace('USD', '')}, inplace=True) for key in df]
+                    df = df.reset_index(drop=True)
+
+                    # df.set_index('Time', inplace=True)
+                    # df.fillna(0, inplace=True)
+                    # [df.astype({key: np.asarray(dt for dt in df[key])}) for key in df if 'Time' != key]
+
+                    dfs[i].append(df)
+
+        except Exception as e:
+            com.dialog('エラーが発生しました。\n' + str(e), 'データ取得エラー発生', lv='W')
+            return
+
+        out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+        cols = ['', '']
+        curs = []
+
+        for col in dfs[0][0].keys():
+            if col in ['Time'] or 0 <= col.find('_Vola') or 0 <= col.find('_UpDn'):
+                continue
+            cols[0] += col + ',' + col + '_Avg,' + col + '_AvgMax,' + col + '_AvgMin,'
+            cols[1] += col + ',' + col + '_Avg,' + col + '_Win,' + col + '_RateWin,' + col + '_AvgWin,' + col + '_AvgLose,'
+            curs.append(col)
+
+        for i in range(len(dfs)):
+
+            data_d = dfs[i][1]
+            data_m = dfs[i][2]
+            data_w = dfs[i][3]
+
+            path = str(year_target - int(inputs[1][1]) - 2 + i)+ '-' + str(year_target - 2 + i)
+
+            vola_file = open(out_path + path + '_' + ['pre', 'next'][i] + '_vola.csv', 'w')
+            vola_file.write('Time,' + ''.join(cols[0].replace(',', span + ',') for span in ['_D', '_M', '_Maf', '_W'])[:-1] + '\n')
+            updn_file = open(out_path + path + '_' + ['pre', 'next'][i] + '_updn.csv', 'w')
+            updn_file.write('Time,' + ''.join(cols[1].replace(',', span + ',') for span in ['_D', '_M', '_Maf', '_W'])[:-1] + '\n')
+
+            for time in forecasts[i]:
+
+                row_d = data_d[data_d['Time'].str.match('20..-' + time.strftime('%m-%d'))].copy()
+
+                if time.day < 16:
+                    row_m = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '01')].copy()
+                    row_m_af = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
+                else:
+                    row_m = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
+                    row_m_af = data_m[data_m['Time'].str.match(
+                        '20..-' + ('01' if 13 == (time.month + 1) else
+                                  ('0' if (time.month + 1) < 10 else '') + str(time.month + 1)) + '-01')].copy()
+                row_w = data_w[data_w['Time'].str.match('20..-' + time.strftime('%m') + '.' + DAYWEEKS[time.weekday() + 1])].copy()
+
+                row_d = row_d.reset_index(drop=True)
+                row_m = row_m.reset_index(drop=True)
+                row_m_af = row_m_af.reset_index(drop=True)
+                row_w = row_w.reset_index(drop=True)
+                rows = [row_d, row_m, row_m_af, row_w]
+
+                vola_file.write(str(time))
+                updn_file.write(str(time))
+                str_vola = ''
+                str_updn = ''
+
+                for row in rows:
+                    for cur in curs:
+                        count = len(row)
+
+                        vola = 0
+                        vola_max = 0
+                        vola_min = 9999999999
+                        updn = 0
+                        count_win = 0
+                        count_lose = 0
+                        updn_win = 0
+                        updn_lose = 0
+
+                        for k in range(len(row)):
+
+                            get_vola = row.at[row.index[k], cur + '_Vola'] / row.at[row.index[k], cur] * 100
+                            get_updn = row.at[row.index[k], cur + '_UpDn'] / row.at[row.index[k], cur] * 100
+                            if 'nan' == str(get_updn) or 'nan' == str(get_vola):
+                                continue
+
+                            vola += get_vola
+                            vola_max = max(vola_max, get_vola)
+                            vola_min = min(vola_min, get_vola)
+
+                            updn += get_updn
+
+                            if get_updn < 0:
+                                count_lose += 1
+                                updn_lose += get_updn
+                            else:
+                                count_win += 1
+                                updn_win += get_updn
+
+                        str_vola += ',' + str(count) + ',' + '{:.2f}'.format(vola / count) + ','
+                        str_vola += '{:.2f}'.format(vola_max) + ',' + '{:.2f}'.format(vola_min)
+
+                        str_updn += ',' + str(count) + ',' + '{:.2f}'.format(updn / count) + ','
+                        str_updn += str(count_win) + ',' + '{:.2f}'.format(count_win / count * 100) + ','
+                        str_updn += '{:.2f}'.format(0 if 0 == count_win else updn_win / count_win) + ','
+                        str_updn += '{:.2f}'.format(0 if 0 == count_lose else updn_lose / count_lose)
+
+                vola_file.write(str_vola + '\n')
+                updn_file.write(str_updn + '\n')
+
+            vola_file.close()
+            updn_file.close()
+
+        run_time = com.time_end(start_time)
+        total_time += run_time
+
+        # except Exception as e:
+        #     com.dialog('エラーが発生しました。\n' + str(e), 'データ編集エラー発生', lv='W')
+        #     return
+        # finally:
+        #     try:
+        #         vola_file.close()
+        #     except:
+        #         pass
+        #     try:
+        #         updn_file.close()
+        #     except:
+        #         pass
+
+        com.log('予測データ編集完了(' + com.conv_time_str(total_time) + ')')
+        com.dialog('予測データ編集完了しました。(' + com.conv_time_str(total_time) + ')', '統計CSV作成完了')
+
 
     # ゴトー日とマド空けの実行
     def _specials(self):

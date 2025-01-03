@@ -29,7 +29,7 @@ class MySql:
 
         except Exception as e:
             com.log('MySQL: 接続エラー [' + host + '(' + dbname + ')] ' + str(e), 'E')
-            self.cnx = None
+            cnx = None
 
         self.cnx = cnx
 

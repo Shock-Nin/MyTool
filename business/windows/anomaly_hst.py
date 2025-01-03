@@ -10,11 +10,11 @@ PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 MTF_INPUTS = [['SMA', 5, 25, 50, 100]]
 
 RENAME_CSV = {
+    'XAUUSD': 'x_gold',
     'JPNIDXJPY': 'z_jn',
     'USA30IDXUSD': 'z_dj',
     'USA500IDXUSD': 'z_sp',
     'USATECHIDXUSD': 'z_nq',
-    'XAUUSD': 'z_gold',
 }
 
 class AnomalyHst:
