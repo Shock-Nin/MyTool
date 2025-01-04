@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import datetime
+
 from common import com
 from const import cst
 
@@ -35,8 +37,8 @@ class Function:
             # コピー(target)はワイルドカード、削除(remove)は完全一致
             self.copy_ex4(
                 fnc, dev_out=['Test1', 'Test1_2', 'Test1_3', 'Test2', 'Test2_2'],
-                web_path=['OANDA', 'ForexExchange', 'FXTF', 'Rakuten'],
-                my_path=['OANDA', 'ForexExchange', 'FXTF', 'FxPro', 'MyFx'],
+                web_path=['ForexExchange', 'Rakuten'],
+                my_path=['OANDA', 'Rakuten1', 'Rakuten2'],
                 target_ea=['Shocknin', 'WheSitDoch'],
                 target_ind=['Shocknin', 'WheSitDoch'],
                 remove_ea=['ShockninWhesitdoch', 'ShockninMaster', 'AnomalyShocknin', 'AnomalyGoToBe'],
@@ -54,8 +56,8 @@ class Function:
 
         elif 'hstコピー(テスト)' == fnc:
             self.copy_history_test(
-                fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_DEV/OANDA', 'MT4_TEST/Test2'],
-                out_path=['Test1', 'Test1_2', 'Test1_3', 'Test2_2'],
+                fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA'],
+                out_path=['Test1', 'Test2'],
                 hst_name=['Demo', 'Demo', 'Demo', 'Demo']
             )
         # elif 'hst転送(Web)' == fnc:
@@ -290,7 +292,8 @@ class Function:
             total_time = 0
 
             out_path = cst.HST_PATH[cst.PC]
-            files = os.listdir(cst.HST_PATH[cst.PC] + '_old')
+            files = os.listdir(out_path + '/add')
+            # files = os.listdir(cst.HST_PATH[cst.PC] + '_old')
             files = [file for file in files if 0 <= file.find('.csv')]
 
             err_msg = ''
@@ -304,24 +307,71 @@ class Function:
                     merge_file = []
                     start_time = com.time_start()
 
+                    # try:
+                    #     event, values = window.read(timeout=0)
+                    #     window[files[0]].update(files[i] + '(' + str(i) + ' / ' + str(len(files)) + ')')
+                    #     window[files[0] + '_'].update(i)
+                    #
+                    #     for in_path in ['old', 'new']:
+                    #
+                    #         com.log('読み込み中: ' + in_path + '/' + files[i])
+                    #         in_file = cst.HST_PATH[cst.PC] + '/' + in_path + '/' + files[i]
+                    #         merge_file.append(pd.read_csv(in_file, encoding='cp932'))
+                    #
+                    #         # 中断イベント
+                    #         if _is_interrupt(window, event):
+                    #             is_interrupt = True
+                    #             break
+                    #
+                    # except Exception as e:
+                    #     err_msg += '\n　' + in_file + '\n　　' + str(e)
+                    #     com.log(str(e))
+                    #     continue
+                    #
+                    # # 中断送り
+                    # if is_interrupt:
+                    #     break
+                    #
+                    # com.log('マージ中: ' + files[i])
+                    # result = pd.concat(merge_file)
+                    # result.to_csv(out_path + '/' + files[i], index=False)
+                    #
+                    # run_time = com.time_end(start_time)
+                    # com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+
+                    result = pd.read_csv(out_path + '/add/' + files[i])
+                    for k in range(0, len(result)):
+                        date = result.at[result.index[k], 'Date']
+                        if 4 < datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:8])).weekday() \
+                                or date[4:] in ['0101']:
+                            continue
+
+                        num = int((float(result.at[result.index[k], 'High']) - float(result.at[result.index[k], 'Low'])) /
+                                  float(result.at[result.index[k], 'Close']) * 10000)
+                        result.at[result.index[k], 'Volume'] = str(int(4 if num < 4 else num) * 10 / 10)
+                        if 0 == k % 500000:
+                            print(files[i] + ': ' + str(k) + ' / ' + str(len(result)))
+
+                    result.to_csv(out_path + '/' + files[i], index=False)
+                    run_time = com.time_end(start_time)
+                    com.log('Volume編集完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+
                     try:
                         event, values = window.read(timeout=0)
                         window[files[0]].update(files[i] + '(' + str(i) + ' / ' + str(len(files)) + ')')
                         window[files[0] + '_'].update(i)
 
-                        for in_path in ['old', 'new']:
+                        com.log('読み込み中: ' + out_path + '/' + files[i])
+                        merge_file.append(pd.read_csv(out_path + '/' + files[i], encoding='cp932'))
+                        merge_file.append(result)
 
-                            com.log('読み込み中: ' + in_path + '/' + files[i])
-                            in_file = cst.HST_PATH[cst.PC] + '_' + in_path + '/' + files[i]
-                            merge_file.append(pd.read_csv(in_file, encoding='cp932'))
-
-                            # 中断イベント
-                            if _is_interrupt(window, event):
-                                is_interrupt = True
-                                break
+                        # 中断イベント
+                        if _is_interrupt(window, event):
+                            is_interrupt = True
+                            break
 
                     except Exception as e:
-                        err_msg += '\n　' + in_file + '\n　　' + str(e)
+                        err_msg += '\n　' + files[i] + '\n　　' + str(e)
                         com.log(str(e))
                         continue
 
@@ -332,24 +382,10 @@ class Function:
                     com.log('マージ中: ' + files[i])
                     result = pd.concat(merge_file)
                     result.to_csv(out_path + '/' + files[i], index=False)
-
                     run_time = com.time_end(start_time)
                     com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + files[i])
 
-                    result = pd.read_csv(out_path + '/' + files[i])
-                    for k in range(0, len(result)):
-                        num = int((float(result.at[result.index[k], 'High']) - float(result.at[result.index[k], 'Low'])) /
-                                  float(result.at[result.index[k], 'Close']) * 10000)
-                        result.at[result.index[k], 'Volume'] = str(int(4 if num < 4 else num) * 10 / 10)
-                        if 0 == k % 500000:
-                            print(files[i] + ': ' + str(k) + ' / ' + str(len(result)))
-
-                    result.to_csv(out_path + '/' + files[i], index=False)
-
-                    run_time = com.time_end(start_time)
                     total_time += run_time
-                    com.log('Volume編集完了(' + com.conv_time_str(run_time) + ') ' + files[i])
-
             finally:
                 try: window.close()
                 except: pass
