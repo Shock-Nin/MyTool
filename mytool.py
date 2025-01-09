@@ -51,7 +51,7 @@ ANOMALY_MENU = {
     'H1データ作成': 'windows.anomaly_hst/create_h1',
     'H1データDB格納': 'windows.anomaly_hst/insert_db',
     '統計CSV作成': 'windows.anomaly_data/create_stat_csv',
-    '予測データ編集': 'windows.anomaly_data/edit_forecast',
+    'アノマリ〜編集': 'windows.anomaly_data/edit_anomaly',
     'モデル作成': 'windows.anomaly_learn/create_model',
     'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
     'アノマリ〜': 'windows.anomaly_data/edit_judge',

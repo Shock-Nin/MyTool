@@ -54,7 +54,7 @@ ERROR_MAIL = 'shocknin7@gmail.com'
 ERROR_MAIL_PW = 'kejm gyuz yczk dfcx'
 
 # アノマリー Twitter
-TWITTER_ID = BLOG_MAIL
+TWITTER_ID = '@ShockNin7'
 TWITTER_PW = 'Shock19800226'
 TWITTER_TAG = '#アノマリー #統計 #確率 #為替 #AI #学習'
 TWEET_TIME = [20, 8]
