@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from idlelib.iomenu import encoding
+
 from common import com
 from common import my_sql
 from const import cst
@@ -7,6 +9,7 @@ from const import cst
 import json
 import glob
 import datetime
+import statistics
 import numpy as np
 import pandas as pd
 import PySimpleGUI as sg
@@ -15,6 +18,7 @@ PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1]]
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
+SPAN_LIST = ['_D', '_Mst', '_Med', '_W']
 MODEL_SKIP_DAYS = ['1225', '0101']
 
 class AnomalyData:
@@ -48,7 +52,6 @@ class AnomalyData:
 
             res = {}
             for i in range(len(tables)):
-            # for i in range(2):
 
                 info = tables[i][0] + ' ' + str(i) + ' / ' + str(len(tables))
                 window = com.progress('データ抽出中', [info, len(tables)], interrupt=True)
@@ -175,11 +178,7 @@ class AnomalyData:
                 window = com.progress('データ編集中', [str(year), len(target_times)], interrupt=True)
                 event, values = window.read(timeout=0)
 
-                out_file = open(cst.HST_PATH[cst.PC].replace('\\', '/') + '_stat/' + str(year)
-                                + {'1': 'H', '2': 'D', '3': 'M', '4': 'W'}[inputs[1][1]] + '.csv', 'w')
-                out_file.write('Time,' + ','.join(''.join(
-                    table.upper() + col for col in [',', '_Vola,', '_UpDn']) for table in res) + '\n')
-
+                str_out = ''
                 old = {table: -1 for table in res}
                 for i in range(cnt, len(target_times)):
                     window[str(year) + '_'].update(i)
@@ -216,14 +215,17 @@ class AnomalyData:
                         if not is_time:
                             data += (',,,' if -1 == old[table] else str(old[table]) + ',0,0,')
 
-                    out_file.write(target_times[i].strftime('%Y-%m'
+                    str_out += target_times[i].strftime('%Y-%m'
                         + ('|' + DAYWEEKS[target_times[i].weekday() + 1] if inputs[1][1] in ['4'] else '-%d')
-                        + (' %H:%M:%S' if '1' == inputs[1][1] else '')) + ',' + data[:-1] + '\n')
+                        + (' %H:%M:%S' if '1' == inputs[1][1] else '')) + ',' + data[:-1] + '\n'
                     cnt += 1
 
-                out_file.close()
-                window.close()
+                with open(cst.HST_PATH[cst.PC].replace('\\', '/') + '_stat/' + str(year)
+                                + {'1': 'H', '2': 'D', '3': 'M', '4': 'W'}[inputs[1][1]] + '.csv', 'w') as out:
+                    out.write('Time,' + ','.join(''.join(
+                        table.upper() + col for col in [',', '_Vola,', '_UpDn']) for table in res) + '\n' + str_out)
 
+                window.close()
                 run_time = com.time_end(start_time)
                 total_time += run_time
                 com.log(str(year) + '年 書き出し完了(' + com.conv_time_str(total_time) + ')')
@@ -232,8 +234,6 @@ class AnomalyData:
             com.dialog('エラーが発生しました。\n' + str(e), 'データ編集エラー発生', lv='W')
             return
         finally:
-            try: out_file.close()
-            except: pass
             try: window.close()
             except: pass
 
@@ -249,7 +249,7 @@ class AnomalyData:
         total_time = 0
 
         year_target = int(inputs[1][0])
-        forecasts = [[], []]
+        forecasts = [[] for _ in dfs]
 
         for i in range(len(forecasts)):
             date = datetime.datetime(year_target - 1 + i, 1, 1)
@@ -272,8 +272,9 @@ class AnomalyData:
 
             curs.append(col)
 
-            cols += col + ',' + col + '_VolaAVG,' + col + '_VolaMax,' + col + '_VolaMin,'
-            cols += col + '_UpDnAvg,' + col + '_Win,' + col + '_Lose,' + col + '_RateWin,' + col + '_AvgWin,' + col + '_AvgLose,'
+            cols += col + ',' + col + '_VolaAVG,' + col + '_VolaMax,' + col + '_VolaMin,' + col + '_UpDnAvg,'
+            cols += col + '_Win,' + col + '_Lose,' + col + '_WinPc,' + col + '_LosePc,'
+            cols += col + col + '_AvgWin,' + col + '_AvgLose,'
 
             cols = cols.replace('USD', '')
 
@@ -284,33 +285,29 @@ class AnomalyData:
                 data_m = dfs[i][2]
                 data_w = dfs[i][3]
 
-                path = str(year_target - int(inputs[1][1]) - 2 + i)+ '-' + str(year_target - 2 + i)
-
-                out = open(out_path + path + '.csv', 'w')
-                out.write('Time,' + ''.join(cols.replace(',', span + ',') for span in ['_D', '_M', '_Maf', '_W'])[:-1] + '\n')
+                str_out = ''
 
                 for time in forecasts[i]:
-
                     row_d = data_d[data_d['Time'].str.match('20..-' + time.strftime('%m-%d'))].copy()
 
                     if time.day < 16:
-                        row_m = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '01')].copy()
-                        row_m_af = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
+                        row_mst = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '01')].copy()
+                        row_med = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
                     else:
-                        row_m = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
-                        row_m_af = data_m[data_m['Time'].str.match(
+                        row_mst = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
+                        row_med = data_m[data_m['Time'].str.match(
                             '20..-' + ('01' if 13 == (time.month + 1) else
                                       ('0' if (time.month + 1) < 10 else '') + str(time.month + 1)) + '-01')].copy()
                     row_w = data_w[data_w['Time'].str.match('20..-' + time.strftime('%m') + '.' + DAYWEEKS[time.weekday() + 1])].copy()
 
                     row_d = row_d.reset_index(drop=True)
-                    row_m = row_m.reset_index(drop=True)
-                    row_m_af = row_m_af.reset_index(drop=True)
+                    row_mst = row_mst.reset_index(drop=True)
+                    row_med = row_med.reset_index(drop=True)
                     row_w = row_w.reset_index(drop=True)
-                    rows = [row_d, row_m, row_m_af, row_w]
+                    rows = [row_d, row_mst, row_med, row_w]
 
-                    out.write(str(time))
-                    str_out = ''
+                    str_out += str(time)
+                    str_updn = ''
 
                     for row in rows:
                         for cur in curs:
@@ -345,37 +342,38 @@ class AnomalyData:
                                     count_win += 1
                                     updn_win += get_updn
 
-                            str_out += ',' + str(count) + ',' + '{:.2f}'.format(vola / count) + ','
-                            str_out += '{:.2f}'.format(vola_max) + ',' + '{:.2f}'.format(vola_min) + ','
+                            str_updn += ',' + str(count) + ',' + '{:.2f}'.format(vola / count) + ','
+                            str_updn += '{:.2f}'.format(vola_max) + ',' + '{:.2f}'.format(vola_min) + ','
 
-                            str_out += '{:.2f}'.format(updn / count) + ',' + str(count_win) + ',' + str(count_lose) + ','
-                            str_out += '{:.2f}'.format(count_win / count * 100) + ','
-                            str_out += '{:.2f}'.format(0 if 0 == count_win else updn_win / count_win) + ','
-                            str_out += '{:.2f}'.format(0 if 0 == count_lose else updn_lose / count_lose)
+                            str_updn += '{:.2f}'.format(updn / count) + ',' + str(count_win) + ',' + str(count_lose) + ','
+                            str_updn += '{:.2f}'.format(count_win / count * 100) + ','
+                            str_updn += '{:.2f}'.format(count_lose / count * 100) + ','
+                            str_updn += '{:.2f}'.format(0 if 0 == count_win else updn_win / count_win) + ','
+                            str_updn += '{:.2f}'.format(0 if 0 == count_lose else updn_lose / count_lose)
 
-                    out.write(str_out + '\n')
-                out.close()
+                    str_out += str_updn + '\n'
+
+                with open(out_path + 'Year' + ['P', '', 'F'][i] + '.csv', 'w') as out:
+                    out.write('Time,' + ''.join(cols.replace(',', span + ',')
+                                                for span in SPAN_LIST)[:-1] + '\n' + str_out)
 
             run_time = com.time_end(start_time)
             total_time += run_time
 
         except Exception as e:
             return '予測データ編集でエラーが発生しました。\n' + str(e)
-        finally:
-            try: out.close()
-            except: pass
 
         com.log('予測データ編集完了(' + com.conv_time_str(total_time) + ')')
         return ''
 
     # ゴトー日編集
-    def _edit_gotobe(self, inputs, dfs):
+    def _edit_gotobe(self, inputs, dfs, h_data):
 
         start_time = com.time_start()
         total_time = 0
 
         year_target = int(inputs[1][0])
-        forecasts = [[], []]
+        forecasts = [[] for _ in dfs]
 
         for i in range(len(forecasts)):
             date = datetime.datetime(year_target - 1 + i, 1, 1)
@@ -387,7 +385,7 @@ class AnomalyData:
 
                     is_ok = date.day in [10, 15, 20]
                     if not is_ok:
-                        if date.month in [4, 6, 9, 11] and 30 == date.day:
+                        if date.month in [6, 9, 11] and 30 == date.day:
                             is_ok = True
                         elif date.month not in [12] and date.day in [25, 31]:
                             is_ok = True
@@ -395,117 +393,261 @@ class AnomalyData:
                             is_ok = True
 
                     if is_ok:
-                        forecasts[i].append(date)
+                        forecasts[i].append([date.weekday(), date])
 
                 date += datetime.timedelta(days=1)
-
-        out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
         cols = ''
         curs = []
+        str_outs = []
+        start_hours = 3
+        close_hours = [2, 3, 4, 5]
+        gets = [0, 1, 2]
+        spans = ['Total'] + [('0' if i < 10 else '') + str(i) + span \
+                             for i in range(1, 13) for span in ['D5', 'D0', 'Mst', 'Med']] \
+                + [DAYWEEKS[i] for i in range(1, len(DAYWEEKS))]
 
         for col in dfs[0][0].keys():
-            if col in ['Time'] or 0 <= col.find('_Vola') or 0 <= col.find('_UpDn'):
+            if col in ['Time'] or 0 <= col.find('_Vola') or 0 <= col.find('_UpDn') or col.startswith('Z_'):
                 continue
 
             curs.append(col)
             col = col.replace('USD', '')
-
-            cols += col + ',' + col + '_VolaAVG,' + col + '_VolaMax,' + col + '_VolaMin,'
-            cols += col + '_UpDnAvg,' + col + '_Win,' + col + '_Lose,' + col + '_RateWin,' + col + '_AvgWin,' + col + '_AvgLose,'
-
+            cols += ',' + col + ',' + col + '_BestOpen,' + col + '_BestClose' \
+                    + ''.join(',' + col + '_Win' + str(h) + 'H0' + str(w) + ','
+                              + col + '_Win' + str(h) + 'H0' + str(w) + 'Pc' for h in close_hours for w in gets) \
+                    + ''.join(',' + col + '_LoseH' + str(h) + '01,'
+                              + col + '_LoseH' + str(h) + '01Pc' for h in close_hours)
         try:
             for i in range(len(dfs)):
+                counts = [{s: [0, [], [], [] + [0 for _ in gets for _ in close_hours]
+                               + [0 for _ in close_hours]] for s in spans} for _ in curs]
 
-                data_d = dfs[i][1]
-                data_m = dfs[i][2]
-                data_w = dfs[i][3]
+                for k in range(len(forecasts[i])):
 
-                path = str(year_target - int(inputs[1][1]) - 2 + i)+ '-' + str(year_target - 2 + i)
+                    info = str(forecasts[i][k][1])[:7] + ' (' + str(k) + ' / ' + str(len(forecasts[i])) + ')'
+                    window = com.progress('ゴト〜日編集中', [info, len(forecasts[i])], interrupt=True)
+                    event, values = window.read(timeout=0)
+                    window[info + '_'].update(k)
 
-                out = open(out_path + path + '_GoToBe' + '.csv', 'w')
-                out.write('Time,' + ''.join(cols.replace(',', span + ',') for span in ['_D', '_M', '_Maf', '_W'])[:-1] + '\n')
+                    for c in range(len(curs)):
+                        cur = curs[c].lower()
 
-                for time in forecasts[i]:
+                        gotobe = []
+                        old_date = ''
+                        for g in range(len(h_data[curs[c].lower()])):
+                            if 4 < h_data[cur][g][0].weekday():
+                                continue
 
-                    row_d = data_d[data_d['Time'].str.match('20..-' + time.strftime('%m-%d'))].copy()
+                            if old_date == str(h_data[cur][g][0])[:10]:
+                                gotobe[len(gotobe) - 1][1].append(h_data[cur][g])
+                            else:
+                                old_date = h_data[cur][g][0]
+                                gotobe.append([old_date, [h_data[cur][g]]])
+                                old_date = str(old_date)[:10]
 
-                    if time.day < 16:
-                        row_m = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '01')].copy()
-                        row_m_af = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
-                    else:
-                        row_m = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
-                        row_m_af = data_m[data_m['Time'].str.match(
-                            '20..-' + ('01' if 13 == (time.month + 1) else
-                                      ('0' if (time.month + 1) < 10 else '') + str(time.month + 1)) + '-01')].copy()
-                    row_w = data_w[data_w['Time'].str.match('20..-' + time.strftime('%m') + '.' + DAYWEEKS[time.weekday() + 1])].copy()
+                        for m in range(len(gotobe)):
 
-                    row_d = row_d.reset_index(drop=True)
-                    row_m = row_m.reset_index(drop=True)
-                    row_m_af = row_m_af.reset_index(drop=True)
-                    row_w = row_w.reset_index(drop=True)
-                    rows = [row_d, row_m, row_m_af, row_w]
+                            day_close = gotobe[m][0]
+                            if (year_target - (2 if len(dfs) - 1 == i else 1) + i) == day_close.year \
+                                    or day_close.year < (year_target - int(inputs[1][1]) - (3 if len(dfs) - 1 == i else 2) + i) \
+                                    or day_close.strftime('%m-%d') != forecasts[i][k][1].strftime('%m-%d'):
+                                continue
 
-                    out.write(str(time))
-                    str_out = ''
+                            day_open = gotobe[m][0]
+                            if 0 < day_open.weekday():
+                                day_open -= datetime.timedelta(days=1)
 
-                    for row in rows:
-                        for cur in curs:
-                            count = len(row)
-
-                            vola = 0
-                            vola_max = 0
-                            vola_min = 9999999999
-                            updn = 0
-                            count_win = 0
-                            count_lose = 0
-                            updn_win = 0
-                            updn_lose = 0
-
-                            for k in range(len(row)):
-
-                                get_vola = row.at[row.index[k], cur + '_Vola'] / row.at[row.index[k], cur] * 100
-                                get_updn = row.at[row.index[k], cur + '_UpDn'] / row.at[row.index[k], cur] * 100
-                                if 'nan' == str(get_updn) or 'nan' == str(get_vola):
+                            open_h = []
+                            close_h = []
+                            for g in range(len(gotobe)):
+                                if day_close.strftime('%Y-%m-%d') != gotobe[g][0].strftime('%Y-%m-%d') \
+                                        or day_close.strftime('%m-%d') != forecasts[i][k][1].strftime('%m-%d'):
                                     continue
 
-                                vola += get_vola
-                                vola_max = max(vola_max, get_vola)
-                                vola_min = min(vola_min, get_vola)
-
-                                updn += get_updn
-
-                                if get_updn < 0:
-                                    count_lose += 1
-                                    updn_lose += get_updn
+                                if 0 == day_close.weekday():
+                                    for h in range(len(gotobe[m][1])):
+                                        if gotobe[m][1][h][0].hour < 2:
+                                            open_h.append(gotobe[m][1][h])
+                                        elif gotobe[m][1][h][0].hour in close_hours:
+                                            close_h.append(gotobe[m][1][h])
                                 else:
-                                    count_win += 1
-                                    updn_win += get_updn
+                                    for h in range(len(gotobe[g][1])):
+                                        if 18 < gotobe[g][1][h][0].hour:
+                                            open_h.append(gotobe[g][1][h])
+                                break
 
-                            str_out += ',' + str(count) + ',' + '{:.2f}'.format(vola / count) + ','
-                            str_out += '{:.2f}'.format(vola_max) + ',' + '{:.2f}'.format(vola_min) + ','
+                            if 0 < day_close.weekday():
+                                for g in range(len(gotobe)):
+                                    if day_close.strftime('%Y-%m-%d') != gotobe[g][0].strftime('%Y-%m-%d') \
+                                            or day_close.strftime('%m-%d') != forecasts[i][k][1].strftime('%m-%d'):
+                                        continue
 
-                            str_out += '{:.2f}'.format(updn / count) + ',' + str(count_win) + ',' + str(count_lose) + ','
-                            str_out += '{:.2f}'.format(count_win / count * 100) + ','
-                            str_out += '{:.2f}'.format(0 if 0 == count_win else updn_win / count_win) + ','
-                            str_out += '{:.2f}'.format(0 if 0 == count_lose else updn_lose / count_lose)
+                                    for h in range(len(gotobe[g][1])):
+                                        if gotobe[g][1][h][0].hour < 2:
+                                            open_h.append(gotobe[g][1][h])
+                                        elif gotobe[g][1][h][0].hour in close_hours:
+                                            close_h.append(gotobe[g][1][h])
+                                    break
 
-                    out.write(str_out + '\n')
-                out.close()
+                            if 0 == len(open_h) or 0 == len(close_h):
 
-            run_time = com.time_end(start_time)
-            total_time += run_time
+                                msg = cur + ', ' + str(forecasts[i][k][1]) + ' | ' + str(day_close.weekday()) + ', '
+                                msg += str(day_open) + ' ' + ('×' if 0 == len(open_h)else '○') + ', '
+                                msg += str(day_close) + ' ' + ('×' if 0 == len(close_h) else '○')
+
+                                #TODO
+                                # print(msg)
+                                continue
+
+                            str_month = ('0' if day_close.month < 10 else '') + str(day_close.month)
+                            str_510 = str_month + ('D5' if str(day_close.day).endswith('5') else 'D0')
+                            str_bfaf = str_month + ('Mst' if day_close.day < 16 else 'Med')
+                            str_dw = DAYWEEKS[day_close.weekday() + 1]
+                            types = ['Total', str_510, str_bfaf, str_dw]
+
+                            hi = 0
+                            lo = 9999999999
+                            hi_h = -1
+                            lo_h = -1
+                            for h in range(len(open_h)):
+                                if hi < open_h[h][2]:
+                                    hi = open_h[h][2]
+                                    hi_h = h
+                                if open_h[h][3] < lo:
+                                    lo = open_h[h][3]
+                                    lo_h = h
+
+                            hl = (lo_h if curs[c].startswith('USD') else hi_h)
+                            for t in types:
+                                counts[c][t][0] += 1
+                                counts[c][t][1].append(open_h[hl][0].hour)
+                            open_price = open_h[hl][1]
+
+                            hi = 0
+                            lo = 9999999999
+                            hi_h = -1
+                            lo_h = -1
+                            cnt = 0
+                            for h in range(len(close_h)):
+                                if hi < close_h[h][2]:
+                                    hi = close_h[h][2]
+                                    hi_h = h
+                                if close_h[h][3] < lo:
+                                    lo = close_h[h][3]
+                                    lo_h = h
+
+                                for g in gets:
+                                    if curs[c].startswith('USD'):
+                                        is_ok = open_price + (open_price * (g / 1000)) < close_h[h][4]
+                                    else:
+                                        is_ok = close_h[h][4] < open_price - (open_price * (g / 1000))
+                                    if is_ok:
+                                        for t in [str_510, str_bfaf, str_dw, 'Total']:
+                                            counts[c][t][start_hours][cnt] += 1
+                                    cnt += 1
+
+                                if curs[c].startswith('USD'):
+                                    is_ok = close_h[h][4] < open_price - (open_price / 1000)
+                                else:
+                                    is_ok = open_price + (open_price / 1000) < close_h[h][4]
+                                if is_ok:
+                                    for t in types:
+                                        counts[c][t][start_hours][len(close_hours) * 2 + h] += 1
+
+                            hl = (hi_h if curs[c].startswith('USD') else lo_h)
+                            for t in types:
+                                counts[c][t][2].append(close_h[hl][0].hour)
+
+                            # 中断イベント
+                            if _is_interrupt(window, event):
+                                return None
+                    window.close()
+
+                str_curs = []
+                for c in range(len(curs)):
+                    str_cur = {}
+
+                    for str_span in counts[c]:
+                        str_time = str(year_target - 1 + i) + '|' + str_span
+                        count = counts[c][str_span][0]
+
+                        str_cur[str_time] = ',' + str(count)
+                        if 0 == count:
+                            str_cur[str_time] += ',,'
+                        else:
+                            str_cur[str_time] += ',' + str(statistics.mode(counts[c][str_span][1]))
+                            str_cur[str_time] += ',' + str(statistics.mode(counts[c][str_span][2]))
+
+                        cnt = 0
+                        for h in range(len(close_hours)):
+                            for g in range(len(gets)):
+                                if 0 == count:
+                                    str_cur[str_time] += ',,'
+                                else:
+                                    str_cur[str_time] += ',' + str(counts[c][str_span][start_hours][cnt])
+                                    str_cur[str_time] += ',' + ('0' if 0 == counts[c][str_span][start_hours][cnt] else
+                                                                '{:.2f}'.format(counts[c][str_span][start_hours][cnt] / count * 100))
+                                cnt += 1
+                        for h in range(len(close_hours)):
+                            if 0 == count:
+                                str_cur[str_time] += ',,'
+                            else:
+                                num = len(close_hours) * 2 + h
+                                str_cur[str_time] += ',' + str(counts[c][str_span][start_hours][num])
+                                str_cur[str_time] += ',' + ('0' if 0 == counts[c][str_span][start_hours][num] else
+                                                            '{:.2f}'.format(counts[c][str_span][start_hours][num] / count * 100))
+
+                    str_curs.append(str_cur)
+                times = []
+                datas = []
+                for cur in str_curs:
+                    for str_time in cur:
+                        if str_time not in times:
+                            times.append(str_time)
+                        datas.append(cur[str_time] + '\n')
+
+                str_rows = []
+                str_row = ''
+                cnt = 0
+
+                for cur in datas:
+                    str_row += cur
+                    cnt += 1
+
+                    if cnt == len(times):
+                        str_rows.append(str_row)
+                        str_row = ''
+                        cnt = 0
+
+                for t in range(len(times)):
+                    row = ''
+
+                    for cur in str_rows:
+                        row += cur.split('\n')[t]
+
+                    str_outs.append(times[t] + row)
+
+                run_time = com.time_end(start_time)
+                total_time += run_time
+
+                com.log(str(year_target - 1 + i) + ' 作成完了(' + com.conv_time_str(total_time) + ')')
+
+            out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+
+            with open(out_path + 'GoToBe' + '.csv', 'w') as out:
+                out.write('Time' + cols + ''.join('\n' + out for out in str_outs).replace('|Total', ''))
 
         except Exception as e:
-            return 'ゴトー日編集でエラーが発生しました。\n' + str(e)
+            return 'ゴト〜日編集でエラーが発生しました。\n' + str(e)
         finally:
-            try: out.close()
+            try: window.close()
             except: pass
 
-        com.log('ゴトー日編集完了(' + com.conv_time_str(total_time) + ')')
+        com.log('ゴト〜日編集完了(' + com.conv_time_str(total_time) + ')')
         return ''
 
     # マド空け編集
-    def _edit_shakay_mado(self, inputs, dfs, h_open):
+    def _edit_shakay_mado(self, inputs, dfs, d_open):
 
         start_time = com.time_start()
         total_time = 0
@@ -523,7 +665,7 @@ class AnomalyData:
 
         cols = ''
         curs = []
-        str_years = []
+        str_years = [[] for _ in dfs]
         heights = [2, 3, 5]
         comp = 3
 
@@ -534,182 +676,232 @@ class AnomalyData:
             curs.append(col)
             col = col.replace('USD', '')
             cols += col + ',' + ''.join(
-                [col + '_' + '0' + str(height) + ',' + col + '_' + '0' + str(height) + '_P,' + ''.join(
+                [col + '_' + '0' + str(height) + ',' + col + '_' + '0' + str(height) + '_Pc,' + ''.join(
                     [col + '_' + '0' + str(height) + 'D' + str(day) + ','
-                     + col + '_' + '0' + str(height) + 'D' + str(day) + '_P,'
+                     + col + '_' + '0' + str(height) + 'D' + str(day) + '_Pc,'
                      for day in range(1, comp + 1)]) for height in heights])
-        # try:
-        for i in range(len(dfs)):
+        try:
+            for i in range(len(dfs)):
 
-            data_d = dfs[i][1]
+                data_d = dfs[i][1]
+                totals = [[0,
+                          {height: 0 for height in heights},
+                          {height: 0 for height in heights},
+                          [[0 for _ in range(1, comp + 1)] for _ in heights],
+                          [[0 for _ in range(1, comp + 1)] for _ in heights]
+                          ] for _ in curs]
 
-            for k in range(len(forecasts[i])):
+                for k in range(len(forecasts[i])):
 
-                info = str(forecasts[i][k])[:7] + ' (' + str(k) + ' / ' + str(len(forecasts[i])) + ')'
-                window = com.progress('マド空け編集中', [info, len(forecasts[i])], interrupt=True)
-                event, values = window.read(timeout=0)
-                window[info + '_'].update(k)
+                    info = str(forecasts[i][k])[:7] + ' (' + str(k) + ' / ' + str(len(forecasts[i])) + ')'
+                    window = com.progress('マド空け編集中', [info, len(forecasts[i])], interrupt=True)
+                    event, values = window.read(timeout=0)
+                    window[info + '_'].update(k)
 
-                str_updns = ['', '']
+                    str_updns = ['', '', '']
 
+                    for c in range(len(curs)):
+                        cur = curs[c].lower()
+
+                        counts = [0,
+                                  {height: 0 for height in heights},
+                                  {height: 0 for height in heights},
+                                  [[0 for _ in range(1, comp + 1)] for _ in heights],
+                                  [[0 for _ in range(1, comp + 1)] for _ in heights]
+                                  ]
+                        windows = [[], [], []]
+
+                        for w in range(len(d_open[curs[c].lower()])):
+                            if d_open[cur][w][0].weekday() < 5:
+                                windows[d_open[cur][w][0].weekday()].append(d_open[cur][w])
+
+                        for m in range(len(windows[0])):
+
+                            time_monday = windows[0][m][0]
+                            if forecasts[i][k].strftime('-%m-%d') != time_monday.strftime('-%m-01') \
+                                    or (year_target - (2 if len(dfs) - 1 == i else 1) + i) == time_monday.year \
+                                    or time_monday.year < (year_target - int(inputs[1][1]) - (3 if len(dfs) - 1 == i else 2) + i) \
+                                    or (12 == time_monday.month and 22 < time_monday.day) \
+                                    or (1 == time_monday.month and time_monday.day < 6):
+                                continue
+
+                            fridays = data_d[data_d['Time'].str[:10] ==
+                                (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')].copy()
+                            fridays = fridays.reset_index(drop=True)
+
+                            row_d2s = None
+                            for w in range(len(windows[1])):
+                                if ((time_monday + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+                                        == windows[1][w][0].strftime('%Y-%m-%d')):
+                                    row_d2s = windows[1][w]
+                                    break
+
+                            row_d3s = None
+                            for w in range(len(windows[2])):
+                                if ((time_monday + datetime.timedelta(days=2)).strftime('%Y-%m-%d')
+                                        == windows[2][w][0].strftime('%Y-%m-%d')):
+                                    row_d3s = windows[2][w]
+                                    break
+
+                            if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]) \
+                                    or row_d2s is None or row_d3s is None:
+
+                                msg = cur + ', ' + str(forecasts[i][k]) + ' | '
+
+                                msg += (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')
+                                msg += ' ' + ('×' if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]) else '○')
+
+                                msg += ', ' + str(time_monday) + ', '
+
+                                msg += (time_monday + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+                                msg += ' ' + ('×' if row_d2s is None else '○') + ', '
+
+                                msg += (time_monday + datetime.timedelta(days=2)).strftime('%Y-%m-%d')
+                                msg += ' ' + ('×' if row_d3s is None else '○')
+
+                                #TODO
+                                # print(msg)
+                                continue
+
+                            counts[0] += 1
+                            totals[c][0] += 1
+                            for row in d_open[cur]:
+                                if row[0].strftime('%Y-%m-%d') == time_monday.strftime('%Y-%m-%d'):
+                                    op = row[1]
+                                    break
+
+                            cl = fridays.at[fridays.index[0], curs[c]]
+                            updn = (cl - op if curs[c].startswith('USD') else op - cl) / op
+                            comp_rate = round(updn * 0.75, 6)
+                            updn = round(updn * 1000, 2)
+
+                            for height in range(len(heights)):
+                                if heights[height] < updn:
+                                    counts[1][heights[height]] += 1
+                                    totals[c][1][heights[height]] += 1
+
+                                    is_comp = False
+                                    for day in range(len(counts[3][height])):
+
+                                        rows = [windows[0][m], row_d2s, row_d3s][day]
+                                        if curs[c].startswith('USD'):
+                                            if cl + comp_rate <= rows[2]:
+                                                is_comp = True
+                                        else :
+                                            if rows[3] <= cl + comp_rate:
+                                                is_comp = True
+
+                                        counts[3][height][day] += (1 if is_comp else 0)
+                                        totals[c][3][height][day] += (1 if is_comp else 0)
+
+                                elif heights[height] < -updn:
+                                    counts[2][heights[height]] += 1
+                                    totals[c][2][heights[height]] += 1
+
+                                    is_comp = False
+                                    for day in range(len(counts[4][height])):
+                                        rows = [windows[0][m], row_d2s, row_d3s][day]
+
+                                        if curs[c].startswith('USD'):
+                                            if rows[3] <= cl + comp_rate:
+                                                is_comp = True
+                                        else :
+                                            if cl + comp_rate <= rows[2]:
+                                                is_comp = True
+
+                                        counts[4][height][day] += (1 if is_comp else 0)
+                                        totals[c][4][height][day] += (1 if is_comp else 0)
+
+                            # 中断イベント
+                            if _is_interrupt(window, event):
+                                return None
+
+                        opens = []
+                        closes = []
+
+                        for cnt_updn in range(len(str_updns) - 1):
+                            cnt1 = cnt_updn + 1
+                            cnt3 = cnt_updn + 3
+
+                            str_updns[cnt_updn] += ','+ str(counts[0])
+                            if len(str_updns) - 2 == cnt_updn:
+                                str_updns[len(str_updns) - 1] += ','
+
+                            for height in range(len(heights)):
+                                opens.append(counts[cnt1][heights[height]])
+                                closes.append(counts[cnt3][height])
+
+                                str_updns[cnt_updn] += ',' + str(opens[cnt_updn]) + ',' +'{:.2f}'.format(opens[cnt_updn] / counts[0] * 100)
+                                if len(str_updns) - 2 == cnt_updn:
+                                    str_updns[len(str_updns) - 1] += ',' + str(opens[0] + opens[1]) + ',' +'{:.2f}'.format((opens[0] + opens[1]) / counts[0] * 100)
+
+                                for day in range(len(closes[cnt_updn])):
+                                    str_updns[cnt_updn] += ',' + str(closes[cnt_updn][day]) + ','
+                                    str_updns[cnt_updn] += ('0' if 0 == opens[cnt_updn] else
+                                                 '{:.2f}'.format(closes[cnt_updn][day] / opens[cnt_updn] * 100))
+                                    if len(str_updns) - 2 == cnt_updn:
+                                        str_updns[len(str_updns) - 1] += ',' + str(closes[0][day] + closes[1][day]) + ','
+                                        str_updns[len(str_updns) - 1] += ('0' if 0 == opens[0] + opens[1] else
+                                                 '{:.2f}'.format((closes[0][day] + closes[1][day]) / (opens[0] + opens[1]) * 100))
+
+                    str_years[i].append(''.join(str(forecasts[i][k])[:7]+ ['|Up', '|Dn', ''][u] + str_updns[u] + '\n'
+                                                for u in range(len(str_updns))))
+                    window.close()
+
+                str_updns_total = ['', '', '']
                 for c in range(len(curs)):
-                    cur = curs[c].lower()
 
-                    counts = [0,
-                              {height: 0 for height in heights},
-                              {height: 0 for height in heights},
-                              [[0 for _ in range(1, comp + 1)] for _ in heights],
-                              [[0 for _ in range(1, comp + 1)] for _ in heights]
-                              ]
-                    windows = [[], [], []]
+                    opens = []
+                    closes = []
 
-                    for w in range(len(h_open[curs[c].lower()])):
-                        if h_open[cur][w][0].weekday() < 3:
-                            windows[h_open[cur][w][0].weekday()].append(h_open[cur][w])
-
-                    for m in range(len(windows[0])):
-
-                        time_monday = windows[0][m][0]
-                        if forecasts[i][k].strftime('-%m-%d') != time_monday.strftime('-%m-01') \
-                                or (year_target - 1 + i) == time_monday.year \
-                                or time_monday.year < (year_target - int(inputs[1][1]) - 2 + i) \
-                                or (12 == time_monday.month and 22 < time_monday.day) \
-                                or (1 == time_monday.month and time_monday.day < 6):
-                            continue
-
-                        fridays = data_d[data_d['Time'].str[:10] ==
-                            (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')].copy()
-                        fridays = fridays.reset_index(drop=True)
-
-                        row_d2s = None
-                        for w in range(len(windows[1])):
-                            if ((time_monday + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-                                    == windows[1][w][0].strftime('%Y-%m-%d')):
-                                row_d2s = windows[1][w]
-                                break
-
-                        row_d3s = None
-                        for w in range(len(windows[2])):
-                            if ((time_monday + datetime.timedelta(days=2)).strftime('%Y-%m-%d')
-                                    == windows[2][w][0].strftime('%Y-%m-%d')):
-                                row_d3s = windows[2][w]
-                                break
-
-                        if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]) \
-                                or row_d2s is None or row_d3s is None:
-
-                            msg = cur + ', ' + str(forecasts[i][k]) + ' | '
-
-                            msg += (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')
-                            msg += ' ' + ('×' if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]) else '○')
-
-                            msg += ', ' + str(time_monday) + ', '
-
-                            msg += (time_monday + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-                            msg += ' ' + ('×' if row_d2s is None else '○') + ', '
-
-                            msg += (time_monday + datetime.timedelta(days=2)).strftime('%Y-%m-%d')
-                            msg += ' ' + ('×' if row_d3s is None else '○')
-
-                            #TODO
-                            # print(msg)
-                            continue
-
-                        counts[0] += 1
-                        for row in h_open[cur]:
-                            if row[0].strftime('%Y-%m-%d') == time_monday.strftime('%Y-%m-%d'):
-                                op = row[1]
-                                break
-
-                        cl = fridays.at[fridays.index[0], curs[c]]
-                        updn = round((op - cl if curs[c].startswith('USD') else cl - op) / op * 1000, 2)
-
-                        for height in range(len(heights)):
-                            if heights[height] < updn:
-                                counts[1][heights[height]] += 1
-
-                                is_comp = False
-                                for day in range(len(counts[3][height])):
-
-                                    rows = [windows[0][m], row_d2s, row_d3s][day]
-                                    if curs[c].startswith('USD'):
-                                        if rows[3] <= cl:
-                                            is_comp = True
-                                    else :
-                                        if cl <= rows[2]:
-                                            is_comp = True
-
-                                    counts[3][height][day] += (1 if is_comp else 0)
-
-                            elif heights[height] < -updn:
-                                counts[2][heights[height]] += 1
-
-                                is_comp = False
-                                for day in range(len(counts[4][height])):
-                                    rows = [windows[0][m], row_d2s, row_d3s][day]
-
-                                    if curs[c].startswith('USD'):
-                                        if cl <= rows[2]:
-                                            is_comp = True
-                                    else :
-                                        if rows[3] <= cl:
-                                            is_comp = True
-
-                                    counts[4][height][day] += (1 if is_comp else 0)
-
-                        # 中断イベント
-                        if _is_interrupt(window, event):
-                            return None
-
-
-                    for cnt_updn in range(len(str_updns)):
+                    for cnt_updn in range(len(str_updns_total) - 1):
                         cnt1 = cnt_updn + 1
                         cnt3 = cnt_updn + 3
 
-                        str_updns[cnt_updn] += ',' + ('' if 1 == cnt1 else '-') + str(counts[0])
+                        str_updns_total[cnt_updn] += ',' + str(totals[c][0])
+                        if len(str_updns_total) - 2 == cnt_updn:
+                            str_updns_total[len(str_updns_total) - 1] += ','
 
                         for height in range(len(heights)):
-                            open_count = counts[cnt1][heights[height]]
-                            str_updns[cnt_updn] += ',' + str(open_count) + ',' +'{:.2f}'.format(open_count / counts[0] * 100)
+                            opens.append(totals[c][cnt1][heights[height]])
+                            closes.append(totals[c][cnt3][height])
 
-                            closes = counts[cnt3][height]
-                            for day in range(len(closes)):
-                                str_updns[cnt_updn] += ',' + str(closes[day]) + ','
-                                str_updns[cnt_updn] += ('0' if 0 == open_count else
-                                             '{:.2f}'.format(closes[day] / open_count * 100))
+                            str_updns_total[cnt_updn] += ',' + str(opens[cnt_updn]) + ',' + '{:.2f}'.format(
+                                opens[cnt_updn] / totals[c][0] * 100)
+                            if len(str_updns_total) - 2 == cnt_updn:
+                                str_updns_total[len(str_updns_total) - 1] += ',' + str(opens[0] + opens[1]) + ',' + '{:.2f}'.format(
+                                    (opens[0] + opens[1]) / totals[c][0] * 100)
 
-                str_years.append(''.join(str(forecasts[i][k]) + out + '\n' for out in str_updns))
-                window.close()
+                            for day in range(len(closes[cnt_updn])):
+                                str_updns_total[cnt_updn] += ',' + str(closes[cnt_updn][day]) + ','
+                                str_updns_total[cnt_updn] += ('0' if 0 == opens[cnt_updn] else
+                                                        '{:.2f}'.format(closes[cnt_updn][day] / opens[cnt_updn] * 100))
+                                if len(str_updns_total) - 2 == cnt_updn:
+                                    str_updns_total[len(str_updns_total) - 1] += ',' + str(closes[0][day] + closes[1][day]) + ','
+                                    str_updns_total[len(str_updns_total) - 1] += \
+                                        ('0' if 0 == opens[0] + opens[1] else
+                                         '{:.2f}'.format((closes[0][day] + closes[1][day]) / (opens[0] + opens[1])* 100))
 
-            run_time = com.time_end(start_time)
-            total_time += run_time
+                str_years[i].insert(0, ''.join(str(year_target - 1 + i) + ['|Up', '|Dn', ''][u] + str_updns_total[u] + '\n'
+                                               for u in range(len(str_updns_total))))
+                run_time = com.time_end(start_time)
+                total_time += run_time
 
-            com.log(str(year_target - 1 + i) + ' 作成完了(' + com.conv_time_str(total_time) + ')')
+                com.log(str(year_target - 1 + i) + ' 作成完了(' + com.conv_time_str(total_time) + ')')
 
-        out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+            out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
 
-        with open(out_path + 'ShakayMado' + '.csv', 'w') as out:
-            out.write('Time,' + cols + '\n' + ''.join(updn for updn in str_years))
+            with open(out_path + 'ShakayMado' + '.csv', 'w') as out:
+                out.write('Time,' + cols + '\n' + ''.join(''.join([updn for updn in years]) for years in str_years))
 
-
-
-
-        # except Exception as e:
-        #     return 'マド空け編集でエラーが発生しました。\n' + str(e)
-        # finally:
-        #     try: out.close()
-        #     except: pass
+        except Exception as e:
+            return 'マド空け編集でエラーが発生しました。\n' + str(e)
+        finally:
+            try: out.close()
+            except: pass
 
         com.log('マド空け編集完了(' + com.conv_time_str(total_time) + ')')
         return ''
-
-
-
-
-
-
-
-
 
     # アノマリ〜編集各種実行
     def _edit_anomaly(self):
@@ -723,6 +915,9 @@ class AnomalyData:
         year_target = int(inputs[1][0])
 
         try:
+            window = com.progress('編集データ取得中', ['', 1], interrupt=True)
+            event, values = window.read(timeout=0)
+
             con = my_sql.MySql('fx_history')
             if con.cnx is None:
                 com.dialog('DB接続エラーが発生しました。', 'DB接続エラー発生', lv='W')
@@ -730,12 +925,20 @@ class AnomalyData:
 
             tables = con.free('SHOW TABLES')
 
-            h_open = {}
+            h_data = {}
+            d_open = {}
             for i in range(len(tables)):
-                h_open[tables[i][0]] = con.free(
+                d_open[tables[i][0]] = con.free(
                     'SELECT * FROM ' + tables[i][0] + ' GROUP BY LEFT(Time, 10)'
                     + ' HAVING \'' + str(year_target - int(inputs[1][1]) - 2) + '-01-01\' <= Time'
                     + ' AND Time <= \'' + str(year_target - 1) + '-12-31\' AND WEEKDAY(Time) < 3')
+                if tables[i][0].startswith('z_'):
+                    continue
+                h_data[tables[i][0]] = con.free(
+                    'SELECT * FROM ' + tables[i][0]
+                    + ' WHERE \'' + str(year_target - int(inputs[1][1]) - 2) + '-01-01\' <= Time'
+                    + ' AND Time <= \'' + str(year_target - 1) + '-12-31\' AND WEEKDAY(Time) < 5'
+                    + ' AND (RIGHT(LEFT(Time, 10), 1) IN(\'4\', \'5\', \'9\', \'0\') OR \'31\' = RIGHT(LEFT(Time, 10), 2))')
 
             dfs = [[], []]
             for i in range(len(dfs)):
@@ -760,14 +963,11 @@ class AnomalyData:
                         for k in range(1, len(files)):
                             df = pd.concat([df, pd.read_csv(files[k])])
 
-                    # pd.to_datetime(df['Time'])
                     df = df.reset_index(drop=True)
-
-                    # df.set_index('Time', inplace=True)
-                    # df.fillna(0, inplace=True)
-                    # [df.astype({key: np.asarray(dt for dt in df[key])}) for key in df if 'Time' != key]
-
                     dfs[i].append(df)
+
+            dfs.append(dfs[len(dfs) - 1])
+            window.close()
 
         except Exception as e:
             com.dialog('エラーが発生しました。\n' + str(e), 'データ取得エラー発生', lv='W')
@@ -775,21 +975,26 @@ class AnomalyData:
         finally:
             con.close()
 
-        # err_msg = self._edit_normal(inputs, dfs)
-        # if err_msg is None:
-        #     return
-        # elif len(err_msg):
-        #     com.dialog(err_msg, 'エラー発生', lv='W')
-        #     return
-        #
-        # err_msg = self._edit_gotobe(inputs, dfs)
-        # if err_msg is None:
-        #     return
-        # elif len(err_msg):
-        #     com.dialog(err_msg, 'エラー発生', lv='W')
-        #     return
+        window = com.progress('予測編集中', ['', 1], interrupt=True)
+        event, values = window.read(timeout=0)
 
-        err_msg = self._edit_shakay_mado(inputs, dfs, h_open)
+        err_msg = self._edit_normal(inputs, dfs)
+        if err_msg is None:
+            return
+        elif len(err_msg):
+            com.dialog(err_msg, 'エラー発生', lv='W')
+            return
+
+        window.close()
+
+        err_msg = self._edit_gotobe(inputs, dfs, h_data)
+        if err_msg is None:
+            return
+        elif len(err_msg):
+            com.dialog(err_msg, 'エラー発生', lv='W')
+            return
+
+        err_msg = self._edit_shakay_mado(inputs, dfs, d_open)
         if err_msg is None:
             return
         elif len(err_msg):
@@ -798,6 +1003,66 @@ class AnomalyData:
 
         com.dialog('アノマリ〜編集が完了しました。', 'アノマリ〜編集完了')
 
+    # CSV ⇨ JS変換
+    def _conv_csv_js(self):
+        io_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+        files = glob.glob(io_path + '*.csv')
+
+        for file in files:
+            df = pd.read_csv(file)
+
+            file_name = io_path + file.split('/')[-1].replace('.csv', '')
+            str_const = 'const ' + ('' if 0 <= file_name.find('Year') else file_name.split('/')[-1]) + ' = {'
+            str_value = ''
+
+            for i in range(len(df)):
+
+                is_main = False
+                for key in df:
+
+                    if 0 <= key.find('Unnamed'):
+                        continue
+
+                    if 'Time' == key:
+                        time = str(df.at[df.index[i], key])
+                        str_value += ('' if 0 == len(str_value) else '\n  },')
+                        str_value += '\n  "' + (time.split(' ')[0] if 0 <= file_name.find('Year') else time) + '": {'
+                        continue
+
+                    str_key = key.replace('X_', '').replace('Z_', '')
+                    if 0 <= str_key.find('_'):
+                        if 0 <= file_name.find('Year'):
+                            if 1 == str_key.count('_'):
+
+                                if is_main:
+                                    str_value += '\n    },'
+                                else:
+                                    is_main = True
+                                str_value += '\n    "' + str_key + '": {'
+                                str_value += '\n      "Count": "' + str(df.at[df.index[i], key]) + '"'
+
+                            else:
+                                str_value += ('\n      "' + str_key[str_key.find('_') + 1: str_key.rfind('_')]
+                                              + '": "' + str(df.at[df.index[i], key]) + '"')
+                        else:
+                            str_value += ('\n      "' + str_key[str_key.find('_') + 1:]
+                                          + '": "' + str(df.at[df.index[i], key]) + '"')
+
+                    else:
+                        if is_main:
+                            str_value += '\n    },'
+                        else:
+                            is_main = True
+                        str_value += '\n    "' + key + '": {'
+                        str_value += '\n      "Count": "' + str(df.at[df.index[i], key]) + '"'
+
+                str_value += '\n    }'
+            str_value += '\n  }\n'
+
+            with open(file_name + '.js', 'w') as out:
+                out.write(str_const + str_value + '}')
+
+        com.dialog('CSV ⇨ JS変換が完了しました。', 'CSV ⇨ JS変換完了')
 
 
 

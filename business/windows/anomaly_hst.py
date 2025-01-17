@@ -10,6 +10,7 @@ PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 MTF_INPUTS = [['SMA', 5, 25, 50, 100]]
 
 RENAME_CSV = {
+    # 'DOLLARIDX': 'usdidx',
     'XAUUSD': 'x_gold',
     'JPNIDXJPY': 'z_jn',
     'USA30IDXUSD': 'z_dj',
