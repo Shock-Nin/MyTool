@@ -36,10 +36,14 @@ class AnomalyHst:
         try:
             for i in range(len(files)):
                 data = open(files[i], 'r').read().split('\n')
+                file = files[i].split('\\')[-1]
 
-                window = com.progress('H1データ作成中', [files[i].split('/')[-1], len(files)], interrupt=True)
+                window = com.progress('H1データ作成中', [file , len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
-                window[files[i].split('/')[-1] + '_'].update(i)
+
+                window[file].update(file + ' (' + str(i) + ' / ' + str(len(files)) + ')')
+                window[file + '_'].update(i)
+
                 start_time = com.time_start()
 
                 out = ''
@@ -83,7 +87,7 @@ class AnomalyHst:
         return
 
     def _insert_db(self):
-        inputs = com.input_box('DBヒストリカル更新 開始しますか？', '開始確認', [['対象年', int(com.str_time()[:4]) - 1]])
+        inputs = com.input_box('DBヒストリカル更新 開始しますか？', '開始確認', [['対象年', 2003]])
         if inputs[0] <= 0:
             return
 
@@ -101,12 +105,17 @@ class AnomalyHst:
 
                 data = open(files[i], 'r').read().split('\n')
 
-                window = com.progress('H1ヒストリカル INSERT中', [files[i].split('/')[-1], len(files)], interrupt=True,)
+                file = files[i].split('\\')[-1]
+
+                window = com.progress('H1ヒストリカル INSERT中', [file , len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
 
-                window[files[i].split('/')[-1] + '_'].update(i)
-                start_time = com.time_start()
+                window[file].update(file + ' (' + str(i) + ' / ' + str(len(files)) + ')')
+                window[file + '_'].update(i)
 
+                con.delete(table, '')
+
+                start_time = com.time_start()
                 inserts = []
                 for k in range(len(data) - 1):
                     rows = data[k].split(',')
@@ -128,8 +137,7 @@ class AnomalyHst:
 
                 run_time = com.time_end(start_time)
                 total_time += run_time
-                com.log(files[i].replace('\\', '/').split('/')[-1]
-                        + '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                com.log(file + '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
                 window.close()
         except:
             con.rollback()

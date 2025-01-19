@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from idlelib.iomenu import encoding
-
 from common import com
 from common import my_sql
 from const import cst
@@ -21,6 +19,7 @@ DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 SPAN_LIST = ['_D', '_Mst', '_Med', '_W']
 MODEL_SKIP_DAYS = ['1225', '0101']
 
+
 class AnomalyData:
 
     def __init__(self, function):
@@ -32,12 +31,12 @@ class AnomalyData:
     # 統計CSV作成
     def _create_stat_csv(self):
         inputs = com.input_box('統計CSV作成 開始しますか？', '開始確認', [
-            ['開始年', int(com.str_time()[:4]) - 1], ['1=H, 2=D, 3=M, 4=W', '1']])
+            ['対象年', int(com.str_time()[:4])], ['モデル期間', 15], ['1=H, 2=D, 3=M, 4=W', '1']])
         if inputs[0] <= 0:
             return
 
-        if inputs[1][1] not in ['1', '2', '3', '4']:
-            com.dialog('選択が不正です。', '選択不正')
+        if inputs[1][2] not in ['1', '2', '3', '4']:
+            com.dialog('選択が不正です。', '選択不正', lv='W')
             return
 
         total_time = 0
@@ -48,18 +47,21 @@ class AnomalyData:
                 com.dialog('DB接続エラーが発生しました。', 'DB接続エラー発生', lv='W')
                 return
 
+            year_target = int(inputs[1][0])
             tables = con.free('SHOW TABLES')
 
-            res = {}
+            db_datas = {}
             for i in range(len(tables)):
 
                 info = tables[i][0] + ' ' + str(i) + ' / ' + str(len(tables))
                 window = com.progress('データ抽出中', [info, len(tables)], interrupt=True)
                 event, values = window.read(timeout=0)
                 window[info + '_'].update(i)
-                res[tables[i][0]] = con.select(
-                    '*', tables[i][0],
-                    where=('\'' + str(int(inputs[1][0])) + '-01-01\' <= Time AND WEEKDAY(Time) < 5'))
+
+                db_datas[tables[i][0]] = con.free(
+                    'SELECT * FROM ' + tables[i][0]
+                    + ' WHERE \'' + str(year_target - int(inputs[1][1]) - 2) + '-01-01\' <= Time'
+                    + ' AND Time <= \'' + str(year_target - 1) + '-12-31\'')
 
                 # 中断イベント
                 if _is_interrupt(window, event):
@@ -80,30 +82,30 @@ class AnomalyData:
         total_time += run_time
         com.log('データ抽出完了(' + com.conv_time_str(total_time) + ')')
 
-        if inputs[1][1] in ['2', '3', '4']:
+        if inputs[1][2] in ['2', '3', '4']:
             try:
                 start_time = com.time_start()
                 cnt = 0
-                len_date = (10 if inputs[1][1] in ['2', '4'] else 7)
+                len_date = (10 if inputs[1][2] in ['2', '4'] else 7)
 
-                for table in res:
+                for table in db_datas:
 
-                    window = com.progress('H1時間足変換中', [table, len(res)], interrupt=True)
+                    window = com.progress('H1時間足変換中', [table, len(db_datas[table])], interrupt=True)
                     event, values = window.read(timeout=0)
                     window[table + '_'].update(cnt)
-                    start_time = com.time_start()
 
+                    start_time = com.time_start()
                     old_date = '1999-01-01'
                     is_middle = False
                     rates = []
 
-                    for i in range(len(res[table][1])):
+                    for i in range(len(db_datas[table])):
 
                         # 中断イベント
                         if _is_interrupt(window, event):
                             return
 
-                        data = res[table][1][i]
+                        data = db_datas[table][i]
                         middle = (14 if '02' == str(data[0])[5:7] else 15)
 
                         if int(str(data[0])[8:10]) <= middle:
@@ -111,7 +113,7 @@ class AnomalyData:
 
                         if str(data[0])[:len_date] == str(old_date)[:len_date]:
 
-                            if inputs[1][1] in ['2', '4']:
+                            if inputs[1][2] in ['2', '4']:
                                 continue
 
                             if int(str(data[0])[8:10]) <= middle or is_middle:
@@ -123,13 +125,13 @@ class AnomalyData:
                         hi = data[2]
                         lo = data[3]
 
-                        for k in range(i + 1, len(res[table][1])):
-                            rows = res[table][1][k]
+                        for k in range(i + 1, len(db_datas[table])):
+                            rows = db_datas[table][k]
 
                             if str(rows[0])[:len_date] != str(old_date)[:len_date]:
                                 break
 
-                            if '3' == inputs[1][1]:
+                            if '3' == inputs[1][2]:
                                 if not is_middle and middle < int(str(rows[0])[8:10]):
                                     break
 
@@ -139,11 +141,11 @@ class AnomalyData:
 
                         rates.append([datetime.datetime(
                             int(str(old_date)[:4]), int(str(old_date)[5:7]),
-                            (int(str(old_date)[8:10])) if inputs[1][1] in ['2', '4'] else 16 if is_middle else 1),
+                            (int(str(old_date)[8:10])) if inputs[1][2] in ['2', '4'] else 16 if is_middle else 1),
                             op, hi, lo, cl])
 
+                    db_datas[table] = rates
                     cnt += 1
-                    res[table][1] = rates
                     window.close()
 
             except Exception as e:
@@ -159,27 +161,28 @@ class AnomalyData:
 
         try:
             times = []
-            for table in res:
-                for i in range(len(res[table][1])):
-                    times.append(res[table][1][i][0])
+            for table in db_datas:
+                for i in range(len(db_datas[table])):
+                    times.append(db_datas[table][i][0])
             times = sorted(list(set(times)))
 
             target_times = []
-            for year in range(int(inputs[1][0]), int(com.str_time()[:4])):
+            for year in range((int(inputs[1][0]) - int(inputs[1][1]) - 2), int(com.str_time()[:4])):
                 for i in range(len(times)):
                     if int(times[i].strftime('%Y')) == year:
 
-                        if inputs[1][1] in ['3'] or times[i].strftime('%m%d') not in MODEL_SKIP_DAYS:
+                        if inputs[1][2] in ['3'] or times[i].strftime('%m%d') not in MODEL_SKIP_DAYS:
                             target_times.append(times[i])
             cnt = 0
-            for year in range(int(inputs[1][0]), int(com.str_time()[:4])):
+            for year in range((int(inputs[1][0]) - int(inputs[1][1]) - 2), int(com.str_time()[:4])):
 
                 start_time = com.time_start()
                 window = com.progress('データ編集中', [str(year), len(target_times)], interrupt=True)
                 event, values = window.read(timeout=0)
 
                 str_out = ''
-                old = {table: -1 for table in res}
+                old = {table: -1 for table in db_datas}
+
                 for i in range(cnt, len(target_times)):
                     window[str(year) + '_'].update(i)
                     data = ''
@@ -187,16 +190,16 @@ class AnomalyData:
                     if year < int(target_times[i].strftime('%Y')):
                         break
 
-                    for table in res:
+                    for table in db_datas:
                         is_time = False
 
-                        for k in range(len(res[table][1])):
+                        for k in range(len(db_datas[table])):
 
                             # 中断イベント
                             if _is_interrupt(window, event):
                                 return
 
-                            row = res[table][1][k]
+                            row = db_datas[table][k]
 
                             if year < int(row[0].strftime('%Y')) or target_times[i] < row[0]:
                                 break
@@ -209,21 +212,21 @@ class AnomalyData:
                                 old[table] = row[4]
                                 is_time = True
 
-                                del res[table][1][k]
+                                del db_datas[table][k]
                                 break
 
                         if not is_time:
                             data += (',,,' if -1 == old[table] else str(old[table]) + ',0,0,')
 
                     str_out += target_times[i].strftime('%Y-%m'
-                        + ('|' + DAYWEEKS[target_times[i].weekday() + 1] if inputs[1][1] in ['4'] else '-%d')
-                        + (' %H:%M:%S' if '1' == inputs[1][1] else '')) + ',' + data[:-1] + '\n'
+                        + ('|' + DAYWEEKS[target_times[i].weekday() + 1] if inputs[1][2] in ['4'] else '-%d')
+                        + (' %H:%M:%S' if '1' == inputs[1][2] else '')) + ',' + data[:-1] + '\n'
                     cnt += 1
 
                 with open(cst.HST_PATH[cst.PC].replace('\\', '/') + '_stat/' + str(year)
-                                + {'1': 'H', '2': 'D', '3': 'M', '4': 'W'}[inputs[1][1]] + '.csv', 'w') as out:
+                                + {'1': 'H', '2': 'D', '3': 'M', '4': 'W'}[inputs[1][2]] + '.csv', 'w') as out:
                     out.write('Time,' + ','.join(''.join(
-                        table.upper() + col for col in [',', '_Vola,', '_UpDn']) for table in res) + '\n' + str_out)
+                        table.upper() + col for col in [',', '_Vola,', '_UpDn']) for table in db_datas) + '\n' + str_out)
 
                 window.close()
                 run_time = com.time_end(start_time)
@@ -907,8 +910,7 @@ class AnomalyData:
     def _edit_anomaly(self):
 
         inputs = com.input_box('アノマリ〜編集 開始しますか？', '開始確認', [
-            # ['対象年', int(com.str_time()[:4])], ['モデル期間', 15]])
-            ['対象年', int(com.str_time()[:4]) - 1], ['モデル期間', 15]])
+            ['対象年', int(com.str_time()[:4])], ['モデル期間', 15]])
         if inputs[0] <= 0:
             return
 

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import datetime
-
 from common import com
 from const import cst
 
 import os
 import cv2
+import glob
 import shutil
+import datetime
 import subprocess
 import pandas as pd
 import PySimpleGUI as sg
@@ -52,7 +52,7 @@ class Function:
             self.log_delete(fnc)
 
         elif 'Tickヒストリー編集' == fnc:
-            self.merge_history(fnc)
+            self.edit_history(fnc)
 
         elif 'hstコピー(テスト)' == fnc:
             self.copy_history_test(
@@ -284,108 +284,84 @@ class Function:
                        '\n　' + cst.MT4_PATH[:-1] + "".join(['\n　　' + row.replace(cst.MT4_PATH, '')
                                                             for row in msg])), fnc + ' 完了')
 
-    # TickstoryのCSVファイルマージ
-    def merge_history(self, fnc):
+    # TickstoryのCSVファイルマージ・編集
+    def edit_history(self, fnc):
         if self.ip == cst.DEV_IP:
 
             is_interrupt = False
             total_time = 0
 
             out_path = cst.HST_PATH[cst.PC]
-            files = os.listdir(out_path + '/add')
-            # files = os.listdir(cst.HST_PATH[cst.PC] + '_old')
-            files = [file for file in files if 0 <= file.find('.csv')]
+            base_files = glob.glob(out_path + '/2024/*.csv')
+            add_files = glob.glob(out_path + '/add/*.csv')
+
+            if 0 == len(add_files):
+                com.dialog(out_path + '/addにファイルが存在しません。', title='ファイル不在', lv='w')
+                return
 
             err_msg = ''
             try:
-                # 進捗表示
-                bar = files[0]
-                window = com.progress('ヒストリカルデータ編集中', [bar, len(files)], interrupt=True)
+                for i in range(len(base_files)):
 
-                for i in range(0, len(files)):
-
-                    merge_file = []
                     start_time = com.time_start()
 
-                    # try:
-                    #     event, values = window.read(timeout=0)
-                    #     window[files[0]].update(files[i] + '(' + str(i) + ' / ' + str(len(files)) + ')')
-                    #     window[files[0] + '_'].update(i)
-                    #
-                    #     for in_path in ['old', 'new']:
-                    #
-                    #         com.log('読み込み中: ' + in_path + '/' + files[i])
-                    #         in_file = cst.HST_PATH[cst.PC] + '/' + in_path + '/' + files[i]
-                    #         merge_file.append(pd.read_csv(in_file, encoding='cp932'))
-                    #
-                    #         # 中断イベント
-                    #         if _is_interrupt(window, event):
-                    #             is_interrupt = True
-                    #             break
-                    #
-                    # except Exception as e:
-                    #     err_msg += '\n　' + in_file + '\n　　' + str(e)
-                    #     com.log(str(e))
-                    #     continue
-                    #
-                    # # 中断送り
-                    # if is_interrupt:
-                    #     break
-                    #
-                    # com.log('マージ中: ' + files[i])
-                    # result = pd.concat(merge_file)
-                    # result.to_csv(out_path + '/' + files[i], index=False)
-                    #
-                    # run_time = com.time_end(start_time)
-                    # com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                    # 進捗表示
+                    file = base_files[i].split('\\')[-1]
 
-                    result = pd.read_csv(out_path + '/add/' + files[i])
-                    for k in range(0, len(result)):
-                        date = result.at[result.index[k], 'Date']
-                        if 4 < datetime.datetime(int(date[:4]), int(date[4:6]), int(date[6:8])).weekday() \
-                                or date[4:] in ['0101']:
-                            continue
+                    window = com.progress('ヒストリカルデータ編集中', [file, len(base_files)], interrupt=True)
+                    event, values = window.read(timeout=0)
 
-                        num = int((float(result.at[result.index[k], 'High']) - float(result.at[result.index[k], 'Low'])) /
-                                  float(result.at[result.index[k], 'Close']) * 10000)
-                        result.at[result.index[k], 'Volume'] = str(int(4 if num < 4 else num) * 10 / 10)
-                        if 0 == k % 500000:
-                            print(files[i] + ': ' + str(k) + ' / ' + str(len(result)))
+                    window[file].update(file + ' (' + str(i) + ' / ' + str(len(base_files)) + ')')
+                    window[file + '_'].update(i)
 
-                    result.to_csv(out_path + '/' + files[i], index=False)
-                    run_time = com.time_end(start_time)
-                    com.log('Volume編集完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                    add_data = pd.read_csv(out_path + '/add/' + file)
+                    before_len = len(add_data)
 
-                    try:
-                        event, values = window.read(timeout=0)
-                        window[files[0]].update(files[i] + '(' + str(i) + ' / ' + str(len(files)) + ')')
-                        window[files[0] + '_'].update(i)
+                    add_data = add_data[(add_data['Date'].astype(str).str.match('20..0101') == False)
+                                        & (pd.to_datetime(add_data['Date'], format='%Y%m%d').dt.weekday < 5)]
+                    add_data = add_data.reset_index(drop=True)
 
-                        com.log('読み込み中: ' + out_path + '/' + files[i])
-                        merge_file.append(pd.read_csv(out_path + '/' + files[i], encoding='cp932'))
-                        merge_file.append(result)
+                    com.log(file + ' (' + str(len(add_data) - before_len) + ') | '
+                            + str(before_len) + ' ⇒ ' + str(len(add_data)))
+                    num = ((add_data['High'] - add_data['Low']) / add_data['Close'] * 10000).astype(int)
+
+                    for k in range(len(add_data)):
+                        add_data.at[add_data.index[k], 'Volume'] = (4 if num[k] < 4 else num[k]) * 10 / 10
+
+                        if 0 == k % 1000000 and 0 < k:
+                            print(file + ': ' + str(k) + ' / ' + str(len(add_data)))
 
                         # 中断イベント
                         if _is_interrupt(window, event):
                             is_interrupt = True
                             break
 
-                    except Exception as e:
-                        err_msg += '\n　' + files[i] + '\n　　' + str(e)
-                        com.log(str(e))
-                        continue
-
                     # 中断送り
                     if is_interrupt:
                         break
 
-                    com.log('マージ中: ' + files[i])
-                    result = pd.concat(merge_file)
-                    result.to_csv(out_path + '/' + files[i], index=False)
                     run_time = com.time_end(start_time)
-                    com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + files[i])
+                    com.log('Volume編集完了(' + com.conv_time_str(run_time) + ') ' + file)
 
+                    try:
+                        result = pd.concat([pd.read_csv(out_path + '/' + file, encoding='cp932'), add_data])
+                        result.to_csv(out_path + '/' + file, index=False)
+
+                    except Exception as e:
+                        err_msg += '\n　' + file + '\n　　' + str(e)
+                        com.log(str(e))
+                        continue
+
+                    # 中断イベント
+                    if _is_interrupt(window, event):
+                        is_interrupt = True
+                        break
+
+                    run_time = com.time_end(start_time)
                     total_time += run_time
+                    com.log('マージ完了(' + com.conv_time_str(run_time) + ') ' + file)
+
+                    window.close()
             finally:
                 try: window.close()
                 except: pass

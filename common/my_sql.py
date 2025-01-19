@@ -92,9 +92,9 @@ class MySql:
         com.log('SQL: ' + sql.replace('\n', ' '))
         return True
 
-    def delete(self, table, where):
+    def delete(self, table, where=''):
 
-        sql = 'DELETE FROM ' + table + ' WHERE ' + where
+        sql = 'DELETE FROM ' + table + ('' if 0 == len(where) else ' WHERE ' + where)
         try:
             cursor = self.cnx.cursor()
             cursor.execute(sql)
