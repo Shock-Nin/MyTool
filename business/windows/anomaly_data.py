@@ -16,8 +16,9 @@ PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1]]
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
-SPAN_LIST = ['_D', '_Mst', '_Med', '_W']
+SPAN_LIST = ['_D', '_M', '_W']
 MODEL_SKIP_DAYS = ['1225', '0101']
+USD_IDX = ['EUR', 'GBP', 'AUD', 'NZD', 'CHF', 'CAD']
 
 
 class AnomalyData:
@@ -39,6 +40,7 @@ class AnomalyData:
             com.dialog('選択が不正です。', '選択不正', lv='W')
             return
 
+        tf = {'1': 'H', '2': 'D', '3': 'M', '4': 'W'}[inputs[1][2]]
         total_time = 0
         start_time = com.time_start()
         try:
@@ -54,7 +56,7 @@ class AnomalyData:
             for i in range(len(tables)):
 
                 info = tables[i][0] + ' ' + str(i) + ' / ' + str(len(tables))
-                window = com.progress('データ抽出中', [info, len(tables)], interrupt=True)
+                window = com.progress('データ抽出中 ' + tf, [info, len(tables)], interrupt=True)
                 event, values = window.read(timeout=0)
                 window[info + '_'].update(i)
 
@@ -70,7 +72,7 @@ class AnomalyData:
                 window.close()
 
         except Exception as e:
-            com.dialog('エラーが発生しました。\n' + str(e), 'データ抽出エラー発生', lv='W')
+            com.dialog('エラーが発生しました。\n' + str(e), 'データ抽出(' + tf + ')エラー発生', lv='W')
             return
 
         finally:
@@ -80,7 +82,7 @@ class AnomalyData:
 
         run_time = com.time_end(start_time)
         total_time += run_time
-        com.log('データ抽出完了(' + com.conv_time_str(total_time) + ')')
+        com.log('データ抽出(' + tf + ')完了(' + com.conv_time_str(total_time) + ')')
 
         if inputs[1][2] in ['2', '3', '4']:
             try:
@@ -90,7 +92,7 @@ class AnomalyData:
 
                 for table in db_datas:
 
-                    window = com.progress('H1時間足変換中', [table, len(db_datas[table])], interrupt=True)
+                    window = com.progress('H1時間足変換中 ' + tf, [table, len(db_datas[table])], interrupt=True)
                     event, values = window.read(timeout=0)
                     window[table + '_'].update(cnt)
 
@@ -106,19 +108,8 @@ class AnomalyData:
                             return
 
                         data = db_datas[table][i]
-                        middle = (14 if '02' == str(data[0])[5:7] else 15)
-
-                        if int(str(data[0])[8:10]) <= middle:
-                            is_middle = False
-
                         if str(data[0])[:len_date] == str(old_date)[:len_date]:
-
-                            if inputs[1][2] in ['2', '4']:
-                                continue
-
-                            if int(str(data[0])[8:10]) <= middle or is_middle:
-                                continue
-                            is_middle = True
+                            continue
 
                         old_date = data[0]
                         op = data[1]
@@ -132,7 +123,7 @@ class AnomalyData:
                                 break
 
                             if '3' == inputs[1][2]:
-                                if not is_middle and middle < int(str(rows[0])[8:10]):
+                                if str(old_date)[5:7] != str(rows[0])[5:7]:
                                     break
 
                             hi = max(rows[2], hi)
@@ -141,15 +132,14 @@ class AnomalyData:
 
                         rates.append([datetime.datetime(
                             int(str(old_date)[:4]), int(str(old_date)[5:7]),
-                            (int(str(old_date)[8:10])) if inputs[1][2] in ['2', '4'] else 16 if is_middle else 1),
-                            op, hi, lo, cl])
+                            (int(str(old_date)[8:10])) if inputs[1][2] in ['2', '4'] else 1), op, hi, lo, cl])
 
                     db_datas[table] = rates
                     cnt += 1
                     window.close()
 
             except Exception as e:
-                com.dialog('エラーが発生しました。\n' + str(e), '時間足編集エラー発生', lv='W')
+                com.dialog('エラーが発生しました。\n' + str(e), '時間足変換(' + tf + ')エラー発生', lv='W')
                 return
             finally:
                 try: window.close()
@@ -157,7 +147,7 @@ class AnomalyData:
 
             run_time = com.time_end(start_time)
             total_time += run_time
-            com.log('H1時間足変換完了(' + com.conv_time_str(total_time) + ')')
+            com.log('H1時間足変換(' + tf + ')完了(' + com.conv_time_str(total_time) + ')')
 
         try:
             times = []
@@ -177,14 +167,14 @@ class AnomalyData:
             for year in range((int(inputs[1][0]) - int(inputs[1][1]) - 2), int(com.str_time()[:4])):
 
                 start_time = com.time_start()
-                window = com.progress('データ編集中', [str(year), len(target_times)], interrupt=True)
+                window = com.progress('データ編集中 ' + tf, [str(year), len(target_times)], interrupt=True)
                 event, values = window.read(timeout=0)
 
                 str_out = ''
                 old = {table: -1 for table in db_datas}
 
                 for i in range(cnt, len(target_times)):
-                    window[str(year) + '_'].update(i)
+                    window[str(year)+ '_'].update(i)
                     data = ''
 
                     if year < int(target_times[i].strftime('%Y')):
@@ -219,7 +209,7 @@ class AnomalyData:
                             data += (',,,' if -1 == old[table] else str(old[table]) + ',0,0,')
 
                     str_out += target_times[i].strftime('%Y-%m'
-                        + ('|' + DAYWEEKS[target_times[i].weekday() + 1] if inputs[1][2] in ['4'] else '-%d')
+                        + ('|' + DAYWEEKS[target_times[i].weekday() + 1] if inputs[1][2] in ['4'] else '' if inputs[1][2] in ['3'] else '-%d')
                         + (' %H:%M:%S' if '1' == inputs[1][2] else '')) + ',' + data[:-1] + '\n'
                     cnt += 1
 
@@ -231,17 +221,17 @@ class AnomalyData:
                 window.close()
                 run_time = com.time_end(start_time)
                 total_time += run_time
-                com.log(str(year) + '年 書き出し完了(' + com.conv_time_str(total_time) + ')')
+                com.log(str(year) + '年(' + tf + ')書き出し完了(' + com.conv_time_str(total_time) + ')')
 
         except Exception as e:
-            com.dialog('エラーが発生しました。\n' + str(e), 'データ編集エラー発生', lv='W')
+            com.dialog('エラーが発生しました。\n' + str(e), 'データ編集(' + tf + ')エラー発生', lv='W')
             return
         finally:
             try: window.close()
             except: pass
 
-        com.log('統計CSV作成完了(' + com.conv_time_str(total_time) + ')')
-        com.dialog('統計CSV作成完了しました。(' + com.conv_time_str(total_time) + ')', '統計CSV作成完了')
+        com.log('統計CSV作成(' + tf + ')完了(' + com.conv_time_str(total_time) + ')')
+        com.dialog('統計CSV作成(' + tf + ')完了しました。(' + com.conv_time_str(total_time) + ')', '統計CSV作成完了')
 
         return ''
 
@@ -274,13 +264,11 @@ class AnomalyData:
                 continue
 
             curs.append(col)
-
-            cols += col + ',' + col + '_VolaAVG,' + col + '_VolaMax,' + col + '_VolaMin,' + col + '_UpDnAvg,'
+            cols += col + ',' + col + '_VolaAvg,' + col + '_VolaMax,' + col + '_VolaMin,' + col + '_UpDnAvg,'
             cols += col + '_Win,' + col + '_Lose,' + col + '_WinPc,' + col + '_LosePc,'
-            cols += col + col + '_AvgWin,' + col + '_AvgLose,'
+            cols += col + '_WinAvg,' + col + '_LoseAvg,'
 
             cols = cols.replace('USD', '')
-
         try:
             for i in range(len(dfs)):
 
@@ -292,22 +280,13 @@ class AnomalyData:
 
                 for time in forecasts[i]:
                     row_d = data_d[data_d['Time'].str.match('20..-' + time.strftime('%m-%d'))].copy()
-
-                    if time.day < 16:
-                        row_mst = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '01')].copy()
-                        row_med = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
-                    else:
-                        row_mst = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m-') + '16')].copy()
-                        row_med = data_m[data_m['Time'].str.match(
-                            '20..-' + ('01' if 13 == (time.month + 1) else
-                                      ('0' if (time.month + 1) < 10 else '') + str(time.month + 1)) + '-01')].copy()
+                    row_m = data_m[data_m['Time'].str.match('20..-' + time.strftime('%m'))].copy()
                     row_w = data_w[data_w['Time'].str.match('20..-' + time.strftime('%m') + '.' + DAYWEEKS[time.weekday() + 1])].copy()
 
                     row_d = row_d.reset_index(drop=True)
-                    row_mst = row_mst.reset_index(drop=True)
-                    row_med = row_med.reset_index(drop=True)
+                    row_m = row_m.reset_index(drop=True)
                     row_w = row_w.reset_index(drop=True)
-                    rows = [row_d, row_mst, row_med, row_w]
+                    rows = [row_d, row_m, row_w]
 
                     str_out += str(time)
                     str_updn = ''
@@ -356,7 +335,7 @@ class AnomalyData:
 
                     str_out += str_updn + '\n'
 
-                with open(out_path + 'Year' + ['P', '', 'F'][i] + '.csv', 'w') as out:
+                with open(out_path + 'Year' + ['1', '2', '3'][i] + '.csv', 'w') as out:
                     out.write('Time,' + ''.join(cols.replace(',', span + ',')
                                                 for span in SPAN_LIST)[:-1] + '\n' + str_out)
 
@@ -670,7 +649,7 @@ class AnomalyData:
         curs = []
         str_years = [[] for _ in dfs]
         heights = [2, 3, 5]
-        comp = 3
+        achieves = [75, 100, 125]
 
         for col in dfs[0][0].keys():
             if col in ['Time'] or 0 <= col.find('_Vola') or 0 <= col.find('_UpDn'):
@@ -679,10 +658,10 @@ class AnomalyData:
             curs.append(col)
             col = col.replace('USD', '')
             cols += col + ',' + ''.join(
-                [col + '_' + '0' + str(height) + ',' + col + '_' + '0' + str(height) + '_Pc,' + ''.join(
-                    [col + '_' + '0' + str(height) + 'D' + str(day) + ','
-                     + col + '_' + '0' + str(height) + 'D' + str(day) + '_Pc,'
-                     for day in range(1, comp + 1)]) for height in heights])
+                [col + '_' + '0' + str(height) + ',' + col + '_' + '0' + str(height) + 'Pc,' + ''.join(
+                    [col + '_' + '0' + str(height) + win_lose + str(achieve) + ','
+                     + col + '_' + '0' + str(height) + win_lose + str(achieve) + 'Pc,'
+                     for achieve in achieves for win_lose in ['W', 'L']]) for height in heights])
         try:
             for i in range(len(dfs)):
 
@@ -690,8 +669,8 @@ class AnomalyData:
                 totals = [[0,
                           {height: 0 for height in heights},
                           {height: 0 for height in heights},
-                          [[0 for _ in range(1, comp + 1)] for _ in heights],
-                          [[0 for _ in range(1, comp + 1)] for _ in heights]
+                          [[[0 for _ in achieves] for _ in ['W', 'L']] for _ in heights],
+                          [[[0 for _ in achieves] for _ in ['W', 'L']] for _ in heights]
                           ] for _ in curs]
 
                 for k in range(len(forecasts[i])):
@@ -709,8 +688,8 @@ class AnomalyData:
                         counts = [0,
                                   {height: 0 for height in heights},
                                   {height: 0 for height in heights},
-                                  [[0 for _ in range(1, comp + 1)] for _ in heights],
-                                  [[0 for _ in range(1, comp + 1)] for _ in heights]
+                                  [[[0 for _ in achieves] for _ in ['W', 'L']] for _ in heights],
+                                  [[[0 for _ in achieves] for _ in ['W', 'L']] for _ in heights]
                                   ]
                         windows = [[], [], []]
 
@@ -732,37 +711,14 @@ class AnomalyData:
                                 (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')].copy()
                             fridays = fridays.reset_index(drop=True)
 
-                            row_d2s = None
-                            for w in range(len(windows[1])):
-                                if ((time_monday + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-                                        == windows[1][w][0].strftime('%Y-%m-%d')):
-                                    row_d2s = windows[1][w]
-                                    break
-
-                            row_d3s = None
-                            for w in range(len(windows[2])):
-                                if ((time_monday + datetime.timedelta(days=2)).strftime('%Y-%m-%d')
-                                        == windows[2][w][0].strftime('%Y-%m-%d')):
-                                    row_d3s = windows[2][w]
-                                    break
-
-                            if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]) \
-                                    or row_d2s is None or row_d3s is None:
+                            if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]):
 
                                 msg = cur + ', ' + str(forecasts[i][k]) + ' | '
-
                                 msg += (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')
                                 msg += ' ' + ('×' if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]) else '○')
+                                msg += ', ' + str(time_monday)
 
-                                msg += ', ' + str(time_monday) + ', '
-
-                                msg += (time_monday + datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-                                msg += ' ' + ('×' if row_d2s is None else '○') + ', '
-
-                                msg += (time_monday + datetime.timedelta(days=2)).strftime('%Y-%m-%d')
-                                msg += ' ' + ('×' if row_d3s is None else '○')
-
-                                #TODO
+                                # TODO
                                 # print(msg)
                                 continue
 
@@ -774,46 +730,73 @@ class AnomalyData:
                                     break
 
                             cl = fridays.at[fridays.index[0], curs[c]]
-                            updn = (cl - op if curs[c].startswith('USD') else op - cl) / op
-                            comp_rate = round(updn * 0.75, 6)
-                            updn = round(updn * 1000, 2)
+                            updn = (cl - op if curs[c].startswith('USD') else op - cl)
+                            updn = round(updn, 6)
+                            # updn = round(cl - op, 6)
 
                             for height in range(len(heights)):
-                                if heights[height] < updn:
+                                if round(abs(updn) / op * 1000, 2) < heights[height]:
+                                    continue
+
+                                if 0 < updn:
                                     counts[1][heights[height]] += 1
                                     totals[c][1][heights[height]] += 1
 
-                                    is_comp = False
-                                    for day in range(len(counts[3][height])):
+                                    for a in range(len(achieves)):
+                                        rows = windows[0][m]
+                                        achieve_rate = round(updn * (achieves[a] / 100), 6)
 
-                                        rows = [windows[0][m], row_d2s, row_d3s][day]
-                                        if curs[c].startswith('USD'):
-                                            if cl + comp_rate <= rows[2]:
-                                                is_comp = True
-                                        else :
-                                            if rows[3] <= cl + comp_rate:
-                                                is_comp = True
+                                        win = 0
+                                        lose = 0
 
-                                        counts[3][height][day] += (1 if is_comp else 0)
-                                        totals[c][3][height][day] += (1 if is_comp else 0)
+                                        if op + achieve_rate <= rows[2]:
+                                            if curs[c].startswith('USD'):
+                                                win = 1
+                                            else:
+                                                lose = 1
 
-                                elif heights[height] < -updn:
+                                        if rows[3] <= op - achieve_rate:
+                                            if curs[c].startswith('USD'):
+                                                lose = 1
+                                            else:
+                                                win = 1
+
+                                        print(str(rows[0])[:10], cur, cl, op, ' | ', achieves[a], achieve_rate, win, lose, ' | ',
+                                              op + achieve_rate <= rows[2], rows[2], ' | ', rows[3] <= op - achieve_rate, rows[3])
+
+                                        counts[3][height][0][a] += win
+                                        totals[c][3][height][0][a] += win
+                                        counts[3][height][1][a] += lose
+                                        totals[c][3][height][1][a] += lose
+
+                                else:
                                     counts[2][heights[height]] += 1
                                     totals[c][2][heights[height]] += 1
 
-                                    is_comp = False
-                                    for day in range(len(counts[4][height])):
-                                        rows = [windows[0][m], row_d2s, row_d3s][day]
+                                    for a in range(len(achieves)):
+                                        rows = windows[0][m]
+                                        achieve_rate = -round(updn * (achieves[a] / 100), 6)
 
-                                        if curs[c].startswith('USD'):
-                                            if rows[3] <= cl + comp_rate:
-                                                is_comp = True
-                                        else :
-                                            if cl + comp_rate <= rows[2]:
-                                                is_comp = True
+                                        win = 0
+                                        lose = 0
 
-                                        counts[4][height][day] += (1 if is_comp else 0)
-                                        totals[c][4][height][day] += (1 if is_comp else 0)
+                                        if rows[3] <= op - achieve_rate:
+                                            if curs[c].startswith('USD'):
+                                                win = 1
+                                            else:
+                                                lose = 1
+
+
+                                        if op + achieve_rate <= rows[2]:
+                                            if curs[c].startswith('USD'):
+                                                lose = 1
+                                            else:
+                                                win = 1
+
+                                        counts[4][height][0][a] += win
+                                        totals[c][4][height][0][a] += win
+                                        counts[4][height][1][a] += lose
+                                        totals[c][4][height][1][a] += lose
 
                             # 中断イベント
                             if _is_interrupt(window, event):
@@ -826,26 +809,30 @@ class AnomalyData:
                             cnt1 = cnt_updn + 1
                             cnt3 = cnt_updn + 3
 
-                            str_updns[cnt_updn] += ','+ str(counts[0])
+                            str_updns[cnt_updn] += ','
                             if len(str_updns) - 2 == cnt_updn:
-                                str_updns[len(str_updns) - 1] += ','
+                                str_updns[len(str_updns) - 1] += ','+ str(counts[0])
+
+                            opens.append(counts[cnt1])
+                            closes.append(counts[cnt3])
 
                             for height in range(len(heights)):
-                                opens.append(counts[cnt1][heights[height]])
-                                closes.append(counts[cnt3][height])
 
-                                str_updns[cnt_updn] += ',' + str(opens[cnt_updn]) + ',' +'{:.2f}'.format(opens[cnt_updn] / counts[0] * 100)
+                                str_updns[cnt_updn] += ',' + str(opens[cnt_updn][heights[height]]) + ',' +'{:.2f}'.format(opens[cnt_updn][heights[height]] / counts[0] * 100)
                                 if len(str_updns) - 2 == cnt_updn:
-                                    str_updns[len(str_updns) - 1] += ',' + str(opens[0] + opens[1]) + ',' +'{:.2f}'.format((opens[0] + opens[1]) / counts[0] * 100)
+                                    str_updns[len(str_updns) - 1] += \
+                                        ',' + str(opens[0][heights[height]] + opens[1][heights[height]]) + ',' \
+                                        + '{:.2f}'.format((opens[0][heights[height]] + opens[1][heights[height]]) / counts[0] * 100)
 
-                                for day in range(len(closes[cnt_updn])):
-                                    str_updns[cnt_updn] += ',' + str(closes[cnt_updn][day]) + ','
-                                    str_updns[cnt_updn] += ('0' if 0 == opens[cnt_updn] else
-                                                 '{:.2f}'.format(closes[cnt_updn][day] / opens[cnt_updn] * 100))
-                                    if len(str_updns) - 2 == cnt_updn:
-                                        str_updns[len(str_updns) - 1] += ',' + str(closes[0][day] + closes[1][day]) + ','
-                                        str_updns[len(str_updns) - 1] += ('0' if 0 == opens[0] + opens[1] else
-                                                 '{:.2f}'.format((closes[0][day] + closes[1][day]) / (opens[0] + opens[1]) * 100))
+                                for win_lose in range(2):
+                                    for achieve in range(len(achieves)):
+                                        str_updns[cnt_updn] += ',' + str(closes[cnt_updn][height][win_lose][achieve]) + ','
+                                        str_updns[cnt_updn] += ('0' if 0 == opens[cnt_updn][heights[height]] else
+                                                     '{:.2f}'.format(closes[cnt_updn][height][win_lose][achieve] / opens[cnt_updn][heights[height]] * 100))
+                                        if len(str_updns) - 2 == cnt_updn:
+                                            str_updns[len(str_updns) - 1] += ',' + str(closes[0][height][win_lose][achieve] + closes[1][height][win_lose][achieve]) + ','
+                                            str_updns[len(str_updns) - 1] += ('0' if 0 == opens[0][heights[height]] + opens[1][heights[height]] else
+                                                     '{:.2f}'.format((closes[0][height][win_lose][achieve] + closes[1][height][win_lose][achieve]) / (opens[0][heights[height]] + opens[1][heights[height]]) * 100))
 
                     str_years[i].append(''.join(str(forecasts[i][k])[:7]+ ['|Up', '|Dn', ''][u] + str_updns[u] + '\n'
                                                 for u in range(len(str_updns))))
@@ -861,29 +848,32 @@ class AnomalyData:
                         cnt1 = cnt_updn + 1
                         cnt3 = cnt_updn + 3
 
-                        str_updns_total[cnt_updn] += ',' + str(totals[c][0])
+                        str_updns_total[cnt_updn] += ','
                         if len(str_updns_total) - 2 == cnt_updn:
-                            str_updns_total[len(str_updns_total) - 1] += ','
+                            str_updns_total[len(str_updns_total) - 1] += ',' + str(totals[c][0])
+
+                        opens.append(totals[c][cnt1])
+                        closes.append(totals[c][cnt3])
 
                         for height in range(len(heights)):
-                            opens.append(totals[c][cnt1][heights[height]])
-                            closes.append(totals[c][cnt3][height])
 
-                            str_updns_total[cnt_updn] += ',' + str(opens[cnt_updn]) + ',' + '{:.2f}'.format(
-                                opens[cnt_updn] / totals[c][0] * 100)
+                            str_updns_total[cnt_updn] += ',' + str(opens[cnt_updn][heights[height]]) + ',' \
+                                                         + '{:.2f}'.format(opens[cnt_updn][heights[height]] / totals[c][0] * 100)
                             if len(str_updns_total) - 2 == cnt_updn:
-                                str_updns_total[len(str_updns_total) - 1] += ',' + str(opens[0] + opens[1]) + ',' + '{:.2f}'.format(
-                                    (opens[0] + opens[1]) / totals[c][0] * 100)
+                                str_updns_total[len(str_updns_total) - 1] += \
+                                    ',' + str(opens[0][heights[height]] + opens[1][heights[height]]) + ',' \
+                                    + '{:.2f}'.format((opens[0][heights[height]] + opens[1][heights[height]]) / totals[c][0] * 100)
 
-                            for day in range(len(closes[cnt_updn])):
-                                str_updns_total[cnt_updn] += ',' + str(closes[cnt_updn][day]) + ','
-                                str_updns_total[cnt_updn] += ('0' if 0 == opens[cnt_updn] else
-                                                        '{:.2f}'.format(closes[cnt_updn][day] / opens[cnt_updn] * 100))
-                                if len(str_updns_total) - 2 == cnt_updn:
-                                    str_updns_total[len(str_updns_total) - 1] += ',' + str(closes[0][day] + closes[1][day]) + ','
-                                    str_updns_total[len(str_updns_total) - 1] += \
-                                        ('0' if 0 == opens[0] + opens[1] else
-                                         '{:.2f}'.format((closes[0][day] + closes[1][day]) / (opens[0] + opens[1])* 100))
+                            for win_lose in range(2):
+                                for achieve in range(len(achieves)):
+                                    str_updns_total[cnt_updn] += ',' + str(closes[cnt_updn][height][win_lose][achieve]) + ','
+                                    str_updns_total[cnt_updn] += ('0' if 0 == opens[cnt_updn][heights[height]] else
+                                                            '{:.2f}'.format(closes[cnt_updn][height][win_lose][achieve] / opens[cnt_updn][heights[height]] * 100))
+                                    if len(str_updns_total) - 2 == cnt_updn:
+                                        str_updns_total[len(str_updns_total) - 1] += ',' + str(closes[0][height][win_lose][achieve] + closes[1][height][win_lose][achieve]) + ','
+                                        str_updns_total[len(str_updns_total) - 1] += \
+                                            ('0' if 0 == opens[0][heights[height]] + opens[1][heights[height]] else
+                                             '{:.2f}'.format((closes[0][height][win_lose][achieve] + closes[1][height][win_lose][achieve]) / (opens[0][heights[height]] + opens[1][heights[height]]) * 100))
 
                 str_years[i].insert(0, ''.join(str(year_target - 1 + i) + ['|Up', '|Dn', ''][u] + str_updns_total[u] + '\n'
                                                for u in range(len(str_updns_total))))
@@ -897,8 +887,8 @@ class AnomalyData:
             with open(out_path + 'ShakayMado' + '.csv', 'w') as out:
                 out.write('Time,' + cols + '\n' + ''.join(''.join([updn for updn in years]) for years in str_years))
 
-        except Exception as e:
-            return 'マド空け編集でエラーが発生しました。\n' + str(e)
+        # except Exception as e:
+        #     return 'マド空け編集でエラーが発生しました。\n' + str(e)
         finally:
             try: out.close()
             except: pass
@@ -980,21 +970,20 @@ class AnomalyData:
         window = com.progress('予測編集中', ['', 1], interrupt=True)
         event, values = window.read(timeout=0)
 
-        err_msg = self._edit_normal(inputs, dfs)
-        if err_msg is None:
-            return
-        elif len(err_msg):
-            com.dialog(err_msg, 'エラー発生', lv='W')
-            return
-
-        window.close()
-
-        err_msg = self._edit_gotobe(inputs, dfs, h_data)
-        if err_msg is None:
-            return
-        elif len(err_msg):
-            com.dialog(err_msg, 'エラー発生', lv='W')
-            return
+        # err_msg = self._edit_normal(inputs, dfs)
+        # if err_msg is None:
+        #     return
+        # elif len(err_msg):
+        #     com.dialog(err_msg, 'エラー発生', lv='W')
+        #     return
+        # window.close()
+        #
+        # err_msg = self._edit_gotobe(inputs, dfs, h_data)
+        # if err_msg is None:
+        #     return
+        # elif len(err_msg):
+        #     com.dialog(err_msg, 'エラー発生', lv='W')
+        #     return
 
         err_msg = self._edit_shakay_mado(inputs, dfs, d_open)
         if err_msg is None:
@@ -1009,60 +998,90 @@ class AnomalyData:
     def _conv_csv_js(self):
         io_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
         files = glob.glob(io_path + '*.csv')
+        files = sorted(files)
 
-        for file in files:
-            df = pd.read_csv(file)
+        value_year = ''
+        data_year = {}
+        cnt = 0
 
-            file_name = io_path + file.split('/')[-1].replace('.csv', '')
-            str_const = 'const ' + ('' if 0 <= file_name.find('Year') else file_name.split('/')[-1]) + ' = {'
-            str_value = ''
+        try:
+            for file in files:
 
-            for i in range(len(df)):
+                df = pd.read_csv(file)
+                file_name = file.split('/')[-1].replace('.csv', '')
 
-                is_main = False
-                for key in df:
+                info = file_name + ' (' + str(cnt) + ' / ' + str(len(files)) + ')'
+                window = com.progress('CSV ⇨ JS変換中', [info, len(files)])
+                event, values = window.read(timeout=0)
+                window[info + '_'].update(cnt)
+                cnt += 1
 
-                    if 0 <= key.find('Unnamed'):
-                        continue
+                file_name = io_path + file_name
+                data_other = {}
+                time_values = ''
 
-                    if 'Time' == key:
-                        time = str(df.at[df.index[i], key])
-                        str_value += ('' if 0 == len(str_value) else '\n  },')
-                        str_value += '\n  "' + (time.split(' ')[0] if 0 <= file_name.find('Year') else time) + '": {'
-                        continue
+                for i in range(len(df)):
 
-                    str_key = key.replace('X_', '').replace('Z_', '')
-                    if 0 <= str_key.find('_'):
-                        if 0 <= file_name.find('Year'):
-                            if 1 == str_key.count('_'):
+                    for key in df:
 
-                                if is_main:
-                                    str_value += '\n    },'
+                        if 0 <= key.find('Unnamed'):
+                            continue
+
+                        if 'Time' == key:
+                            time = str(df.at[df.index[i], key])
+                            time_value = ('' if 0 == len(time_values) or 0 <= file_name.find('Year') else '\n  },')
+                            time_value += '\n  "' + (time.split(' ')[0] if 0 <= file_name.find('Year') else time) + '": {'
+                            time_values += time_value
+                            continue
+
+                        str_key = key.replace('X_', '').replace('Z_', '')
+
+                        if key == str_key:
+                            name_key = (key if 0 == str_key.count('_') else key[: key.find('_', 1)])
+                        else:
+                            name_key = (key if 0 == str_key.count('_') else key[: key.find('_', 2)])
+
+                        if 0 < str_key.count('_'):
+                            if 0 < file_name.count('Year'):
+
+                                str_span = key.split('_')[1 if key == str_key else 2]
+
+                                if 1 == str_key.count('_'):
+
+                                    value = '\n    "' + str_span \
+                                            + '": {\n      "Count": "' + str(df.at[df.index[i], key]) + '"'
+                                    try:
+                                        data_year[name_key] += \
+                                            '\n    },' + ('\n  },' + time_value if 'D' == str_span else '') + value
+                                    except:
+                                        data_year[name_key] = time_value + value
+
                                 else:
-                                    is_main = True
-                                str_value += '\n    "' + str_key + '": {'
-                                str_value += '\n      "Count": "' + str(df.at[df.index[i], key]) + '"'
-
+                                    data_year[name_key] += \
+                                        ',\n      "' + key[key.find('_', 1 if key == str_key else 2) + 1: key.rfind('_')] \
+                                        + '": "' + str(df.at[df.index[i], key]) + '"'
                             else:
-                                str_value += ('\n      "' + str_key[str_key.find('_') + 1: str_key.rfind('_')]
-                                              + '": "' + str(df.at[df.index[i], key]) + '"')
+                                data_other[name_key] += ',\n    "' + key[key.find('_', 1 if key == str_key else 2) + 1:] \
+                                                 + '": "' + str(df.at[df.index[i], key]) + '"'
+
                         else:
-                            str_value += ('\n      "' + str_key[str_key.find('_') + 1:]
-                                          + '": "' + str(df.at[df.index[i], key]) + '"')
+                            try:
+                                data_other[name_key] += time_value + '\n    "Count": "' + str(df.at[df.index[i], key]) + '"'
+                            except:
+                                data_other[name_key] = time_value + '\n    "Count": "' + str(df.at[df.index[i], key]) + '"'
 
-                    else:
-                        if is_main:
-                            str_value += '\n    },'
-                        else:
-                            is_main = True
-                        str_value += '\n    "' + key + '": {'
-                        str_value += '\n      "Count": "' + str(df.at[df.index[i], key]) + '"'
+                if 0 == file_name.count('Year'):
+                    with open(file_name + '.js', 'w') as out:
+                        out.write('\n'.join('const ' + cur + '_' + file_name.split('/')[-1] + ' = {' + data_other[cur] + '\n  }\n}' for cur in data_other))
 
-                str_value += '\n    }'
-            str_value += '\n  }\n'
+                window.close()
 
-            with open(file_name + '.js', 'w') as out:
-                out.write(str_const + str_value + '}')
+            with open(io_path + '/Days.js', 'w') as out:
+                out.write('\n'.join('const ' + cur + ' = {' + data_year[cur] + '\n    }\n  }\n}' for cur in data_year))
+
+        finally:
+            try: window.close()
+            except: pass
 
         com.dialog('CSV ⇨ JS変換が完了しました。', 'CSV ⇨ JS変換完了')
 

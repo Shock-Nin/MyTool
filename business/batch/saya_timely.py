@@ -36,6 +36,10 @@ class SayaTimely:
             html = html[html.find('<'): html.find('</tbody>')]
 
             while 0 < html.find('/JPY </a>'):
+
+                if len(cst.CURRENCIES_365) < len(rates):
+                    break
+
                 html = html[html.find('/JPY </a>') + 10:]
                 txt = html
                 txt = txt[txt.find('<td'):]

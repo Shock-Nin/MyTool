@@ -78,13 +78,13 @@ class MyAsset:
             try: self.cnx.close()
             except: pass
 
-        before_view = before[1][4]
-        before_paypay = before[1][6]
+        before_view = [before[1][1], before[1][4]]
+        before_paypay = [before[1][3], before[1][6]]
         before_smbc = before[1][7]
 
         flg, inputs = com.input_box(
             str_summary + '\n' + self.myjob + ' 開始しますか？', '開始確認',
-            [['Viewカード', str(before_view)], ['PayPay', str(before_paypay)], ['三井住友', str(before_smbc)]],
+            [['Viewカード', str(before_view[0])], ['PayPay', str(before_paypay[0])], ['三井住友', str(before_smbc)]],
             'input')
         if flg <= 0:
             return
@@ -100,7 +100,7 @@ class MyAsset:
 
         try:
             # ViewCard取得
-            vcard = [inputs[0], before_view]
+            vcard = [inputs[0], before_view[1]]
 
             # target = targets[('ViewCard' == targets['Name'])]
             # vcard, wd1 = self._get_view_card(target)
@@ -115,7 +115,7 @@ class MyAsset:
                 return
 
             # Paypayカード取得
-            pcard = [inputs[1], before_paypay]
+            pcard = [inputs[1], before_paypay[1]]
 
             cards = [vcard, rcard, pcard]
 
