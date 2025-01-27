@@ -37,7 +37,7 @@ class SayaTimely:
 
             while 0 < html.find('/JPY </a>'):
 
-                if len(cst.CURRENCIES_365) < len(rates):
+                if len(cst.CURRENCIES_365) * 2 <= len(rates):
                     break
 
                 html = html[html.find('/JPY </a>') + 10:]
@@ -74,6 +74,7 @@ class SayaTimely:
 
     def _insert_sql(self, rates):
 
+        print(rates, cst.CURRENCIES_365)
         if 0 == len(rates):
             return False
 
