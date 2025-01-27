@@ -58,7 +58,7 @@ class Function:
             self.copy_history_test(
                 fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA'],
                 out_path=['Test1', 'Test2'],
-                hst_name=['Demo', 'Demo', 'Demo', 'Demo']
+                hst_name=['Demo', 'Demo']
             )
         # elif 'hst転送(Web)' == fnc:
         #     self.copy_history_web(fnc, in_path='MT4_DEV/OANDA', hst_name='Demo')
