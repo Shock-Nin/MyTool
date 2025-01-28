@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from mako.compat import win32
+
 from common import com
 from common import my_sql
 from const import cst
@@ -629,7 +631,7 @@ class AnomalyData:
         return ''
 
     # マド空け編集
-    def _edit_shakay_mado(self, inputs, dfs, d_open):
+    def _edit_shakay_mado(self, inputs, dfs, h_window):
 
         start_time = com.time_start()
         total_time = 0
@@ -691,15 +693,22 @@ class AnomalyData:
                                   [[[0 for _ in achieves] for _ in ['W', 'L']] for _ in heights],
                                   [[[0 for _ in achieves] for _ in ['W', 'L']] for _ in heights]
                                   ]
-                        windows = [[], [], []]
+                        windows = [[], []]
+                        mondays = []
+                        old_day = 0
 
-                        for w in range(len(d_open[curs[c].lower()])):
-                            if d_open[cur][w][0].weekday() < 5:
-                                windows[d_open[cur][w][0].weekday()].append(d_open[cur][w])
+                        for w in range(len(h_window[curs[c].lower()])):
+                            num = h_window[cur][w][0].weekday()
+                            windows[num].append(h_window[cur][w])
 
-                        for m in range(len(windows[0])):
+                            if 0 == num:
+                                if old_day != h_window[cur][w][0].day:
+                                    mondays.append(h_window[cur][w])
+                                    old_day = h_window[cur][w][0].day
 
-                            time_monday = windows[0][m][0]
+                        for m in range(len(mondays)):
+
+                            time_monday = mondays[m][0]
                             if forecasts[i][k].strftime('-%m-%d') != time_monday.strftime('-%m-01') \
                                     or (year_target - (2 if len(dfs) - 1 == i else 1) + i) == time_monday.year \
                                     or time_monday.year < (year_target - int(inputs[1][1]) - (3 if len(dfs) - 1 == i else 2) + i) \
@@ -710,6 +719,7 @@ class AnomalyData:
                             fridays = data_d[data_d['Time'].str[:10] ==
                                 (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')].copy()
                             fridays = fridays.reset_index(drop=True)
+
 
                             if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]):
 
@@ -724,10 +734,15 @@ class AnomalyData:
 
                             counts[0] += 1
                             totals[c][0] += 1
-                            for row in d_open[cur]:
-                                if row[0].strftime('%Y-%m-%d') == time_monday.strftime('%Y-%m-%d'):
-                                    op = row[1]
-                                    break
+
+                            hours = []
+                            op = mondays[m][1]
+
+                            for hour in windows[0]:
+                                if str(hour[0])[:10] == str(mondays[m][0])[:10]:
+                                    hours.append(hour)
+                                    if 23 == hour[0].hour:
+                                        break
 
                             cl = fridays.at[fridays.index[0], curs[c]]
                             updn = (cl - op if curs[c].startswith('USD') else op - cl)
@@ -743,26 +758,27 @@ class AnomalyData:
                                     totals[c][1][heights[height]] += 1
 
                                     for a in range(len(achieves)):
-                                        rows = windows[0][m]
                                         achieve_rate = round(updn * (achieves[a] / 100), 6)
 
                                         win = 0
                                         lose = 0
 
-                                        if op + achieve_rate <= rows[2]:
-                                            if curs[c].startswith('USD'):
-                                                win = 1
-                                            else:
-                                                lose = 1
+                                        for hour in hours:
 
-                                        if rows[3] <= op - achieve_rate:
-                                            if curs[c].startswith('USD'):
-                                                lose = 1
-                                            else:
-                                                win = 1
+                                            if op + achieve_rate <= hour[2]:
+                                                if curs[c].startswith('USD'):
+                                                    win = 1
+                                                else:
+                                                    lose = 1
 
-                                        print(str(rows[0])[:10], cur, cl, op, ' | ', achieves[a], achieve_rate, win, lose, ' | ',
-                                              op + achieve_rate <= rows[2], rows[2], ' | ', rows[3] <= op - achieve_rate, rows[3])
+                                            if hour[3] <= op - achieve_rate:
+                                                if curs[c].startswith('USD'):
+                                                    lose = 1
+                                                else:
+                                                    win = 1
+
+                                        # print(str(rows[0])[:10], cur, cl, op, ' | ', achieves[a], achieve_rate, win, lose, ' | ',
+                                        #       op + achieve_rate <= rows[2], rows[2], ' | ', rows[3] <= op - achieve_rate, rows[3])
 
                                         counts[3][height][0][a] += win
                                         totals[c][3][height][0][a] += win
@@ -915,22 +931,22 @@ class AnomalyData:
                 com.dialog('DB接続エラーが発生しました。', 'DB接続エラー発生', lv='W')
                 return
 
-            tables = con.free('SHOW TABLES')
+            h_gotobe = {}
+            h_window = {}
 
-            h_data = {}
-            d_open = {}
+            tables = con.free('SHOW TABLES')
+            str_range = ' WHERE \'' + str(year_target - int(inputs[1][1]) - 2) + '-01-01\' <= Time'\
+                        + ' AND Time <= \'' + str(year_target - 1) + '-12-31\''
+
             for i in range(len(tables)):
-                d_open[tables[i][0]] = con.free(
-                    'SELECT * FROM ' + tables[i][0] + ' GROUP BY LEFT(Time, 10)'
-                    + ' HAVING \'' + str(year_target - int(inputs[1][1]) - 2) + '-01-01\' <= Time'
-                    + ' AND Time <= \'' + str(year_target - 1) + '-12-31\' AND WEEKDAY(Time) < 3')
+                h_window[tables[i][0]] = con.free(
+                    'SELECT * FROM ' + tables[i][0] + str_range + ' AND WEEKDAY(Time) < 2')
                 if tables[i][0].startswith('z_'):
                     continue
-                h_data[tables[i][0]] = con.free(
-                    'SELECT * FROM ' + tables[i][0]
-                    + ' WHERE \'' + str(year_target - int(inputs[1][1]) - 2) + '-01-01\' <= Time'
-                    + ' AND Time <= \'' + str(year_target - 1) + '-12-31\' AND WEEKDAY(Time) < 5'
-                    + ' AND (RIGHT(LEFT(Time, 10), 1) IN(\'4\', \'5\', \'9\', \'0\') OR \'31\' = RIGHT(LEFT(Time, 10), 2))')
+                h_gotobe[tables[i][0]] = con.free(
+                    'SELECT * FROM ' + tables[i][0] + str_range + ' AND WEEKDAY(Time) < 5'
+                    + ' AND (RIGHT(LEFT(Time, 10), 1) IN(\'4\', \'5\', \'9\', \'0\')'
+                    + ' OR \'31\' = RIGHT(LEFT(Time, 10), 2))')
 
             dfs = [[], []]
             for i in range(len(dfs)):
@@ -978,14 +994,14 @@ class AnomalyData:
         #     return
         # window.close()
         #
-        # err_msg = self._edit_gotobe(inputs, dfs, h_data)
+        # err_msg = self._edit_gotobe(inputs, dfs, h_gotobe)
         # if err_msg is None:
         #     return
         # elif len(err_msg):
         #     com.dialog(err_msg, 'エラー発生', lv='W')
         #     return
 
-        err_msg = self._edit_shakay_mado(inputs, dfs, d_open)
+        err_msg = self._edit_shakay_mado(inputs, dfs, h_window)
         if err_msg is None:
             return
         elif len(err_msg):

@@ -113,8 +113,11 @@ class SayaDaily:
                 curs = rows.split('\\nD01')
 
                 for i in range(1, len(curs)):
-
                     cols = curs[i].split(',')
+
+                    if 0 <= cols[3].find('CNH') or 0 <= cols[3].find('HUF') or 0 <= cols[3].find('CZK'):
+                        continue
+
                     if 0 <= cols[3].find('/USD'):
                         break
 
