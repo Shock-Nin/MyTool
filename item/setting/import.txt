@@ -1,6 +1,6 @@
 conda update --force conda -y
 conda update --all -y
-conda update anaconda -y
+--conda update anaconda -y
 
 conda create -n py39 python=3.9.6 -y
 conda activate py39　
