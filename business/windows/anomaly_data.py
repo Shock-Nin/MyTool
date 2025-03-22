@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from mako.compat import win32
-
 from common import com
 from common import my_sql
 from const import cst
 
-import json
 import glob
 import datetime
 import statistics
-import numpy as np
 import pandas as pd
 import PySimpleGUI as sg
 
@@ -1063,7 +1059,7 @@ class AnomalyData:
             for file in files:
 
                 df = pd.read_csv(file)
-                file_name = file.split('/')[-1].replace('.csv', '')
+                file_name = file.split('/')[-1].split('\\')[-1].replace('.csv', '')
 
                 info = file_name + ' (' + str(cnt) + ' / ' + str(len(files)) + ')'
                 window = com.progress('CSV ⇨ JS変換中', [info, len(files)])
