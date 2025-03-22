@@ -69,7 +69,7 @@ class AnomalyHst:
                         hi = 0
                         lo = 9999999
 
-                open(files[i].replace('\\', '/').replace('history/', 'Trender/H1_'), 'w').write(out)
+                # open(files[i].replace('\\', '/').replace('history/', 'Trender/H1_'), 'w').write(out)
                 open(files[i].replace('\\', '/').replace('history/', 'history_h1/'), 'w').write(out)
 
                 run_time = com.time_end(start_time)
