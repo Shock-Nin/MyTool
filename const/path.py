@@ -62,7 +62,7 @@ ANM_FOLD = '/anm/anomaly_'
 ANM_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/test_root/ANM',
             'Win': CURRENT_PATH['Win'] + 'Documents/MT4/Web_MT4/MQL4/Files/ANM'}
 # アノマリー MT4パス
-ANM_OUT_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/test_root/MT4/Trender/anomaly',
+ANM_OUT_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/test_root/MT4/anomaly',
                 'Win': CURRENT_PATH['Win'] + 'Documents/apache-tomcat/webapps/ROOT/anomaly'}
 
 # EAパラメータのファイルパス(Googleドライブ)

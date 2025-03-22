@@ -256,7 +256,7 @@ class AnomalyData:
 
                 date += datetime.timedelta(days=1)
 
-        out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+        out_path = cst.ANM_OUT_PATH[cst.PC].replace('\\', '/') + '/'
         cols = ''
         curs = []
 
@@ -649,7 +649,7 @@ class AnomalyData:
 
                 com.log(str(year_target - 1 + i) + ' 作成完了(' + com.conv_time_str(total_time) + ')')
 
-            out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+            out_path = cst.ANM_OUT_PATH[cst.PC].replace('\\', '/') + '/'
 
             with open(out_path + 'GoToBe' + '.csv', 'w') as out:
                 out.write('Time' + cols + ''.join('\n' + out for out in str_outs).replace('|Total', ''))
@@ -937,7 +937,7 @@ class AnomalyData:
 
                 com.log(str(year_target - 1 + i) + ' 作成完了(' + com.conv_time_str(total_time) + ')')
 
-            out_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+            out_path = cst.ANM_OUT_PATH[cst.PC].replace('\\', '/') + '/'
 
             with open(out_path + 'ShakayMado' + '.csv', 'w') as out:
                 out.write('Time,' + cols + '\n' + ''.join(''.join([updn for updn in years]) for years in str_years))
@@ -1051,7 +1051,7 @@ class AnomalyData:
 
     # CSV ⇨ JS変換
     def _conv_csv_js(self):
-        io_path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'anomaly/')
+        io_path = cst.ANM_OUT_PATH[cst.PC].replace('\\', '/') + '/'
         files = glob.glob(io_path + '*.csv')
         files = sorted(files)
 
