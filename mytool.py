@@ -54,10 +54,10 @@ ANOMALY_MENU = {
     'アノマリ〜編集': 'windows.anomaly_data/edit_anomaly',
     'CSV ⇨ JS変換': 'windows.anomaly_data/conv_csv_js',
     'モデル作成': 'windows.anomaly_learn/create_model',
-    'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
-    'アノマリ〜': 'windows.anomaly_data/edit_judge',
-    'スペシャル': 'windows.anomaly_data/specials',
-    'Webコンテンツ': 'windows.anomaly_web/contents',
+    # 'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
+    # 'アノマリ〜': 'windows.anomaly_data/edit_judge',
+    # 'スペシャル': 'windows.anomaly_data/specials',
+    # 'Webコンテンツ': 'windows.anomaly_web/contents',
     'トピック & Tweet': 'windows.anomaly_web/tweet',
 }
 FUNC_MENU = {
@@ -166,11 +166,12 @@ def main():
                             font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (0, 15)))],
                   [[sg.Button(btn, key=btn, font=('', 16 * DP[3]), pad=((0, 0), (0, 5)), size=XY_SIZE)] for btn in BTN]]
 
-        is_dev = (cst.DEV_IP == WORK_IP)
-        if is_dev:
+        is_dev = ()
+        if cst.DEV_IP == WORK_IP:
             layout.append([sg.Combo([key for key in EA_MENU],
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (10, 5)))])
+        if cst.DEV_IP == WORK_IP or cst.WEB_IP == WORK_IP:
             layout.append([sg.Combo([key for key in ANOMALY_MENU],
                                     default_value='　アノマリ〜', key='Anomaly', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE, pad=((0, 0), (10, 5)))])
