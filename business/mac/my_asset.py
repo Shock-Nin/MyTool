@@ -8,7 +8,7 @@ from business.multiple.web_login import WebLogin
 
 import datetime
 
-TARGET_TABLES = ['per_month', 'asset_balance', 'asset_history']
+TARGET_TABLES = ['per_month', 'asset_balance', 'asset_history', 'payment_avg']
 BANKS = ['Viewカード', '楽天カード', 'PayPayカード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK']
 
 class MyAsset:
@@ -44,6 +44,29 @@ class MyAsset:
                         self.cnx.update(columns, values, TARGET_TABLES[1], '\'' + str(invests[1][i][0]) + '\' = ソート番号')
                         self.cnx.commit()
 
+            payments = self.cnx.select('*', TARGET_TABLES[3], '', '')
+            payment_type = {}
+
+            for i in reversed(range(len(payments[1]))):
+                payment = payments[1][i]
+                val = payment[3].replace(')', '').split('(')
+                space = (''.join('  ' for _ in range(6 - len(str(payment[2])))) if len(str(payment[2])) < 5 else '')
+                val = ('  [' + str(round(float(val[0]), 1)) +
+                      (']           ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)) + ')]')
+                       + ('  ' if float(val[0]) < 10 else ''))
+                val = space + format(int(str(payment[2])), ',') + val
+
+                try:
+                    payment_type[payment[1]][payment[0]] = val
+                except:
+                    payment_type[payment[1]] = {payment[0]: val}
+
+            str_payment = '　種別　　　　　' + '　　　  　　　  '.join(key for key in payment_type['外食'])
+
+            str_payment += '\n' + '\n'.join(rows + ''.join('   ' for _ in range(6 - len(rows))) + ' '.join(
+                payment_type[rows][col] + ''.join(' ' for _ in range(22 - len(str(payment_type[rows][col]))))
+                for col in payment_type[rows]) for rows in reversed(payment_type))
+
             summary = self.cnx.select('*', TARGET_TABLES[0], '', '')
             summary[0] = '　　 '.join(['　 ' + summary[0][i] for i in range(len(summary[0]))])
 
@@ -64,13 +87,14 @@ class MyAsset:
 
             # 本日のデータ取得済みなら中断
             if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
-                layout = [[], []]
+                layout = [[], [], ['　　'], [], []]
                 for i in range(len(BANKS)):
-                    layout[0].append(BANKS[i])
-                    layout[1].append(format(before[1][i + 1 + (0 if i < 3 else 3)], ','))
+                    num = (3 if BANKS[i].find('カード') < 0 else 0)
+                    layout[num + 0].append(BANKS[i])
+                    layout[num + 1].append(format(before[1][i + 1 + (0 if i < 3 else 3)], ','))
 
-                com.dialog_cols(str_summary + '\n' + '本日は取得済です。',
-                    layout, ['l', 'r', 'c', 'r'], self.myjob, lv='W')
+                com.dialog_cols(str_payment + '\n\n' + str_summary + '　　本日は取得済です。',
+                    layout, ['l', 'r', 'c', 'l', 'r'], self.myjob, lv='W')
                 return
 
         # 最後はDBを閉じる
@@ -83,7 +107,7 @@ class MyAsset:
         before_smbc = before[1][7]
 
         flg, inputs = com.input_box(
-            str_summary + '\n' + self.myjob + ' 開始しますか？', '開始確認',
+            str_payment + '\n\n' + str_summary + '　　開始しますか？', '開始確認',
             [['Viewカード', str(before_view[0])], ['PayPay', str(before_paypay[0])], ['三井住友', str(before_smbc)]],
             'input')
         if flg <= 0:
