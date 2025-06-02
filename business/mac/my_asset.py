@@ -51,8 +51,8 @@ class MyAsset:
                 payment = payments[1][i]
                 val = payment[3].replace(')', '').split('(')
                 space = (''.join('  ' for _ in range(6 - len(str(payment[2])))) if len(str(payment[2])) < 5 else '')
-                val = ('  [' + str(round(float(val[0]), 1)) +
-                      (']           ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)) + ')]')
+                val = ('  [' + str(round(float(val[0]), 1)).replace(('' if len(payments[1]) - len(payment) - 1 < i else '.0'), '') +
+                      (']           ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace(('' if len(payments[1]) - len(payment) - 1 < i else '.0'), '') + ')]')
                        + ('  ' if float(val[0]) < 10 else ''))
                 val = space + format(int(str(payment[2])), ',') + val
 
@@ -61,7 +61,7 @@ class MyAsset:
                 except:
                     payment_type[payment[1]] = {payment[0]: val}
 
-            str_payment = '　種別　　　　　' + '　　　  　　　  '.join(key for key in payment_type['外食'])
+            str_payment = '　種別　　　  　  　' + '　　　  　　'.join(key for key in payment_type['外食'])
 
             str_payment += '\n' + '\n'.join(rows + ''.join('   ' for _ in range(6 - len(rows))) + ' '.join(
                 payment_type[rows][col] + ''.join(' ' for _ in range(22 - len(str(payment_type[rows][col]))))
@@ -206,7 +206,7 @@ class MyAsset:
             except: pass
 
         com.dialog_cols(com.str_time()[:10] + '(前回 ' + datetime.datetime.strftime(before[1][0], '%Y-%m-%d') +
-                        ')\n\n' + str_summary + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
+                        ')\n\n' + str_payment + '\n\n' + str_summary + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
                         layout, ['l', 'r', 'c', 'r'], self.myjob)
 
     # Viewカード
