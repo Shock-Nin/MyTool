@@ -7,9 +7,10 @@ from const import cst
 from business.multiple.web_login import WebLogin
 
 import datetime
+from selenium.webdriver.support.select import Select
 
 TARGET_TABLES = ['per_month', 'asset_balance', 'asset_history', 'payment_avg']
-BANKS = ['Viewカード', '楽天カード', 'PayPayカード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK']
+BANKS = ['Viewカード', '楽天カード(M)', '楽天カード(S)', 'PayPayカード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK']
 
 class MyAsset:
 
@@ -83,7 +84,7 @@ class MyAsset:
             before = [before[0], before[1][0]]
 
             str_summary = ''.join(summary[0][i] for i in range(len(summary[0]))) + '\n' + str_summary \
-                          + '\n\n楽天カード支払　' + format(before[1][5], ',') \
+                          + '\n\n楽天カード支払　' + format(before[1][6], ',') + ' | '+ format(before[1][7], ',') \
 
             # 本日のデータ取得済みなら中断
             if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
@@ -91,7 +92,7 @@ class MyAsset:
                 for i in range(len(BANKS)):
                     num = (3 if BANKS[i].find('カード') < 0 else 0)
                     layout[num + 0].append(BANKS[i])
-                    layout[num + 1].append(format(before[1][i + 1 + (0 if i < 3 else 3)], ','))
+                    layout[num + 1].append(format(before[1][i + 1 + (0 if i < 4 else 3)], ','))
 
                 com.dialog_cols(str_payment + '\n\n' + str_summary + '　　本日は取得済です。',
                     layout, ['l', 'r', 'c', 'l', 'r'], self.myjob, lv='W')
@@ -102,12 +103,13 @@ class MyAsset:
             try: self.cnx.close()
             except: pass
 
-        before_view = [before[1][1], before[1][4]]
-        before_paypay = [before[1][3], before[1][6]]
-        before_smbc = before[1][7]
+        before_view = [before[1][1], before[1][5]]
+        before_paypay = [before[1][4], before[1][8]]
+        before_smbc = before[1][9]
 
         flg, inputs = com.input_box(
-            str_payment + '\n\n' + str_summary + '　　開始しますか？', '開始確認',
+            ('　　　　　本日は13日です。　　　　　\n\n' if 13 == datetime.datetime.now().day else '')
+            + str_payment + '\n\n' + str_summary + '　　' + '開始しますか？', '開始確認',
             [['Viewカード', str(before_view[0])], ['PayPay', str(before_paypay[0])], ['三井住友', str(before_smbc)]],
             'input')
         if flg <= 0:
@@ -133,15 +135,19 @@ class MyAsset:
 
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
-            rcard, wd2 = self.__get_rakuten_card(target)
-            if rcard is None or '0' == str(rcard[0]):
-                com.dialog('データ取得に失敗しました', '楽天カード', 'W')
+            rmcard, rscard, wd2 = self.__get_rakuten_card(target)
+            if rmcard is None or '0' == str(rmcard[0]):
+                com.dialog('データ取得に失敗しました', '楽天カード(M)', 'W')
                 return
+            # TODO
+            # if rscard is None or '0' == str(rscard[0]):
+            #     com.dialog('データ取得に失敗しました', '楽天カード(S)', 'W')
+            #     return
 
             # Paypayカード取得
             pcard = [inputs[1], before_paypay[1]]
 
-            cards = [vcard, rcard, pcard]
+            cards = [vcard, rmcard, rscard, pcard]
 
             # 三井住友銀行取得
             banks = [inputs[2]]
@@ -207,7 +213,7 @@ class MyAsset:
 
         com.dialog_cols(com.str_time()[:10] + '(前回 ' + datetime.datetime.strftime(before[1][0], '%Y-%m-%d') +
                         ')\n\n' + str_payment + '\n\n' + str_summary + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
-                        layout, ['l', 'r', 'c', 'r'], self.myjob)
+                        layout, ['l', 'r', 'c', 'r', 'c', 'l',  'r', 'c', 'r'], self.myjob)
 
     # Viewカード
     def __get_view_card(self, target):
@@ -248,23 +254,28 @@ class MyAsset:
         wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
         if wd is None:
             com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return None, None
+            return None, None, None
 
         # 金額取得(未確定・1月前)
         try:
             for i in range(0, 2):
-                wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(i))
-                com.sleep(1)
-                try:
-                    results.append(web_driver.find_element(wd, 'span.stmt-u-font-roboto').text.replace(',', ''))
-                except:
-                    results.append('0')
+                for k in range(0, 2):
+                    wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(k))
+                    com.sleep(1)
+
+                    dropdown = web_driver.find_element(wd, 'j_idt631:card')
+                    Select(dropdown).select_by_index(i)
+
+                    try:
+                        results.append(web_driver.find_element(wd, 'span.stmt-u-font-roboto').text.replace(',', ''))
+                    except:
+                        results.append('0')
         except Exception as e:
             com.log('WebDriverエラー: 楽天カード, ' + str(e), 'E')
             com.dialog('楽天カードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
-            return None, None
+            return None, None, None
 
-        return results, wd
+        return results[:2], results[2:], wd
 
     # PayPayカード
     def __get_paypay_card(self, target):
@@ -382,39 +393,42 @@ class MyAsset:
 def _edit_data(before, cards, banks):
 
     is_change = False
-    layout = [BANKS, [], [], []]
+    layout = [[], [], [], [], ['　　'], [], [], [], []]
+    num = 5
 
     # 日付
     columns = [before[0][0]]
     values = [com.str_time()[:10]]
 
-    # 未確定(Viewカード, 楽天カード, PayPayカード)
-    for i in range(1, 4):
+    # 未確定(Viewカード, 楽天カード(M), 楽天カード(S), PayPayカード)
+    for i in range(1, num):
+        layout[0].append(BANKS[i - 1])
         __append_data(before[1][i], cards[i - 1][0], before[0][i], is_change, layout, columns, values)
 
-    # 1月前(Viewカード, 楽天カード, PayPayカード)
-    for i in range(4, 7):
+    # 1月前(Viewカード, 楽天カード(M), 楽天カード(S), PayPayカード)
+    for i in range(num, num + 4):
         columns.append(before[0][i])
-        values.append(cards[i - 4][1])
+        values.append(cards[i - num][1])
 
     # 銀行(三井住友, 三菱UFJ, 楽天銀行, JREBANK)
-    for i in range(7, 11):
-        __append_data(before[1][i], banks[i - 7], before[0][i], is_change, layout, columns, values)
+    for i in range(num + 4, num + 4 + 4):
+        layout[num].append(BANKS[i - num])
+        __append_data(before[1][i], banks[i - (num + 4)], before[0][i], is_change, layout, columns, values, num=num)
 
     return is_change, layout, columns, [values]
 
-def __append_data(before, now, col, is_change, layout, columns, values):
+def __append_data(before, now, col, is_change, layout, columns, values, num=0):
 
     columns.append(col)
-    layout[1].append(format(before, ','))
+    layout[num + 1].append(format(before, ','))
     if int(before) == int(now):
-        layout[2].append('')
-        layout[3].append('')
+        layout[num + 2].append('')
+        layout[num + 3].append('')
         values.append(before)
     else:
         is_change = True
-        layout[2].append('→')
-        layout[3].append(format(int(now), ','))
+        layout[num + 2].append('→')
+        layout[num + 3].append(format(int(now), ','))
         values.append(now)
 
     return is_change, layout, columns, values

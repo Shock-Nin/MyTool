@@ -326,7 +326,7 @@ class Function:
                     num = ((add_data['High'] - add_data['Low']) / add_data['Close'] * 10000).astype(int)
 
                     for k in range(len(add_data)):
-                        add_data.at[add_data.index[k], 'Volume'] = (4 if num[k] < 4 else num[k]) * 10 / 10
+                        add_data.at[add_data.index[k], 'Volume'] = int(max(8, num[k]))
 
                         if 0 == k % 1000000 and 0 < k:
                             print(file + ': ' + str(k) + ' / ' + str(len(add_data)))

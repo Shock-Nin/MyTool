@@ -86,30 +86,30 @@ class Batch:
 
                 SayaDaily(self.myjob).get_csv()
                 jobs.append('365日足更新')
-
-            # 0時にトピック作成
-            if 0 == self.now.hour:
-                if 0 == len(jobs):
-                    com.log('Batch開始: ' + cst.IP)
-
-                Anomaly(self.myjob).write_topic()
-                jobs.append('アノマリーTopic作成')
-
-        # 30分以上の場合に実行
-        else:
-            # 元旦とクリスマス以外の平日に実行
-            if self.now.weekday() < 5 \
-                    and not (1 == self.now.month and 1 == self.now.day) \
-                    and not (12 == self.now.month and 25 == self.now.day):
-
-                # 月曜〜金曜の3・6時・12時に実行
-                if self.now.hour in [0, 12, 3]:
-
-                    if 0 == len(jobs):
-                        com.log('Batch開始: ' + cst.IP)
-
-                    Anomaly(self.myjob).tweet()
-                    jobs.append('アノマリーTweet')
+            #
+            # # 0時にトピック作成
+            # if 0 == self.now.hour:
+            #     if 0 == len(jobs):
+            #         com.log('Batch開始: ' + cst.IP)
+            #
+            #     Anomaly(self.myjob).write_topic()
+            #     jobs.append('アノマリーTopic作成')
+        #
+        # # 30分以上の場合に実行
+        # else:
+        #     # 元旦とクリスマス以外の平日に実行
+        #     if self.now.weekday() < 5 \
+        #             and not (1 == self.now.month and 1 == self.now.day) \
+        #             and not (12 == self.now.month and 25 == self.now.day):
+        #
+        #         # 月曜〜金曜の3・6時・12時に実行
+        #         if self.now.hour in [0, 12, 3]:
+        #
+        #             if 0 == len(jobs):
+        #                 com.log('Batch開始: ' + cst.IP)
+        #
+        #             Anomaly(self.myjob).tweet()
+        #             jobs.append('アノマリーTweet')
 
         # 30分間隔で実行
         if 0 == len(jobs):
