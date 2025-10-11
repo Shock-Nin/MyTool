@@ -135,7 +135,7 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
                 sg.Text('', key='', background_color=color) if row is None else
                 sg.Checkbox(row, True, key=row, checkbox_color='#FFFFFF', background_color=color,
                             text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))] for row in cols[i]],
-                      element_justification=aligns[i], background_color=color, vertical_alignment='bottom')
+                      text_align=aligns[i], background_color=color, vertical_alignment='bottom')
             for i in range(0, len(cols))]
         btn = [sg.Button('全て外す', key='check_out', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3]),
                sg.Button('開始', key='Start', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3]),
@@ -144,13 +144,12 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
         center = [
             sg.Column([[
                 sg.Text(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
-                for row in cols[i]], element_justification=aligns[i], background_color=color)
+                for row in cols[i]], text_align=aligns[i], background_color=color)
             for i in range(0, len(cols))]
         btn = [sg.Button('OK', key='OK', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3])]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True,
-                       # icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
+                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, text_align='c',
                        layout=[
                            [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16),
                                     pad=((20, 20), (10, 10)))], center, btn])
