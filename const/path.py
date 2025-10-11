@@ -17,8 +17,8 @@ else:
     IP = IP[IP.find('<td'):]
     IP = IP[IP.find('>') + 1: IP.find('</td')].strip()
 
-DEV_IP = '164.70.84.254'
-WEB_IP = '164.70.84.131'
+DEV_IP = '157.120.12.132'
+WEB_IP = '164.70.84.107'
 MY_IP = '164.70.84.107'
 MAC_IP = ('????' if IP in [DEV_IP, WEB_IP, MY_IP] else IP)
 

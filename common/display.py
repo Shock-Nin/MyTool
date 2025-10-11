@@ -4,7 +4,7 @@
 from const import cst
 
 import os
-import PySimpleGUI as sg
+import TkEasyGUI as sg
 
 
 # 標準ダイアログをレベルに応じて表示
@@ -149,7 +149,8 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
         btn = [sg.Button('OK', key='OK', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3])]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
+                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True,
+                       # icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[
                            [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16),
                                     pad=((20, 20), (10, 10)))], center, btn])
