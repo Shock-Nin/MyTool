@@ -28,11 +28,11 @@ IP_LIST = [DEV_IP, WEB_IP, MY_IP, MAC_IP]
 CURRENT_PATH = {'Mac': '/Users/dsk_nagaoka/',
                 'Win': 'C:/Users/Administrator/'}
 GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
-               'Win': 'C:/Googleドライブ/'}
+               'Win': 'G:/マイドライブ/'}
 TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
              'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/'}
 RUN_PATH = {'Mac': '/usr/local/bin/python3.12',
-            'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python312/python.exe'}
+            'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python313/python.exe'}
 
 # MT4のパス
 MT4_PATH = CURRENT_PATH['Win'] + 'Documents/MT4/'
