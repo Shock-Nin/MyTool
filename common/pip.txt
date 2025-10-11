@@ -10,8 +10,3 @@ pip install selenium
 pip install webdriver_manager
 pip install mysql
 pip install mysql_connector
-pip install
-pip install
-pip install
-pip install
-pip install
