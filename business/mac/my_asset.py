@@ -92,7 +92,7 @@ class MyAsset:
                 for i in range(len(BANKS)):
                     num = (3 if BANKS[i].find('カード') < 0 else 0)
                     layout[num + 0].append(BANKS[i])
-                    layout[num + 1].append(format(before[1][i + 1 + (0 if i < 4 else 3)], ','))
+                    layout[num + 1].append(format(before[1][i + 1 + (0 if i < 4 else 4)], ','))
 
                 com.dialog_cols(str_payment + '\n\n' + str_summary + '　　本日は取得済です。',
                     layout, ['l', 'r', 'c', 'l', 'r'], self.myjob, lv='W')
@@ -263,7 +263,7 @@ class MyAsset:
                     wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(k))
                     com.sleep(1)
 
-                    dropdown = web_driver.find_element(wd, 'j_idt631:card')
+                    dropdown = web_driver.find_element(wd, 'j_idt636:card')
                     Select(dropdown).select_by_index(i)
 
                     try:

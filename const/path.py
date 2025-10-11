@@ -19,7 +19,7 @@ else:
 
 DEV_IP = '164.70.84.254'
 WEB_IP = '164.70.84.131'
-MY_IP = '164.70.84.169'
+MY_IP = '164.70.84.107'
 MAC_IP = ('????' if IP in [DEV_IP, WEB_IP, MY_IP] else IP)
 
 IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MY_IP: 'My', MAC_IP: 'Mac'}
