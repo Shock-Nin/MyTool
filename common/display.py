@@ -4,7 +4,7 @@
 from const import cst
 
 import os
-import TkEasyGUI as sg
+import FreeSimpleGUI as sg
 
 
 # 標準ダイアログをレベルに応じて表示
