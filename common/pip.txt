@@ -3,6 +3,7 @@ pip install pyperclip
 pip install pandas
 pip install pyautogui
 pip install tkeasyGUI
+pip install FreeSimpleGUI
 pip install pyinstaller
 pip install opencv-python
 pip install pillow

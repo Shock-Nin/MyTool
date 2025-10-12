@@ -20,7 +20,7 @@ import os
 import argparse
 import importlib
 import pyautogui as pgui
-import TkEasyGUI as sg
+import FreeSimpleGUI as sg
 import subprocess
 
 """ PW_INPUT = True | CHANGE_MENU = -1 [DEV_IP, WEB_IP, MY_IP, MAC_IP] """
