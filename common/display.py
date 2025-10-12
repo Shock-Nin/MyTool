@@ -143,13 +143,13 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
     else:
         center = [
             sg.Column([[
-                sg.Text(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
-                for row in cols[i]], text_align=aligns[i], background_color=color)
+                sg.Text(row, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
+                for row in cols[i]], text_align=aligns[i])
             for i in range(0, len(cols))]
         btn = [sg.Button('OK', key='OK', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3])]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
-                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, text_align='c',
+                       icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[
                            [sg.Text(msg, background_color=color, text_color='#000000', font=('', 16),
                                     pad=((20, 20), (10, 10)))], center, btn])
