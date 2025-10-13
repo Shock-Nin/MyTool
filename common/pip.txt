@@ -2,7 +2,6 @@ cd C:\Users\Administrator\AppData\Local\Programs\Python\Python313\Scripts
 pip install pyperclip
 pip install pandas
 pip install pyautogui
-pip install tkeasyGUI
 pip install FreeSimpleGUI
 pip install pyinstaller
 pip install opencv-python
