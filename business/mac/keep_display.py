@@ -7,7 +7,7 @@ from const import cst
 
 import os
 import pyautogui as pgui
-import TkEasyGUI as sg
+import FreeSimpleGUI as sg
 
 from common import web_driver
 
