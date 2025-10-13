@@ -10,7 +10,7 @@ import shutil
 import datetime
 import subprocess
 import pandas as pd
-import TkEasyGUI as sg
+import FreeSimpleGUI as sg
 
 
 class Function:
