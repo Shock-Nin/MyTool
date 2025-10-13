@@ -126,7 +126,7 @@ class MyAsset:
 
         try:
             # ViewCard取得
-            vcard = [inputs[1], before_view[1]]
+            vcard = [inputs[0], before_view[1]]
 
             # target = targets[('ViewCard' == targets['Name'])]
             # vcard, wd1 = self._get_view_card(target)
@@ -145,12 +145,12 @@ class MyAsset:
             #     return
 
             # Paypayカード取得
-            pcard = [inputs[2], before_paypay[1]]
+            pcard = [inputs[1], before_paypay[1]]
 
             cards = [vcard, rmcard, rscard, pcard]
 
             # 三井住友銀行取得
-            banks = [inputs[3]]
+            banks = [inputs[2]]
 
             # target = targets[('三井住友' == targets['Name'])]
             # result, wd4 = self._get_smbc_bank(target)
