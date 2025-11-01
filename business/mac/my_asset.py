@@ -52,8 +52,8 @@ class MyAsset:
                 payment = payments[1][i]
                 val = payment[3].replace(')', '').split('(')
                 space = (''.join('  ' for _ in range(6 - len(str(payment[2])))) if len(str(payment[2])) < 5 else '')
-                val = ('  [' + str(round(float(val[0]), 1)).replace(('' if len(payments[1]) - len(payment) - 1 < i else '.0'), '') +
-                      (']           ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace(('' if len(payments[1]) - len(payment) - 1 < i else '.0'), '') + ')]')
+                val = ('  [' + str(round(float(val[0]), 1)).replace(('' if len(payments[1]) - len(payment) - 1 < i else ''), '') +
+                      (']           ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace(('' if len(payments[1]) - len(payment) - 1 < i else ''), '') + ')]')
                        + ('  ' if float(val[0]) < 10 else ''))
                 val = space + format(int(str(payment[2])), ',') + val
 

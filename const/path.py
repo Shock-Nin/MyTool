@@ -55,7 +55,7 @@ TEST_LINK = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
 # TickStoryのExeと作成先フォルダ
 TICK_STORY = 'C:/Program Files (x86)/Tickstory/Tickstory.exe'
 HST_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/test_root/MT4/history',
-            'Win': CURRENT_PATH['Win'] + 'Documents/MT4/history'}
+            'Win': CURRENT_PATH['Win'] + 'Documents/FX/history'}
 
 # アノマリー MT4パス
 ANM_FOLD = '/anm/anomaly_'

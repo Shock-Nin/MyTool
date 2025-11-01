@@ -30,11 +30,11 @@ CHANGE_MENU = -1
 # CHANGE_MENU = 0
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
-    'Tweet': 'batch.anomaly/tweet',
+    '': '',
     }, cst.MY_IP: {
-    'Tweet': 'batch.anomaly/tweet',
+    '': '',
     }, cst.WEB_IP: {
-    'Tweet': 'batch.anomaly/tweet',
+    '': '',
     }, cst.MAC_IP: {
     # '英単語辞書': 'mac.english_dict',
     # 'Tweet': 'batch.anomaly/tweet',
@@ -145,7 +145,7 @@ def main():
                             font=('', 16 * DP[3]), size=XY_SIZE)],
                   [sg.Combo(web, default_value='　Web', key='Web', enable_events=True, readonly=True,
                             font=('', 16 * DP[3]), size=XY_SIZE)]
-                  ] + [[sg.Button(btn, key=btn, font=('', 16 * DP[3]), pad=((0, 0), (0, 5)), size=XY_SIZE)] for btn in BTN]
+                  ] + [([] if 0 == len(BTN[btn]) else [sg.Button(btn, key=btn, font=('', 16 * DP[3]), pad=((0, 0), (0, 5)), size=XY_SIZE)]) for btn in BTN]
 
         is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev:
