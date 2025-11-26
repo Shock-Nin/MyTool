@@ -9,7 +9,6 @@ conda info -e
 conda install -c conda-forge pyinstaller -y
 
 python -m pip install setuptools
-python -m pip install pysimplegui
 python -m pip install opencv-python
 
 python -m pip install --upgrade pip
@@ -29,7 +28,6 @@ sudo rm -r /opt/anaconda3
 
 conda install -c conda-forge pyinstaller -y
 conda install -c conda-forge qrcode setuptools -y
-conda install -c conda-forge qrcode pysimplegui -y
 conda install -c conda-forge qrcode opencv -y
 
 python3 -m pip install --upgrade pip

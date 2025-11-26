@@ -42,13 +42,13 @@ BTNS = {cst.DEV_IP: {
     '資産': 'mac.my_asset',
     # 'タイマー': 'mac.alert_timer',
     }}
-EA_MENU = {
-    'EAデータ編集': 'windows.ea_edits',
-    'EA連続テスト': 'windows.ea_auto_test',
-    'EAテスト結合': 'windows.ea_merge_test',
+PREDICT_MENU = {
+    'チャート': 'predict.base/open_chart',
+    'モデル作成': 'predict.base/create_model',
 }
 ANOMALY_MENU = {
     'H1データ作成': 'windows.anomaly_hst/create_h1',
+    'D1データ作成': 'windows.anomaly_hst/create_d1',
     'H1データDB格納': 'windows.anomaly_hst/insert_db',
     '統計CSV作成': 'windows.anomaly_data/create_stat_csv',
     'アノマリ〜編集': 'windows.anomaly_data/edit_anomaly',
@@ -59,6 +59,11 @@ ANOMALY_MENU = {
     # 'スペシャル': 'windows.anomaly_data/specials',
     # 'Webコンテンツ': 'windows.anomaly_web/contents',
     'トピック & Tweet': 'windows.anomaly_web/tweet',
+}
+EA_MENU = {
+    'EAデータ編集': 'windows.ea_edits',
+    'EA連続テスト': 'windows.ea_auto_test',
+    'EAテスト結合': 'windows.ea_merge_test',
 }
 FUNC_MENU = {
     '最適化セット': 'DEV',
@@ -149,11 +154,15 @@ def main():
 
         is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev:
-            layout.append([sg.Combo([key for key in EA_MENU],
-                                    default_value='　EA', key='EA', enable_events=True, readonly=True,
+
+            layout.append([sg.Combo([key for key in PREDICT_MENU],
+                                    default_value='　予測モデル', key='Predict', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
             layout.append([sg.Combo([key for key in ANOMALY_MENU],
                                     default_value='　アノマリ〜', key='Anomaly', enable_events=True, readonly=True,
+                                    font=('', 16 * DP[3]), size=XY_SIZE)])
+            layout.append([sg.Combo([key for key in EA_MENU],
+                                    default_value='　EA', key='EA', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
         if cst.MAC_IP != WORK_IP:
             layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
@@ -176,7 +185,7 @@ def main():
                 return
 
             # セレクト選択した場合、ターミナルコマンドを実行
-            if event in ['Fold', 'Web', 'EA', 'Anomaly', '機能']:
+            if event in ['Fold', 'Web', 'EA', 'Predict', 'Anomaly', '機能']:
 
                 if event in ['Fold', 'Web']:
                     menu = cst.MENU_CSV[event]
@@ -213,12 +222,13 @@ def main():
                         [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
                          '-m', EA_MENU[select], '-e', select]))
 
-                # Anomalyセレクトで選択した場合
-                elif 'Anomaly' == event:
+                # Predict or Anomalyセレクトで選択した場合
+                elif event in['Predict', 'Anomaly']:
+                    obj = (PREDICT_MENU if 'Predict' == event else ANOMALY_MENU)
                     # 動的モジュールを実行
                     processes.append(subprocess.Popen(
                         [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
-                         '-m', ANOMALY_MENU[select].split('/')[0], '-e', ANOMALY_MENU[select].split('/')[1]]))
+                         '-m', obj[select].split('/')[0], '-e', obj[select].split('/')[1]]))
 
                 # 単独機能で選択した場合
                 else:

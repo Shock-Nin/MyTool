@@ -7,7 +7,7 @@ import json
 import glob
 import datetime
 import pandas as pd
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 
 from business.batch.anomaly import Anomaly
 

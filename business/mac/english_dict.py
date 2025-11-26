@@ -11,7 +11,7 @@ import re
 import json
 import pykakasi
 import pandas as pd
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 import pyautogui as pgui
 import urllib.request
 import pyperclip

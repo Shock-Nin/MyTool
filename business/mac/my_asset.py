@@ -263,7 +263,11 @@ class MyAsset:
                     wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(k))
                     com.sleep(1)
 
-                    dropdown = web_driver.find_element(wd, 'j_idt636:card')
+                    j_idt = wd.page_source
+                    j_idt = j_idt[j_idt.find(':card') - 9: j_idt.find(':card')]
+                    j_idt = j_idt[j_idt.find('j_idt'):] + ':card'
+
+                    dropdown = web_driver.find_element(wd, j_idt)
                     Select(dropdown).select_by_index(i)
 
                     try:
