@@ -86,15 +86,23 @@ def input_box(msg, title, forms, obj='', cancel=False):
     elif 'input' == obj:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
-                 sg.InputText(default_text=forms[i][1], font=('', 16), size=(12, 1))]
+                [sg.Text(forms[i][0], font=('', 16), size=(len(forms[i][0]) * 2, 1), text_color='#000000', background_color='#77CCFF')],
+                [sg.InputText(default_text=forms[i][1], font=('', 16), size=(len(forms[i][0]) * 2, 1))]
+            ])] for i in range(0, len(forms))], background_color='#77CCFF'
+        )]
+    elif 'combo' == obj:
+        layout = [sg.Column([[
+            sg.Frame('', background_color='#77CCFF', layout=[
+                [sg.Text('　', key='act', font=('', 16), size=(len(msg) * 2, 1), text_color='#000000', background_color='#77CCFF')],
+                [sg.Combo(forms[i][0].split(','), font=('', 16), size=(len(msg) * 2, 1),
+                          default_value=forms[i][1], readonly=True)]
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]
     else:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [(sg.Text(forms[i][k], font=('', 16), size=(16, 1), text_color='#000000', background_color='#77CCFF')
-                  if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(12, 1)))]
+                [(sg.Text(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1), text_color='#000000', background_color='#77CCFF')
+                  if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1)))]
                  for k in range(0, len(forms[i]))
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]

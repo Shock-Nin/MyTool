@@ -8,7 +8,7 @@ from const import cst
 import cv2
 import subprocess
 import pyautogui as pgui
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 
 from business. windows import ea_edits as inheritance
 

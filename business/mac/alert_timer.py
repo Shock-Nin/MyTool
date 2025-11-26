@@ -5,7 +5,7 @@ from const import cst
 
 import os
 import datetime
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 from playsound import playsound
 
 LIMIT_MIN = 60

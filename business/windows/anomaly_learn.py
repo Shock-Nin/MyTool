@@ -8,7 +8,7 @@ import json
 import glob
 import datetime
 import pandas as pd
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 
 import numpy as np
 import matplotlib.pyplot as plt

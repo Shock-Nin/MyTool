@@ -10,3 +10,11 @@ pip install selenium
 pip install webdriver_manager
 pip install mysql
 pip install mysql_connector
+
+pip install matplotlib
+pip install keras
+pip install scikit-learn
+pip install tensorflow
+pip install pandas-datareader
+pip install pmdarima
+pip install jupyter

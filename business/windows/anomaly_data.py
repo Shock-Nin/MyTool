@@ -8,7 +8,7 @@ import glob
 import datetime
 import statistics
 import pandas as pd
-import PySimpleGUI as sg
+import FreeSimpleGUI as sg
 
 PATHS = ['H1', 'MTF/H4', 'MTF/D1']
 JUDGE_INPUTS = [['期間', 2008, int(com.str_time()[:4]) - 1]]
