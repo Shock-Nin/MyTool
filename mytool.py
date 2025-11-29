@@ -86,7 +86,7 @@ DP_XY_WIDTH = {
     cst.MY_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
     # cst.WEB_IP: [0, 0, 20, 2],
     # cst.MY_IP: [0, 0, 20, 2],
-    cst.MAC_IP: [150, 40 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
+    cst.MAC_IP: [150, 50 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
 
@@ -152,11 +152,12 @@ def main():
                             font=('', 16 * DP[3]), size=XY_SIZE)]
                   ] + [([] if 0 == len(BTN[btn]) else [sg.Button(btn, key=btn, font=('', 16 * DP[3]), pad=((0, 0), (0, 5)), size=XY_SIZE)]) for btn in BTN]
 
-        if cst.DEV_IP == WORK_IP or cst.MAC_IP == WORK_IP:
+        is_dev = (cst.DEV_IP == WORK_IP)
+        if is_dev or cst.MAC_IP == WORK_IP:
             layout.append([sg.Combo([key for key in PREDICT_MENU],
                                     default_value='　予測モデル', key='Predict', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
-        if cst.DEV_IP == WORK_IP:
+        if is_dev:
             layout.append([sg.Combo([key for key in ANOMALY_MENU],
                                     default_value='　アノマリ〜', key='Anomaly', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
