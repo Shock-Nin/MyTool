@@ -76,7 +76,7 @@ class Base:
         if self.dict_df is None or self.input is None:
             return
 
-        fig, ax = plt.subplots(1, len(self.dict_df), figsize=(16, 5))
+        fig, ax = plt.subplots(1, len(self.dict_df), figsize=cst.FIG_SIZE)
         fig.suptitle(', '.join(currency.replace('USD', '') for currency in self.dict_df))
 
         cnt = 0
@@ -108,17 +108,16 @@ class Base:
 
         if 'ARIMA' == inputs[1][0]:
             from business.predict import arima
-            arima.C(self.dict_df, self.input)
+            arima.create(self.dict_df, self.input)
 
-        elif 'RNN' == inputs[1][0]:
-            from business.predict import rnn
-            rnn.V(self.dict_df, self.input)
+        # elif 'RNN' == inputs[1][0]:
+        #     from business.predict import rnn
+        #     rnn.create(inputs[1][0], self.dict_df, self.input)
         else:
+            # from business.predict import rnn
+            # rnn.create(inputs[1][0], self.dict_df, self.input)
             from business.predict import keras_models
             keras_models.create(inputs[1][0], self.dict_df, self.input)
-            from business.predict import gru
-
-            # gru.gru(self.dict_df, self.input)
 
 # 中断イベント
 def _is_interrupt(window, event):

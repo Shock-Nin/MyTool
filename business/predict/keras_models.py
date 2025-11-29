@@ -20,11 +20,13 @@ def create(model_type, dict_df, inputs):
 
     com.log(model_type + 'モデル作成開始')
 
-    fig, ax = plt.subplots(1, len(dict_df), figsize=(16, 6))
-    fig.suptitle(model_type + ' [' + ', '.join(currency.replace('USD', '') for currency in dict_df) + ']')
+    fig, ax = plt.subplots(1, len(dict_df), figsize=cst.FIG_SIZE)
+    fig.suptitle(model_type + ': 二乗平均平方根誤差(RMSE) ↓ 0 | 決定係数(r2) ↑ 1',
+                 fontsize=14, fontname='Yu Gothic')
 
     total_time = 0
     cnt = 0
+    res_r = {}
     try:
         for currency in dict_df:
             start_time = com.time_start()
@@ -50,13 +52,18 @@ def create(model_type, dict_df, inputs):
             # どれくらいの期間をもとに予測するか
             window_size = int(inputs[0])
 
-            train_data = scaled_data[0:int(training_data_len), :]
+            train_data = scaled_data[0: int(training_data_len), :]
 
             # train_dataをx_trainとy_trainに分ける
             x_train, y_train = [], []
-            for i in range(window_size, len(train_data)):
-                x_train.append(train_data[i - window_size:i, 0])
-                y_train.append(train_data[i, 0])
+            if 'RNN' == model_type:
+                for i in range(window_size * 2, len(train_data)):
+                    x_train.append(train_data[i - window_size: i, 0])
+                    y_train.append(train_data[i, 0])
+            else:
+                for i in range(window_size, len(train_data)):
+                    x_train.append(train_data[i - window_size: i, 0])
+                    y_train.append(train_data[i, 0])
 
             # numpy arrayに変換
             x_train, y_train = np.array(x_train), np.array(y_train)
@@ -119,24 +126,22 @@ def create(model_type, dict_df, inputs):
             # except:
             #     com.log('Predictionsエラー')
 
-            # 二乗平均平方根誤差（RMSE）: 0に近いほど良い
-            rmse = np.sqrt(np.mean(((predictions - y_test) ** 2)))
-
-            # 決定係数(r2) : 1に近いほど良い
-            r2s = r2_score(y_test, predictions)
-
             run_time = com.time_end(start_time)
             total_time += run_time
-            com.log(model_type + ' [' + currency + ']予測完了(' + com.conv_time_str(run_time) + ') '
-                    + ' 二乗平均平方根誤差(RMSE) ↓ 0：'+ str(rmse) + ' | 決定係数(r2) ↑ 1：'+ str(r2s))
+            com.log(model_type + ' [' + currency + ']予測完了(' + com.conv_time_str(run_time) + ') ')
 
             train = data[:training_data_len]
             valid = data[training_data_len:]
-            try:
-                valid['Predictions'] = predictions
-            except:
-                com.log('Predictionsエラー(valid)')
+            valid['Predictions'] = predictions
+            # try:
+            #     valid['Predictions'] = predictions
+            # except:
+            #     com.log('Predictionsエラー(valid)')
 
+            # 二乗平均平方根誤差(RMSE): 0に近いほど良い、決定係数(r2): 1に近いほど良い
+            ax[cnt].set_title(currency.replace('USD', '') + ': '
+                              + str(round(np.sqrt(np.mean(((predictions - y_test) ** 2))), 5)) + ' | '
+                              + str(round(r2_score(y_test, predictions), 5)), fontsize=12)
             ax[cnt].plot(train['Close'], linewidth=2)
             ax[cnt].plot(valid[['Close', 'Predictions']], linewidth=1)
 
@@ -145,6 +150,7 @@ def create(model_type, dict_df, inputs):
 
         plt.gcf().autofmt_xdate()
         plt.legend(['Train', 'Val', 'Predictions'], loc='lower center')
+
         plt.show()
     finally:
         try: window.close()

@@ -1,4 +1,4 @@
-cd C:\Users\Administrator\AppData\Local\Programs\Python\Python313\Scripts
+cd C:\Users\Administrator\AppData\dskna\Programs\Python\Python313\Scripts
 pip install pyperclip
 pip install pandas
 pip install pyautogui

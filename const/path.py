@@ -17,7 +17,7 @@ else:
     IP = IP[IP.find('<td'):]
     IP = IP[IP.find('>') + 1: IP.find('</td')].strip()
 
-DEV_IP = '157.120.12.132'
+DEV_IP = '192.168.170.129'
 WEB_IP = '164.70.84.107'
 MY_IP = '164.70.84.107'
 MAC_IP = ('????' if IP in [DEV_IP, WEB_IP, MY_IP] else IP)
@@ -32,7 +32,8 @@ GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
 TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
              'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/'}
 RUN_PATH = {'Mac': '/usr/local/bin/python3.12',
-            'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python313/python.exe'}
+            'Win': 'C:/Users/dskna/AppData/Local/Programs/Python/Python313/python.exe'}
+            # 'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python313/python.exe'}
 
 # MT4のパス
 MT4_PATH = CURRENT_PATH['Win'] + 'Documents/MT4/'

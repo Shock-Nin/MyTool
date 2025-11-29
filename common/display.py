@@ -93,7 +93,7 @@ def input_box(msg, title, forms, obj='', cancel=False):
     elif 'combo' == obj:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text('　', key='act', font=('', 16), size=(len(msg) * 2, 1), text_color='#000000', background_color='#77CCFF')],
+                [sg.Text('', key='act', font=('', 16), size=(len(msg) * 2, 1), text_color='#000000', background_color='#77CCFF')],
                 [sg.Combo(forms[i][0].split(','), font=('', 16), size=(len(msg) * 2, 1),
                           default_value=forms[i][1], readonly=True)]
             ])] for i in range(0, len(forms))], background_color='#77CCFF'

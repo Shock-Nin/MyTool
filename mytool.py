@@ -81,7 +81,7 @@ WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])
 BTN = BTNS[WORK_IP]
 HEIGHT = 2 + (2 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
 DP_XY_WIDTH = {
-    cst.DEV_IP: [0, 150 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
+    cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
     cst.WEB_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
     cst.MY_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
     # cst.WEB_IP: [0, 0, 20, 2],
@@ -152,12 +152,11 @@ def main():
                             font=('', 16 * DP[3]), size=XY_SIZE)]
                   ] + [([] if 0 == len(BTN[btn]) else [sg.Button(btn, key=btn, font=('', 16 * DP[3]), pad=((0, 0), (0, 5)), size=XY_SIZE)]) for btn in BTN]
 
-        is_dev = (cst.DEV_IP == WORK_IP)
-        if is_dev:
-
+        if cst.DEV_IP == WORK_IP or cst.MAC_IP == WORK_IP:
             layout.append([sg.Combo([key for key in PREDICT_MENU],
                                     default_value='　予測モデル', key='Predict', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
+        if cst.DEV_IP == WORK_IP:
             layout.append([sg.Combo([key for key in ANOMALY_MENU],
                                     default_value='　アノマリ〜', key='Anomaly', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
@@ -170,7 +169,7 @@ def main():
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
 
         location = (None, None) if 0 == DP[0] + DP[1] else (
-            win_x - DP[0] if 0 < DP[0] else 70, win_y - DP[1] if 0 < DP[1] else 0)
+            win_x - DP[0] if 0 < DP[0] else 0, win_y - DP[1] if 0 < DP[1] else 0)
         window = sg.Window(cst.PC, modal=True, element_justification='c',
                            icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
