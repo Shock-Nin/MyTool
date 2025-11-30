@@ -120,22 +120,10 @@ def create(model_type, dict_df, inputs):
             # 予測を実行する
             predictions = model.predict(x_test)
             predictions = scaler.inverse_transform(predictions)
-            # try:
-            #     predictions = scaler.inverse_transform(predictions)
-            # except:
-            #     com.log('Predictionsエラー')
-
-            run_time = com.time_end(start_time)
-            total_time += run_time
-            com.log(model_type + ' [' + currency + ']予測完了(' + com.conv_time_str(run_time) + ') ')
 
             train = data[:training_data_len]
             valid = data[training_data_len:]
             valid['Predictions'] = predictions
-            # try:
-            #     valid['Predictions'] = predictions
-            # except:
-            #     com.log('Predictionsエラー(valid)')
 
             # 二乗平均平方根誤差(RMSE): 0に近いほど良い、決定係数(r2): 1に近いほど良い
             ax[cnt].set_title(currency.replace('USD', '') + ': '
@@ -143,6 +131,10 @@ def create(model_type, dict_df, inputs):
                               + str(round(r2_score(y_test, predictions), 5)), fontsize=12)
             ax[cnt].plot(train['Close'], linewidth=2)
             ax[cnt].plot(valid[['Close', 'Predictions']], linewidth=1)
+
+            run_time = com.time_end(start_time)
+            total_time += run_time
+            com.log(model_type + '[' + currency + ']予測完了(' + com.conv_time_str(run_time) + ') ')
 
             cnt += 1
             window.close()
