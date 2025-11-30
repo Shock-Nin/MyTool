@@ -29,7 +29,7 @@ CURRENT_PATH = {'Mac': '/Users/dsk_nagaoka/',
                 'Win': 'C:/Users/dskna/'}
                 # 'Win': 'C:/Users/Administrator/'}
 # GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
-GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Library/CloudStorage/GoogleDrive-dsk.nagaoka@gmeil.com/マイドライブ/',
+GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Library/CloudStorage/GoogleDrive-dsk.nagaoka.0226@gmail.com/マイドライブ/',
                'Win': 'G:/マイドライブ/'}
 TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
              'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/'}
