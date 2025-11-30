@@ -77,12 +77,14 @@ class Base:
             return
 
         fig, ax = plt.subplots(1, len(self.dict_df), figsize=cst.FIG_SIZE)
-        fig.suptitle(', '.join(currency.replace('USD', '') for currency in self.dict_df))
+        fig.suptitle('移動平均: ' + str(self.input).replace('[', '').replace(']', '').replace('\'', ''),
+                     fontsize=14, fontname='Yu Gothic')
 
         cnt = 0
         for currency in self.dict_df:
             df = self.dict_df[currency]
 
+            ax[cnt].set_title(currency.replace('USD', ''), fontsize=12)
             ax[cnt].plot(df.index, df['Close'], linewidth=2)
 
             for ma in self.input:
