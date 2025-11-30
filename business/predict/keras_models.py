@@ -26,7 +26,6 @@ def create(model_type, dict_df, inputs):
 
     total_time = 0
     cnt = 0
-    res_r = {}
     try:
         for currency in dict_df:
             start_time = com.time_start()
