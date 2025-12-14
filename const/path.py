@@ -33,7 +33,7 @@ GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Library/CloudStorage/GoogleDrive-ds
                'Win': 'G:/マイドライブ/'}
 TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
              'Win': CURRENT_PATH['Win'] + 'Documents/MyToolTmp/'}
-RUN_PATH = {'Mac': '/usr/local/bin/python3.12',
+RUN_PATH = {'Mac': '/usr/local/bin/python3.13',
             'Win': CURRENT_PATH['Win'] + 'AppData/Local/Programs/Python/Python313/python.exe'}
             # 'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python313/python.exe'}
 

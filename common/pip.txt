@@ -1,4 +1,5 @@
 cd C:\Users\Administrator\AppData\dskna\Programs\Python\Python313\Scripts
+
 pip install pyperclip
 pip install pandas
 pip install pyautogui
@@ -19,3 +20,4 @@ pip install tensorflow
 pip install pandas-datareader
 pip install pmdarima
 pip install jupyter
+pip install tqdm
