@@ -43,8 +43,9 @@ BTNS = {cst.DEV_IP: {
     # 'タイマー': 'mac.alert_timer',
     }}
 PREDICT_MENU = {
-    'チャート': 'predict.base/open_chart',
-    'モデル作成': 'predict.base/create_model',
+    'データ作成': 'predict.base/create_data',
+    '推論実行': 'predict.base/load_model',
+    'メイン': 'predict.base/main',
 }
 ANOMALY_MENU = {
     'H1データ作成': 'windows.anomaly_hst/create_h1',
@@ -83,10 +84,7 @@ HEIGHT = 2 + (2 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP e
 DP_XY_WIDTH = {
     cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 40), 16, 1],
     cst.WEB_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
-    cst.MY_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
-    # cst.WEB_IP: [0, 0, 20, 2],
-    # cst.MY_IP: [0, 0, 20, 2],
-    cst.MAC_IP: [150, 50 + (int(len(BTN) + HEIGHT) * 40), 13, 1]}
+    cst.MAC_IP: [150, 10 + (int(len(BTN) + HEIGHT) * 50), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
 
@@ -155,7 +153,7 @@ def main():
         is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev or cst.MAC_IP == WORK_IP:
             layout.append([sg.Combo([key for key in PREDICT_MENU],
-                                    default_value='　予測モデル', key='Predict', enable_events=True, readonly=True,
+                                    default_value='　予測推論', key='Predict', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
         if is_dev:
             layout.append([sg.Combo([key for key in ANOMALY_MENU],
@@ -174,7 +172,7 @@ def main():
         window = sg.Window(cst.PC, modal=True, element_justification='c',
                            icon=(os.getcwd() + cst.ICON_FILE),
                            background_color=(cst.MAIN_BGCOLOR if CHANGE_MENU < 0 else '#777777'),
-                           element_padding=((0, 0), (0, 0)), margins=(0, 0), location=location, layout=layout)
+                           element_padding=((0, 0), (0, 5)), margins=(0, 0), location=location, layout=layout)
         # 画面のイベント監視
         while True:
             event, values = window.read()

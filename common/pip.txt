@@ -12,6 +12,7 @@ pip install mysql
 pip install mysql_connector
 
 pip install matplotlib
+pip install japanize-matplotlib
 pip install keras
 pip install scikit-learn
 pip install tensorflow

@@ -12,136 +12,134 @@ from sklearn.preprocessing import MinMaxScaler
 from keras.models import Sequential
 from keras.layers import Dense, Dropout, LSTM, GRU, RNN
 
+import japanize_matplotlib
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
 
-def create(model_type, dict_df, inputs):
+def create(currency, model_type, df, train, span, epochs):
 
     com.log(model_type + 'モデル作成開始')
 
-    fig, ax = plt.subplots(1, len(dict_df), figsize=cst.FIG_SIZE)
-    fig.suptitle(model_type + ': 二乗平均平方根誤差(RMSE) ↓ 0 | 決定係数(r2) ↑ 1',
-                 fontsize=14, fontname='Yu Gothic')
+    fig, ax = plt.subplots(1, 1, figsize=cst.FIG_SIZE, sharex=True)
 
     total_time = 0
     cnt = 0
     try:
-        for currency in dict_df:
-            start_time = com.time_start()
+        start_time = com.time_start()
 
-            window = com.progress(model_type + 'モデル作成中', [currency, len(dict_df)], interrupt=True)
-            event, values = window.read(timeout=0)
+        window = com.progress(model_type + 'モデル作成中', [currency, 1], interrupt=True)
+        event, values = window.read(timeout=0)
 
-            window[currency].update(currency + ' (' + str(cnt) + ' / ' + str(len(dict_df)) + ')')
-            window[currency + '_'].update(cnt)
+        # Close(終値)のデータ
+        data = df.filter(['Close'])
+        dataset = data.values
 
-            df = dict_df[currency]
+        # データを0〜1の範囲に正規化
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaled_data = scaler.fit_transform(dataset)
 
-            # Close(終値)のデータ
-            data = df.filter(['Close'])
-            dataset = data.values
+        # トレーニングデータとして扱う割合
+        # training_data_len = int(np.ceil(len(dataset) * .8))
+        training_data_len = int(np.ceil(len(dataset) * train))
+        # 予測期間
+        window_size = int(span)
 
-            # データを0〜1の範囲に正規化
-            scaler = MinMaxScaler(feature_range=(0, 1))
-            scaled_data = scaler.fit_transform(dataset)
+        train_data = scaled_data[0: int(training_data_len), :]
 
-            # 全体の80%をトレーニングデータとして扱う
-            training_data_len = int(np.ceil(len(dataset) * .8))
-            # どれくらいの期間をもとに予測するか
-            window_size = int(inputs[0])
+        # train_dataをx_trainとy_trainに分ける
+        x_train, y_train = [], []
+        if 'RNN' == model_type:
+            for i in range(window_size * 2, len(train_data)):
+                x_train.append(train_data[i - window_size: i, 0])
+                y_train.append(train_data[i, 0])
+        else:
+            for i in range(window_size, len(train_data)):
+                x_train.append(train_data[i - window_size: i, 0])
+                y_train.append(train_data[i, 0])
 
-            train_data = scaled_data[0: int(training_data_len), :]
+        # numpy arrayに変換
+        x_train, y_train = np.array(x_train), np.array(y_train)
+        x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
 
-            # train_dataをx_trainとy_trainに分ける
-            x_train, y_train = [], []
-            if 'RNN' == model_type:
-                for i in range(window_size * 2, len(train_data)):
-                    x_train.append(train_data[i - window_size: i, 0])
-                    y_train.append(train_data[i, 0])
-            else:
-                for i in range(window_size, len(train_data)):
-                    x_train.append(train_data[i - window_size: i, 0])
-                    y_train.append(train_data[i, 0])
+        units = 50
+        dropout = 0.2
 
-            # numpy arrayに変換
-            x_train, y_train = np.array(x_train), np.array(y_train)
-            x_train = np.reshape(x_train, (x_train.shape[0], x_train.shape[1], 1))
+        model = Sequential()
+        if 'LSTM' == model_type:
+            model.add(LSTM(units=units, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            model.add(Dropout(dropout))
+            model.add(LSTM(units=units, return_sequences=True))
+            model.add(Dropout(dropout))
+            model.add(LSTM(units=units, return_sequences=True))
+            model.add(Dropout(dropout))
+            model.add(LSTM(units=units))
+            model.add(Dropout(dropout))
 
-            model = Sequential()
-            if 'LSTM' == model_type:
-                model.add(LSTM(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-                model.add(Dropout(0.2))
-                model.add(LSTM(units=50, return_sequences=True))
-                model.add(Dropout(0.2))
-                model.add(LSTM(units=50, return_sequences=True))
-                model.add(Dropout(0.2))
-                model.add(LSTM(units=50))
-                model.add(Dropout(0.2))
+        elif 'GRU' == model_type:
+            model.add(GRU(units=units, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            model.add(Dropout(dropout))
+            model.add(GRU(units=units, return_sequences=True))
+            model.add(Dropout(dropout))
+            model.add(GRU(units=units, return_sequences=True))
+            model.add(Dropout(dropout))
+            model.add(GRU(units=units))
+            model.add(Dropout(dropout))
 
-            elif 'GRU' == model_type:
-                model.add(GRU(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-                model.add(Dropout(0.2))
-                model.add(GRU(units=50, return_sequences=True))
-                model.add(Dropout(0.2))
-                model.add(GRU(units=50, return_sequences=True))
-                model.add(Dropout(0.2))
-                model.add(GRU(units=50))
-                model.add(Dropout(0.2))
+        elif 'RNN' == model_type:
+            model.add(RNN(units=units, return_sequences=True, input_shape=(x_train.shape[1], 1)))
+            model.add(Dropout(dropout))
+            model.add(RNN(units=units, return_sequences=True))
+            model.add(Dropout(dropout))
+            model.add(RNN(units=units, return_sequences=True))
+            model.add(Dropout(dropout))
+            model.add(RNN(units=units))
+            model.add(Dropout(dropout))
 
-            elif 'RNN' == model_type:
-                model.add(RNN(units=50, return_sequences=True, input_shape=(x_train.shape[1], 1)))
-                model.add(Dropout(0.2))
-                model.add(RNN(units=50, return_sequences=True))
-                model.add(Dropout(0.2))
-                model.add(RNN(units=50, return_sequences=True))
-                model.add(Dropout(0.2))
-                model.add(RNN(units=50))
-                model.add(Dropout(0.2))
+        model.add(Dense(units=1))
+        model.compile(optimizer='adam', loss='mean_squared_error')
+        history = model.fit(x_train, y_train, batch_size=32, epochs=epochs)
 
-            model.add(Dense(units=1))
-            model.compile(optimizer='adam', loss='mean_squared_error')
-            history = model.fit(x_train, y_train, batch_size=32, epochs=int(inputs[1]))
+        model.summary()
 
-            model.summary()
+        # テストデータを作成
+        test_data = scaled_data[training_data_len - window_size:, :]
 
-            # テストデータを作成
-            test_data = scaled_data[training_data_len - window_size:, :]
+        x_test = []
+        y_test = dataset[training_data_len:, :]
+        for i in range(window_size, len(test_data)):
+            x_test.append(test_data[i - window_size:i, 0])
 
-            x_test = []
-            y_test = dataset[training_data_len:, :]
-            for i in range(window_size, len(test_data)):
-                x_test.append(test_data[i - window_size:i, 0])
+        # numpy arrayに変換
+        x_test = np.array(x_test)
+        x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
 
-            # numpy arrayに変換
-            x_test = np.array(x_test)
-            x_test = np.reshape(x_test, (x_test.shape[0], x_test.shape[1], 1))
+        # 予測を実行する
+        predictions = model.predict(x_test)
+        predictions = scaler.inverse_transform(predictions)
 
-            # 予測を実行する
-            predictions = model.predict(x_test)
-            predictions = scaler.inverse_transform(predictions)
+        train = data[:training_data_len]
+        valid = data[training_data_len:]
+        valid['Predictions'] = predictions
 
-            train = data[:training_data_len]
-            valid = data[training_data_len:]
-            valid['Predictions'] = predictions
+        # 二乗平均平方根誤差(RMSE): 0に近いほど良い、決定係数(r2): 1に近いほど良い
+        fig.suptitle(model_type + ' | ' + currency + ': 二乗平均平方根誤差(RMSE ↓0) '
+                     + str(round(np.sqrt(np.mean(((predictions - y_test) ** 2))), 5))
+                     + '| 決定係数(r2 ↑1) ' + str(round(r2_score(y_test, predictions), 5)), fontsize=cst.FIG_FONT_SIZE)
 
-            # 二乗平均平方根誤差(RMSE): 0に近いほど良い、決定係数(r2): 1に近いほど良い
-            ax[cnt].set_title(currency.replace('USD', '') + ': '
-                              + str(round(np.sqrt(np.mean(((predictions - y_test) ** 2))), 5)) + ' | '
-                              + str(round(r2_score(y_test, predictions), 5)), fontsize=12)
-            ax[cnt].plot(train['Close'], linewidth=2)
-            ax[cnt].plot(valid[['Close', 'Predictions']], linewidth=1)
-
-            run_time = com.time_end(start_time)
-            total_time += run_time
-            com.log(model_type + '[' + currency + ']予測完了(' + com.conv_time_str(run_time) + ') ')
-
-            cnt += 1
-            window.close()
+        plt.plot(train['Close'], linewidth=2)
+        plt.plot(valid[['Close', 'Predictions']], linewidth=1)
 
         plt.gcf().autofmt_xdate()
-        plt.legend(['Train', 'Val', 'Predictions'], loc='lower center')
+        plt.xticks(np.arange(0, len(df), step=(len(df) / 10)))
+        plt.legend(['Train', 'Val', 'Predictions'], ncol=3, loc='upper left')
+        plt.grid()
 
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log(model_type + '[' + currency + ']予測完了(' + com.conv_time_str(run_time) + ') ')
+
+        window.close()
         plt.show()
     finally:
         try: window.close()

@@ -110,7 +110,7 @@ class MyAsset:
         flg, inputs = com.input_box(
             ('　　　　　本日は13日です。　　　　　\n\n' if 13 == datetime.datetime.now().day else '')
             + str_payment + '\n\n' + str_summary + '　　' + '開始しますか？', '開始確認',
-            [['Viewカード', str(before_view[0])], ['PayPay', str(before_paypay[0])], ['三井住友', str(before_smbc)]],
+            [['Viewカード', str(before_view[0])], ['PayPay　', str(before_paypay[0])], ['三井住友　　　', str(before_smbc)]],
             'input')
         if flg <= 0:
             return
@@ -264,8 +264,9 @@ class MyAsset:
                     com.sleep(1)
 
                     j_idt = wd.page_source
-                    j_idt = j_idt[j_idt.find(':card') - 9: j_idt.find(':card')]
-                    j_idt = j_idt[j_idt.find('j_idt'):] + ':card'
+                    j_idt = j_idt[j_idt.find(':card') - 12: j_idt.find(':card')]
+                    j_idt = j_idt[j_idt.rfind('j_idt'):] + ':card'
+                    com.log(str(i + 1) + '-' + str(k + 1) + ', ' + j_idt)
 
                     dropdown = web_driver.find_element(wd, j_idt)
                     Select(dropdown).select_by_index(i)

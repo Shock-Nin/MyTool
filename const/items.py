@@ -53,9 +53,12 @@ BLOG_MAIL_PW = 'Shock19800226'
 ERROR_MAIL = 'shocknin7@gmail.com'
 ERROR_MAIL_PW = 'kejm gyuz yczk dfcx'
 
-# 予測 チャートサイズ
-FIG_SIZE = (10, 5)
-FONT_SIZE = 12
+# モデル 時間足
+MODEL_PERIODS = ['D1', 'H1']
+MODEL_CURRENCIES = ['EURUSD', 'GBPUSD', 'USDJPY']
+# モデル 予測チャートサイズ
+FIG_SIZE = (12, 7)
+FIG_FONT_SIZE = 12
 
 # アノマリー Twitter
 TWITTER_ID = '@ShockNin7'
