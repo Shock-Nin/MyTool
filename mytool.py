@@ -31,8 +31,6 @@ CHANGE_MENU = -1
 """ ---------------------------------- """
 BTNS = {cst.DEV_IP: {
     '': '',
-    }, cst.MY_IP: {
-    '': '',
     }, cst.WEB_IP: {
     '': '',
     }, cst.MAC_IP: {

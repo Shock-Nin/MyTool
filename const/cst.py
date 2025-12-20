@@ -16,7 +16,6 @@ PC = path.PC
 PC_NAME = path.PC_NAME
 IP = path.IP
 WEB_IP = path.WEB_IP
-MY_IP = path.MY_IP
 DEV_IP = path.DEV_IP
 MAC_IP = path.MAC_IP
 IPS = path.IPS

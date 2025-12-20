@@ -17,13 +17,12 @@ else:
     IP = IP[IP.find('<td'):]
     IP = IP[IP.find('>') + 1: IP.find('</td')].strip()
 
-DEV_IP = '172.16.7.128'
 WEB_IP = '164.70.84.107'
-MY_IP = '164.70.84.107'
-MAC_IP = ('????' if IP in [DEV_IP, WEB_IP, MY_IP] else IP)
+DEV_IP = (IP if 'Win' == PC else '????')
+MAC_IP = ('????' if IP in [DEV_IP, WEB_IP] else IP)
 
-IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MY_IP: 'My', MAC_IP: 'Mac'}
-IP_LIST = [DEV_IP, WEB_IP, MY_IP, MAC_IP]
+IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MAC_IP: 'Mac'}
+IP_LIST = [DEV_IP, WEB_IP, MAC_IP]
 
 CURRENT_PATH = {'Mac': '/Users/dsk_nagaoka/',
                 'Win': 'C:/Users/dskna/'}
