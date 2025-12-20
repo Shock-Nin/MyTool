@@ -143,10 +143,6 @@ class MyAsset:
                 com.dialog('データ取得に失敗しました', '楽天カード(M)', 'W')
                 return
             web_drivers.append(wd2)
-            # TODO
-            # if rscard is None or '0' == str(rscard[0]):
-            #     com.dialog('データ取得に失敗しました', '楽天カード(S)', 'W')
-            #     return
 
             # Paypayカード取得
             pcard = [inputs[1], before_paypay[1]]
