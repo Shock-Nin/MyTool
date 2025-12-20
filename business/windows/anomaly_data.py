@@ -499,13 +499,6 @@ class AnomalyData:
                                     break
 
                             if 0 == len(open_h) or 0 == len(close_h):
-
-                                msg = cur + ', ' + str(forecasts[i][k][1]) + ' | ' + str(day_close.weekday()) + ', '
-                                msg += str(day_open) + ' ' + ('×' if 0 == len(open_h)else '○') + ', '
-                                msg += str(day_close) + ' ' + ('×' if 0 == len(close_h) else '○')
-
-                                #TODO
-                                # print(msg)
                                 continue
 
                             str_month = ('0' if day_close.month < 10 else '') + str(day_close.month)
@@ -753,14 +746,6 @@ class AnomalyData:
 
 
                             if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]):
-
-                                msg = cur + ', ' + str(forecasts[i][k]) + ' | '
-                                msg += (time_monday - datetime.timedelta(days=3)).strftime('%Y-%m-%d')
-                                msg += ' ' + ('×' if 0 == len(fridays) or 'nan' == str(fridays.at[fridays.index[0], curs[c]]) else '○')
-                                msg += ', ' + str(time_monday)
-
-                                # TODO
-                                # print(msg)
                                 continue
 
                             counts[0] += 1
