@@ -101,7 +101,8 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
         forecast_arima = rolling_forecast(forcast_data, len(forcast_data), split_len + forecast, interval, pdq)
 
         # モデルで予測を実行
-        forecast = model.forecast(steps=(len(eq[currency]) - split_len + forecast))
+        # forecast = model.forecast(steps=(len(eq[currency]) - split_len + forecast))
+        forecast = model.predict(steps=(len(eq[currency]) - split_len + forecast))
         # print(model.summary())
         # print(model.params)
 
@@ -136,22 +137,22 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
 
             threshold = 0.1
 
-            print(forecast_data.index[i], str(round(now_price, 5)),
-                  '↓' if result_pct < -threshold else
-                  '↑' if threshold < result_pct else '→',
-                  round(result_price, 5), str(round(result_pct, 2)) + '%',
-                  '予測', round(infer, 5),
-                  '↓' if result_pct < 0 and infer_pct < -threshold else
-                  '↑' if 0 < result_pct and threshold < infer_pct else '×',
-                  str(round(infer_pct, 2)) + '%',
-                  '検証', '-' if pred is None else round(pred, 5),
-                  '-' if pred is None else
-                  '↓' if result_pct < 0 and pred_pct < -threshold else
-                  '↑' if 0 < result_pct and threshold < pred_pct else '×',
-                  '-' if pred is None else
-                  str(round(pred_pct, 2)) + '%',
-                  round(last_price, 5) != round(infer, 5)
-                  )
+            # print(forecast_data.index[i], str(round(now_price, 5)),
+            #       '↓' if result_pct < -threshold else
+            #       '↑' if threshold < result_pct else '→',
+            #       round(result_price, 5), str(round(result_pct, 2)) + '%',
+            #       '予測', round(infer, 5),
+            #       '↓' if result_pct < 0 and infer_pct < -threshold else
+            #       '↑' if 0 < result_pct and threshold < infer_pct else '×',
+            #       str(round(infer_pct, 2)) + '%',
+            #       '検証', '-' if pred is None else round(pred, 5),
+            #       '-' if pred is None else
+            #       '↓' if result_pct < 0 and pred_pct < -threshold else
+            #       '↑' if 0 < result_pct and threshold < pred_pct else '×',
+            #       '-' if pred is None else
+            #       str(round(pred_pct, 2)) + '%',
+            #       round(last_price, 5) != round(infer, 5)
+            #       )
 
             forecast[i] = infer
         # print(len(np.array(list(forecast_data['test']))), len(forecast_data))
@@ -163,8 +164,8 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
               + ') P-val(' + str(round(ad_fuller_result[1], 7)) \
               + ') RMSE(' + str(round(rmse_arima, 7)) + ')'
 
-        com.log(msg + ' | Forecast(' + str(len(forecast_arima)) + ') '
-                + ', '.join(str(round(price, 7)) for price in forecast_arima))
+        com.log(msg + ' | Forecast(' + str(len(forecast_arima)) + ') ')
+        print(forecast_arima)
 
         # チャートの表示定義
         fig1, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=cst.FIG_SIZE, sharex=True)
