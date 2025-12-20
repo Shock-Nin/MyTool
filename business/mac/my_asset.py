@@ -62,7 +62,7 @@ class MyAsset:
                 except:
                     payment_type[payment[1]] = {payment[0]: val}
 
-            str_payment = '　種別　　　  　  　' + '　　　  　　'.join(key for key in payment_type['外食'])
+            str_payment = '　種別　　　  　 ' + '　　　  　　'.join(key for key in payment_type['外食'])
 
             str_payment += '\n' + '\n'.join(rows + ''.join('   ' for _ in range(6 - len(rows))) + ' '.join(
                 payment_type[rows][col] + ''.join(' ' for _ in range(22 - len(str(payment_type[rows][col]))))
@@ -108,7 +108,7 @@ class MyAsset:
         before_smbc = before[1][9]
 
         flg, inputs = com.input_box(
-            ('　　　　　本日は13日です。　　　　　\n\n' if 13 == datetime.datetime.now().day else '')
+            ('　　　　　本日は16日です。　　　　　\n\n' if 16 == datetime.datetime.now().day else '')
             + str_payment + '\n\n' + str_summary + '　　' + '開始しますか？', '開始確認',
             [['Viewカード', str(before_view[0])], ['PayPay　', str(before_paypay[0])], ['三井住友　　　', str(before_smbc)]],
             'input')
@@ -124,6 +124,9 @@ class MyAsset:
         targets = cst.MENU_CSV['Web']
         targets = targets[('資産' == targets['Type'])]
 
+        # WebDriverのクリーンアップ用リスト
+        web_drivers = []
+        
         try:
             # ViewCard取得
             vcard = [inputs[0], before_view[1]]
@@ -138,7 +141,13 @@ class MyAsset:
             rmcard, rscard, wd2 = self.__get_rakuten_card(target)
             if rmcard is None or '0' == str(rmcard[0]):
                 com.dialog('データ取得に失敗しました', '楽天カード(M)', 'W')
+                if wd2 is not None:
+                    web_drivers.append(wd2)
+                for wd in web_drivers:
+                    try: wd.close()
+                    except: pass
                 return
+            web_drivers.append(wd2)
             # TODO
             # if rscard is None or '0' == str(rscard[0]):
             #     com.dialog('データ取得に失敗しました', '楽天カード(S)', 'W')
@@ -163,25 +172,37 @@ class MyAsset:
             target = targets[('三菱UFJ' == targets['Name'])]
             result, wd5 = self.__get_mufg_bank(target)
             if result is None:
+                for wd in web_drivers:
+                    try: wd.close()
+                    except: pass
                 return
             else:
                 banks.append(result)
+            web_drivers.append(wd5)
 
             # 楽天銀行取得
             target = targets[('楽天銀行' == targets['Name'])]
             result, wd6 = self.__get_rakuten_bank(target)
             if result is None:
+                for wd in web_drivers:
+                    try: wd.close()
+                    except: pass
                 return
             else:
                 banks.append(result)
+            web_drivers.append(wd6)
 
             # JREBANK取得
             target = targets[('JREBANK' == targets['Name'])]
             result, wd7 = self.__get_jre_bank(target)
             if result is None:
+                for wd in web_drivers:
+                    try: wd.close()
+                    except: pass
                 return
             else:
                 banks.append(result)
+            web_drivers.append(wd7)
 
             run_time = com.time_end(start_time)
             total_time += run_time
@@ -200,6 +221,9 @@ class MyAsset:
             else:
                 self.cnx.rollback()
                 com.dialog('SQLのINSERTに失敗しました。', 'SQLエラー', 'E')
+                for wd in web_drivers:
+                    try: wd.close()
+                    except: pass
                 return
 
             run_time = com.time_end(start_time)
@@ -214,6 +238,9 @@ class MyAsset:
         com.dialog_cols(com.str_time()[:10] + '(前回 ' + datetime.datetime.strftime(before[1][0], '%Y-%m-%d') +
                         ')\n\n' + str_payment + '\n\n' + str_summary + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
                         layout, ['l', 'r', 'c', 'r', 'c', 'l',  'r', 'c', 'r'], self.myjob)
+        for wd in web_drivers:
+            try: wd.close()
+            except: pass
 
     # Viewカード
     def __get_view_card(self, target):

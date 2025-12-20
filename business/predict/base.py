@@ -197,7 +197,8 @@ class Base:
     def _open_chart(self, spans):
 
         fig, ax = plt.subplots(1, 1, figsize=cst.FIG_SIZE, sharex=True)
-        fig.suptitle(self.currency, fontsize=12)
+        fig.suptitle(self.currency + '[' + str(len(self.df)) + '] ', fontsize=cst.FIG_FONT_SIZE)
+
         plt.plot(self.df.index, self.df['Close'], linewidth=2)
 
         for ma in spans:
@@ -206,8 +207,10 @@ class Base:
             plt.plot(self.df[col_name], linewidth=1, linestyle='dashed')
 
         plt.gcf().autofmt_xdate()
-        plt.xticks(np.arange(0, len(self.df), step=(len(self.df) / 10)))
-        plt.legend(['Close'] + ['MA ' + str(ma) for ma in spans], ncol=(len(spans) + 1), loc='upper left')
+        plt.tight_layout()
+        plt.xticks(np.arange(0, len(self.df), step=(len(self.df) / 10) + 1))
+        plt.legend(['MA ' + str(ma) for ma in spans], ncol=(len(spans)), loc='upper left')
+        plt.grid()
         plt.grid()
         plt.show()
 

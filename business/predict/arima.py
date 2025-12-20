@@ -11,24 +11,12 @@ import statistics
 import pandas as pd
 import FreeSimpleGUI as sg
 
-from itertools import product
-import pmdarima as pm
-from pmdarima import datasets
-from pmdarima import utils
-from pmdarima import arima
-from pmdarima import model_selection
-from sklearn.metrics import mean_absolute_error
-from statistics import mean
-import pandas_datareader.data as web
-
-from statsmodels.graphics.tsaplots import plot_acf
-from statsmodels.tsa.seasonal import seasonal_decompose, STL
+from statsmodels.tsa.seasonal import STL
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.arima.model import ARIMAResults
 
-from tqdm import tqdm_notebook
-from typing import Union
+from itertools import product
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 
@@ -103,10 +91,10 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
 
         # 検証データ作成
         pred_data = pd.DataFrame({'test': test_data})
-        pred_data.loc[:, 'pred_ARIMA'] = pred_arima[:len(pred_data)]
+        pred_data.loc[:, 'predict'] = pred_arima[:len(pred_data)]
 
         # RMSE取得
-        rmse_arima = sqrt(mean_squared_error(pred_data['test'], pred_data['pred_ARIMA']))
+        rmse_arima = sqrt(mean_squared_error(pred_data['test'], pred_data['predict']))
 
         # 予測データ作成
         forcast_data = pd.concat([eq[currency][split_len:], df_future[currency]])
@@ -137,7 +125,7 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
             now_price = forecast_data.iloc[i]['test']
             infer = last_price + forecast[i]
             try:
-                pred = pred_data.iloc[i]['pred_ARIMA']
+                pred = pred_data.iloc[i]['predict']
             except:
                 pred = None
 
@@ -173,7 +161,6 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
 
         msg = 'ADF(' + str(round(ad_fuller_result[0], 7)) \
               + ') P-val(' + str(round(ad_fuller_result[1], 7)) \
-              + ') AIC(' + str(round(list(result_df['AIC'])[0], 7)) \
               + ') RMSE(' + str(round(rmse_arima, 7)) + ')'
 
         com.log(msg + ' | Forecast(' + str(len(forecast_arima)) + ') '
@@ -181,15 +168,16 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
 
         # チャートの表示定義
         fig1, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=cst.FIG_SIZE, sharex=True)
-        fig1.suptitle(('AUTO_' if 0 == str_pqd.count(',') else '') + 'ARIMA' + str(pdq)
-                      + ' | ' + currency + '(' + str(split_len) + ' / ' + str(len(eq))
-                      + ') ' + msg + ' 季節周期(' + str(span) + ')', fontsize=cst.FIG_FONT_SIZE)
+        fig1.suptitle(currency + '[' + str(split_len) + ' / ' + str(len(eq))
+                      + '] ' + ('AUTO_' if 0 == str_pqd.count(',') else '') + 'ARIMA' + str(pdq)
+                      + ' AIC(' + str(round(list(result_df['AIC'])[0], 7)) + ')'
+                      + ' | ' + msg + ' 季節周期(' + str(span) + ')', fontsize=cst.FIG_FONT_SIZE)
 
-        ax1.plot(train_data, linewidth=1)
-        ax1.plot(advanced_decomposition.trend, label='Trend', linewidth=1, linestyle='dashed')
+        ax1.plot(train_data, label='Actual', linewidth=1, color='blue')
+        ax1.plot(advanced_decomposition.trend, label='Trend', linewidth=1, color='pink', linestyle='dashed')
 
-        ax1.plot(forecast_data['test'], label='Actual', linewidth=1, color='blue')
-        ax1.plot(pred_data['pred_ARIMA'], label='ARIMA', linewidth=1)
+        ax1.plot(forecast_data['test'], linewidth=1, color='blue')
+        ax1.plot(pred_data['predict'], label='Predict', linewidth=1)
         ax1.plot(forecast_data['forecast'], label='Forecast', linewidth=1)
 
         ax2.plot(advanced_decomposition.seasonal, label='季節性', linewidth=1)
@@ -198,12 +186,11 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
 
         fig1.autofmt_xdate()
         plt.tight_layout()
-        plt.xticks(np.arange(0, len(df), step=(len(df) / 10)))
-
-        ax1.legend(loc='upper left')
-        ax2.legend(loc='upper left')
-        ax1.grid()
-        ax2.grid()
+        plt.xticks(np.arange(0, len(df) + len(df_future), step=((len(df) + len(df_future)) / 10)))
+        ax1.legend(ncol=4, loc='upper left')
+        ax2.legend(ncol=3, loc='upper left')
+        plt.grid()
+        plt.grid()
 
         # 表示の実行
         window.close()
