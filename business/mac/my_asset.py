@@ -141,11 +141,6 @@ class MyAsset:
             rmcard, rscard, wd2 = self.__get_rakuten_card(target)
             if rmcard is None or '0' == str(rmcard[0]):
                 com.dialog('データ取得に失敗しました', '楽天カード(M)', 'W')
-                if wd2 is not None:
-                    web_drivers.append(wd2)
-                for wd in web_drivers:
-                    try: wd.close()
-                    except: pass
                 return
             web_drivers.append(wd2)
             # TODO
@@ -172,9 +167,6 @@ class MyAsset:
             target = targets[('三菱UFJ' == targets['Name'])]
             result, wd5 = self.__get_mufg_bank(target)
             if result is None:
-                for wd in web_drivers:
-                    try: wd.close()
-                    except: pass
                 return
             else:
                 banks.append(result)
@@ -184,9 +176,6 @@ class MyAsset:
             target = targets[('楽天銀行' == targets['Name'])]
             result, wd6 = self.__get_rakuten_bank(target)
             if result is None:
-                for wd in web_drivers:
-                    try: wd.close()
-                    except: pass
                 return
             else:
                 banks.append(result)
@@ -196,9 +185,6 @@ class MyAsset:
             target = targets[('JREBANK' == targets['Name'])]
             result, wd7 = self.__get_jre_bank(target)
             if result is None:
-                for wd in web_drivers:
-                    try: wd.close()
-                    except: pass
                 return
             else:
                 banks.append(result)
@@ -221,9 +207,6 @@ class MyAsset:
             else:
                 self.cnx.rollback()
                 com.dialog('SQLのINSERTに失敗しました。', 'SQLエラー', 'E')
-                for wd in web_drivers:
-                    try: wd.close()
-                    except: pass
                 return
 
             run_time = com.time_end(start_time)

@@ -1,0 +1,99 @@
+# MyTool プロジェクト - Claude Code連携設定
+
+## プロジェクト概要
+MyToolは、Windows/Mac向けのPythonベースの統合ツールです。GUIアプリケーションとして動作し、複数のビジネス機能を提供します。
+
+## プロジェクト構造
+
+### エントリーポイント
+- `mytool.py`: メインGUIアプリケーション（FreeSimpleGUI使用）
+- `run.py`: モジュール実行用スクリプト（コマンドライン実行）
+
+### ディレクトリ構造
+- `business/`: ビジネスロジック
+  - `mac/`: Mac専用機能
+  - `windows/`: Windows専用機能
+  - `predict/`: 予測・推論機能（ARIMA、RNN、Keras）
+  - `batch/`: バッチ処理
+  - `multiple/`: 共通機能
+- `common/`: 共通ユーティリティ（com, display, matching, my_sql, web_driver）
+- `const/`: 定数定義（cst, items, path）
+- `data/`: データ処理（csv, db, excel）
+
+## コーディング規約
+
+### 言語・文字コード
+- Python 3.x
+- UTF-8エンコーディング（`# -*- coding: utf-8 -*-`）
+- 日本語コメント・変数名を使用
+
+### 命名規則
+- クラス名: PascalCase（例: `EnglishDict`, `EaAutoTest`）
+- 関数・変数名: snake_case（例: `get_menu`, `event_time`）
+- 定数: UPPER_SNAKE_CASE（例: `MAIN_BGCOLOR`, `DEV_IP`）
+
+### プラットフォーム対応
+- Windows/Mac両対応
+- プラットフォーム判定: `const.path.PC`（'Win' or 'Mac'）
+- パス処理はプラットフォームごとに分岐
+
+### モジュール実行パターン
+- 動的モジュール読み込み: `importlib.import_module()`を使用
+- クラス名はスネークケースからPascalCaseに自動変換
+- 実行: `module(event).do()` パターン
+
+## 重要な設定
+
+### 環境変数・設定
+- IPアドレスベースで環境を切り替え（DEV_IP, WEB_IP, MY_IP, MAC_IP）
+- メニュー設定はCSVファイルから読み込み（`com.get_menu()`）
+- パス設定は`const.path`で一元管理
+
+### GUIフレームワーク
+- FreeSimpleGUI（`sg`）を使用
+- 画面レイアウトは動的生成
+- イベント駆動型アーキテクチャ
+
+### データ処理
+- pandasを使用したデータ処理
+- CSV、Excel、データベース対応
+- Seleniumを使用したWeb自動化
+
+## 開発時の注意事項
+
+### セキュリティ
+- パスワードやAPIキーはコードに直接記載しない（現在一部残存）
+- 環境変数や設定ファイルの使用を推奨
+
+### 依存関係
+- 主要ライブラリ: FreeSimpleGUI, pandas, pyautogui, selenium
+- 依存関係は`common/pip.txt`に記載
+
+### 実行方法
+- GUI起動: `python mytool.py`
+- モジュール単独実行: `python run.py -m <module> -e <event>`
+- バッチ実行: `python mytool.py -f Batch`
+
+## Claude Codeへの指示
+
+1. **コード生成時**
+   - 既存のコーディングスタイルに合わせる
+   - プラットフォーム判定を適切に実装
+   - エラーハンドリングを追加
+
+2. **リファクタリング時**
+   - 既存のモジュール構造を維持
+   - 動的モジュール読み込みパターンを保持
+   - 後方互換性を考慮
+
+3. **新機能追加時**
+   - `business/`配下の適切なディレクトリに配置
+   - 既存のメニュー構造に統合
+   - プラットフォーム対応を確認
+
+4. **デバッグ時**
+   - `com.log()`を使用したログ出力
+   - エラーメッセージは日本語で明確に
+   - プラットフォーム固有の問題を考慮
+
+

@@ -1,0 +1,37 @@
+{
+  // ファイルエクスプローラーで非表示にするファイル・フォルダ
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/*.pyo": true,
+    "**/*.pyd": true,
+    "**/.Python": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/*.egg-info": true,
+    "**/.eggs": true,
+    "**/.DS_Store": true,
+    "**/.idea": true
+  },
+  // 検索から除外するファイル・フォルダ
+  "search.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/*.pyo": true,
+    "**/*.pyd": true,
+    "**/.Python": true,
+    "**/build": true,
+    "**/dist": true,
+    "**/*.egg-info": true,
+    "**/.eggs": true,
+    "**/.DS_Store": true,
+    "**/.idea": true
+  },
+  // Python実行設定
+  "python.defaultInterpreterPath": "${workspaceFolder}",
+  "python.terminal.executeInFileDir": false,
+  // デフォルトの実行設定をmytool.pyに設定
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.typeCheckingMode": "basic"
+}
+
