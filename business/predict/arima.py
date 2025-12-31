@@ -2,6 +2,9 @@
 # -*- coding: utf-8 -*-
 import datetime
 import math
+import os
+
+from soupsieve.util import lower
 
 from common import com
 from const import cst
@@ -13,6 +16,8 @@ import FreeSimpleGUI as sg
 
 from statsmodels.tsa.seasonal import STL
 from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.arima.model import ARIMAResults
 
@@ -27,36 +32,23 @@ plt.style.use('fivethirtyeight')
 import warnings
 warnings.simplefilter(action='ignore')
 
+SAVE_PATH = f'{cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'models/')}'
 
-def create(currency, df, train, span, forecast, interval, str_pqd):
+# ARIMAのPDQリスト作成
+ORDERS = list(product(range(1, 6), range(1, 3), range(1, 6)))
 
-    com.log('ARIMAモデル作成開始')
+def optimize_Arima(currency, df, span):
+    com.log('AUTO_ARIMA取得開始')
 
-    # モデルの保存
-    save_model = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'models/') \
-                 + f'{currency}_{df.index[0][:4]}_{df.index[-1][:4]}_' \
-                 + f'{str(train)}_{str(span)}_{str(forecast)}_{str(interval)}_{str_pqd}.pkl'
+    # 保存パス
+    save_path = f'{SAVE_PATH}Optimize/{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
 
     total_time = 0
-    cnt = 0
     try:
         start_time = com.time_start()
 
-        window = com.progress('ARIMAモデル作成中', [currency, 2], interrupt=True)
-        event, values = window.read(timeout=0)
-
-        window[currency].update(currency + ' 季節性(' + str(cnt) + ' / 3)')
-        window[currency + '_'].update(cnt)
-
         # 基本データからデータ作成
-        df_future = df[(datetime.datetime(int(df.index[-1][:4]), 1,1, 0, 0, 0)
-                        <= pd.to_datetime(df.index))].copy()
-        df_seasonal = df.copy()
-        df = df[(pd.to_datetime(df.index)
-                 < datetime.datetime(int(df.index[-1][:4]), 1,1, 0, 0, 0))]
-
-        df_future = df_future.rename(columns={'Close': currency})
-        df_seasonal = df_seasonal.rename(columns={'Close': currency})
+        df_seasonal = df.copy().rename(columns={'Close': currency})
         eq = df.rename(columns={'Close': currency})
 
         # 季節性・残差・対数差分の取得
@@ -64,134 +56,241 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
         eq_diff = np.diff(df_seasonal[currency], n=1)
         ad_fuller_result = adfuller(eq_diff)
 
-        # 学習データ作成
-        split_len = int(np.ceil(len(eq) * train))
-        train_data = eq[currency][:split_len]
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log(f'季節性取得完了({com.conv_time_str(run_time)})')
 
-        # ARIMAのモデル生成、失敗したら終了
-        result_df, model = _optimize_Arima(train_data, str_pqd)
-        if result_df is None:
-            com.dialog('ARIMAのPDQ設定が失敗しました。', 'ARIMA設定失敗')
-            return
+        # ARIMAのPDQ設定
+        result_dfs = []
+        msg = f'季節周期: {str(span)}, ADF: {str(round(ad_fuller_result[0], 7))}, P-val: {str(round(ad_fuller_result[1], 7))}\n'
+        for pqd_type in ['', 'S']:
+            results = []
 
-        cnt += 1
-        window[currency].update(currency + ' 予測中(' + str(cnt) + ' / 3)')
-        window[currency + '_'].update(cnt)
+            window = com.progress('AUTO_ARIMA(S)定義中', [currency, len(ORDERS)], interrupt=True)
+            event, values = window.read(timeout=0)
 
-        # モデルの保存
-        model.save(save_model)
+            for i in range(len(ORDERS)):
 
-        # AICとpdqの抽出
-        result_df.sort_values(by='AIC')
-        pdq = list(result_df['(p,d,q)'])[0]
+                if 'S' == pqd_type:
+                    window[currency].update(f'{currency} {str(i)} / {str(len(ORDERS))}')
+                    window[currency + '_'].update(i)
 
-        # テストデータを取得
-        test_data = eq[currency][split_len:]
-        pred_arima = rolling_forecast(eq, len(train_data), len(test_data), interval, pdq)
+                    if 0 == i % 5:
+                        com.log(f'{pqd_type} {str(i)} / {str(len(ORDERS))}')
+                try:
+                    model = _create_model(eq[currency], pqd_type, (ORDERS[i][0], ORDERS[i][1], ORDERS[i][2]), span)
+                except:
+                    continue
+                aic = model.aic
+                results.append([ORDERS[i], aic])
 
-        # 検証データ作成
-        pred_data = pd.DataFrame({'test': test_data})
-        pred_data.loc[:, 'predict'] = pred_arima[:len(pred_data)]
+            # 中断イベント
+            if _is_interrupt(window, event):
+                return
 
-        # RMSE取得
-        rmse_arima = sqrt(mean_squared_error(pred_data['test'], pred_data['predict']))
+            if 0 == len(results): continue
 
-        # 予測データ作成
-        forcast_data = pd.concat([eq[currency][split_len:], df_future[currency]])
-        forecast_arima = rolling_forecast(forcast_data, len(forcast_data), split_len + forecast, interval, pdq)
+            result_df = pd.DataFrame(results)
+            result_df.columns = ['(p,d,q)', 'AIC']
 
-        # モデルで予測を実行
-        # forecast = model.forecast(steps=(len(eq[currency]) - split_len + forecast))
-        forecast = model.predict(steps=(len(eq[currency]) - split_len + forecast))
-        # print(model.summary())
-        # print(model.params)
+            # AIC低い順でソート、PDQの抽出
+            result_df = result_df.sort_values(by='AIC')
+            pdq = list(result_df['(p,d,q)'])[0]
+            aic = list(result_df['AIC'])[0]
 
-        cnt += 1
-        window[currency].update(currency + ' 予測中(' + str(cnt) + ' / 3)')
-        window[currency + '_'].update(cnt)
+            model = _create_model(eq[currency], pqd_type, pdq, span)
+            result_dfs.append([pqd_type, pdq, aic, result_df])
 
-        std_price = eq[currency][split_len - 1]
+            msg += f'\n\n{pqd_type} {str(result_df)}\n\n{model.summary().as_text()}\n\n{str(ad_fuller_result)}\n'
 
-        forecast_data = pd.concat([pd.DataFrame({'test': test_data}), pd.DataFrame({'test': df_future[currency]})])
-        forecast = [[std_price] + list(forecast.copy()), list(forecast.copy())]
-
-        for i in range(1, len(forecast[0])):
-            print(round(forecast[0][i - 1], 5), round(forecast[1][i - 1], 5), round(forecast[1][i - 1] - forecast[0][i - 1], 5))
-            # forecast[1][i - 1] -= forecast[0][i - 1]
-
-        forecast = forecast[1]
-
-        for i in range(len(forecast_data)):
-            last_price = (std_price if 0 == i else forecast_data.iloc[i - 1]['test'])
-            now_price = forecast_data.iloc[i]['test']
-            infer = last_price + forecast[i]
-            try:
-                pred = pred_data.iloc[i]['predict']
-            except:
-                pred = None
-
-            result_price = (now_price - last_price)
-            result_pct = result_price / last_price * 100
-            infer_pct = (now_price - infer) / last_price * 100
-            pred_pct = (None if pred is None else (now_price - pred) / last_price * 100 )
-
-            threshold = 0.1
-
-            # print(forecast_data.index[i], str(round(now_price, 5)),
-            #       '↓' if result_pct < -threshold else
-            #       '↑' if threshold < result_pct else '→',
-            #       round(result_price, 5), str(round(result_pct, 2)) + '%',
-            #       '予測', round(infer, 5),
-            #       '↓' if result_pct < 0 and infer_pct < -threshold else
-            #       '↑' if 0 < result_pct and threshold < infer_pct else '×',
-            #       str(round(infer_pct, 2)) + '%',
-            #       '検証', '-' if pred is None else round(pred, 5),
-            #       '-' if pred is None else
-            #       '↓' if result_pct < 0 and pred_pct < -threshold else
-            #       '↑' if 0 < result_pct and threshold < pred_pct else '×',
-            #       '-' if pred is None else
-            #       str(round(pred_pct, 2)) + '%',
-            #       round(last_price, 5) != round(infer, 5)
-            #       )
-
-            forecast[i] = infer
-        # print(len(np.array(list(forecast_data['test']))), len(forecast_data))
-        # sim = model.simulate(np.array(list(forecast_data['test'])), nsimulations=len(forecast_data))
-        # print(sim)
-        forecast_data.loc[:, 'forecast'] = forecast[:len(forecast_data)]
-
-        msg = 'ADF(' + str(round(ad_fuller_result[0], 7)) \
-              + ') P-val(' + str(round(ad_fuller_result[1], 7)) \
-              + ') RMSE(' + str(round(rmse_arima, 7)) + ')'
-
-        com.log(msg + ' | Forecast(' + str(len(forecast_arima)) + ') ')
-        print(forecast_arima)
+            window.close()
 
         # チャートの表示定義
-        fig1, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=cst.FIG_SIZE, sharex=True)
-        fig1.suptitle(currency + '[' + str(split_len) + ' / ' + str(len(eq))
-                      + '] ' + ('AUTO_' if 0 == str_pqd.count(',') else '') + 'ARIMA' + str(pdq)
-                      + ' AIC(' + str(round(list(result_df['AIC'])[0], 7)) + ')'
-                      + ' | ' + msg + ' 季節周期(' + str(span) + ')', fontsize=cst.FIG_FONT_SIZE)
+        fig1, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=cst.FIG_SIZE,
+                                        gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
+        fig1.suptitle(f'AUTO_ARIMA: {currency}[{str(len(eq))}]', fontsize=cst.FIG_FONT_SIZE)
 
-        ax1.plot(train_data, label='Actual', linewidth=1, color='blue')
-        ax1.plot(advanced_decomposition.trend, label='Trend', linewidth=1, color='pink', linestyle='dashed')
+        ax1.plot(df_seasonal, label='Actual', linewidth=1, color='blue', alpha=0.3)
+        ax1.plot(advanced_decomposition.trend, ':', label='Trend', linewidth=1, color='pink', alpha=0.5)
 
-        ax1.plot(forecast_data['test'], linewidth=1, color='blue')
-        ax1.plot(pred_data['predict'], label='Predict', linewidth=1)
-        ax1.plot(forecast_data['forecast'], label='Forecast', linewidth=1)
+        ax2.plot(advanced_decomposition.seasonal, label='季節性(' + str(span) + ')', linewidth=1, alpha=0.5)
+        ax2.plot(advanced_decomposition.resid, label='残差', linewidth=1, alpha=0.2)
+        ax2.plot(eq_diff, '.', label='対数差分', linewidth=1, alpha=0.2)
 
-        ax2.plot(advanced_decomposition.seasonal, label='季節性', linewidth=1)
-        ax2.plot(advanced_decomposition.resid, label='残差', linewidth=1)
-        ax2.plot(eq_diff, label='対数差分', linewidth=1)
+        fig1.autofmt_xdate()
+        plt.tight_layout()
+        plt.xticks(np.arange(0, len(df), step=((len(df)) / 10)))
+        ax1.legend(ncol=2, loc='upper left')
+        ax2.legend(ncol=3, loc='upper left')
+        plt.grid()
+        plt.grid()
+
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log(f'AUTO_ARIMA取得完了({com.conv_time_str(run_time)})')
+
+        # モデル情報の保存
+        with open(f'{save_path}_{currency}_ARIMA(PDQ).txt', 'a') as f:
+            f.write(f'実行時間: {com.conv_time_str(run_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]\n{msg}')
+        plt.savefig(f'{save_path}_{currency}_ARIMA(PDQ).png', format='png')
+
+        # 表示の実行
+        plt.show()
+
+    finally:
+        try: window.close()
+        except: pass
+
+    return
+
+def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, loaded_result=None):
+    arima_type = 'S'
+    com.log(f'ARIMAモデル予測開始')
+
+    # 保存パス
+    save_path = f'{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
+
+    total_time = 0
+    try:
+        start_time = com.time_start()
+
+        # 基本データからデータ作成
+        df_future = df.copy()[-forecast:]
+        df_seasonal = df.copy()
+        df = df[:-forecast]
+
+        df_future = df_future.rename(columns={'Close': currency})
+        df_seasonal = df_seasonal.rename(columns={'Close': currency})
+        eq = df.rename(columns={'Close': currency})
+
+        pdq = str_pdq.split(',')
+        pdq = (int(pdq[0]), int(pdq[1]), int(pdq[2]))
+
+        # 学習データ作成
+        split_len = int(np.ceil(len(eq)))
+        train_data = eq[currency][:split_len]
+
+        # テストデータを定義
+        test_data = df_seasonal[currency][split_len:]
+        train_len = len(train_data)
+        test_len = len(test_data)
+        total_len = train_len + test_len
+
+        if loaded_result is None:
+            predict_arima = []
+
+            window = com.progress('ARIMAモデル予測中', ['Predict', int(test_len / interval)], interrupt=True)
+            event, values = window.read(timeout=0)
+
+            ## トレーニングデータ以降を始点としてテストデータをintervalで指定した数ごとに分けてループする。
+            for i in range(train_len, total_len, interval):
+
+                window['Predict'].update(f'{currency} Predict ({str(int((i - train_len) / interval))} / {str(int(test_len / interval))})')
+                window['Predict_'].update(int((i - train_len) / interval))
+
+                if 0 == int((i - train_len) / interval) % 5:
+                    com.log(f'Predict: {str(int((i - train_len) / interval))} / {str(int(test_len / interval))}')
+
+                model = _create_model(df[:i], arima_type, pdq, span)
+                predictions = model.get_prediction(0, i + interval - 1)
+                oos_pred = predictions.predicted_mean.iloc[-interval:]
+                predict_arima.extend(oos_pred)
+
+                # 中断イベント
+                if _is_interrupt(window, event):
+                    return None
+
+            # 検証データ作成
+            predict_data = pd.DataFrame({'test': test_data})
+            predict_data.loc[:, 'predict'] = predict_arima[:len(predict_data)]
+
+            # RMSE取得
+            predict_rmse = sqrt(mean_squared_error(predict_data['test'], predict_data['predict']))
+
+            run_time = com.time_end(start_time)
+            total_time += run_time
+            com.log('Predict完了(' + com.conv_time_str(run_time) + ') ')
+
+            window.close()
+
+        window = com.progress('ARIMAモデル予測中', ['シミュレーション', simu_try], interrupt=True)
+        event, values = window.read(timeout=0)
+
+        # モデルで予測を実行
+        if loaded_result is None:
+            model = _create_model(train_data, arima_type, pdq, span)
+        else:
+            model = loaded_result
+
+        if 'A' != arima_type:
+            # 予測データ作成
+            forecast_data = pd.DataFrame({'test': test_data})
+
+            simulations = []
+            for i in range(simu_try):
+
+                window['シミュレーション'].update(f'シミュレーション {str(i)} / {str(simu_try)}')
+                window['シミュレーション_'].update(i)
+
+                if 0 == i % 100:
+                    com.log(f'シミュレーション: {str(i)} / {str(simu_try)}')
+
+                sim = model.simulate(nsimulations=len(test_data), anchor='end')
+                simulations.append(sim)
+
+                # 中断イベント
+                if _is_interrupt(window, event):
+                    return None
+
+            forecast_median = np.median(simulations, axis=0)
+            forecast_percentiles = np.percentile(simulations, [simu_height, 100 - simu_height], axis=0)
+
+            forecast_data.loc[:, 'forecast_upper'] = forecast_percentiles[1]
+            forecast_data.loc[:, 'forecast_lower'] = forecast_percentiles[0]
+            forecast_data.loc[:, 'forecast_median'] = forecast_median
+
+        msg = (f'\n\nARIMA: {str(pdq).strip().replace(',', '')}'
+               + f', RMSE: {str(round(predict_rmse, 7))}' if loaded_result is None else '')
+
+        # チャートの表示定義
+        fig1, (ax1) = plt.subplots(nrows=1, ncols=1, figsize=cst.FIG_SIZE, sharex=True)
+        fig1.suptitle(currency + '[' + str(len(eq)) + ' - ' + str(forecast) + '] ' + msg, fontsize=cst.FIG_FONT_SIZE)
+
+        ax1.plot(df_seasonal, label='Actual', linewidth=1, color='blue', alpha=0.3)
+
+        if loaded_result is None:
+            ax1.plot(predict_data['predict'], label='Predict', linewidth=1, color='red', alpha=0.5)
+
+        if 'A' != arima_type:
+            ax1.fill_between(np.arange(split_len, split_len + len(forecast_data['forecast_median']), 1),
+                             forecast_data['forecast_upper'], forecast_data['forecast_lower'], color='orange', alpha=0.2)
+            ax1.plot(forecast_data['forecast_median'], label='Median', linewidth=1, color='green', alpha=0.3)
 
         fig1.autofmt_xdate()
         plt.tight_layout()
         plt.xticks(np.arange(0, len(df) + len(df_future), step=((len(df) + len(df_future)) / 10)))
-        ax1.legend(ncol=4, loc='upper left')
-        ax2.legend(ncol=3, loc='upper left')
+        ax1.legend(ncol=5, loc='upper left')
         plt.grid()
         plt.grid()
+
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log('ARIMAモデル予測完了(' + com.conv_time_str(total_time) + ')')
+
+        # モデル情報の保存
+        file_name = f'_ARIMA{str(pdq).replace(' ', '')}'
+        file_name += ('Analytics' if loaded_result is None else '_Result')
+        save_path = f'{SAVE_PATH}{'Analytics' if loaded_result is None else 'Result'}/{save_path}_{currency}{file_name}'
+
+        with open(f'{save_path}.txt', 'w') as f:
+            f.write(f'学習時間: {com.conv_time_str(run_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]\n'
+                    + f'季節周期: {str(span)}, 予測期間: {str(forecast)}, '
+                    + (f'予測間隔: {str(interval)}, ' if loaded_result is None else '')
+                    + f'シミュレーション: {str(simu_try)}, バンド幅: {str(simu_height)}'
+                    + f'{msg}\n\n{model.summary().as_text()}\n\n'
+                    + f'{str(model.params)}\n\n{str(model.bse)}\n\n{str(model.tvalues)}\n\n'
+                    + f'{str(model.pvalues)}\n{str(model.conf_int())}')
+        plt.savefig(f'{save_path}.png',  format='png')
 
         # 表示の実行
         window.close()
@@ -201,63 +300,51 @@ def create(currency, df, train, span, forecast, interval, str_pqd):
         try: window.close()
         except: pass
 
-    com.log('ARIMAモデル作成完了(' + com.conv_time_str(total_time) + ')')
+def save(currency, df, span, str_pdq):
+    arima_type = 'S'
+    com.log('ARIMAモデル作成開始')
 
-def load(path):
-    # モデルの読み込み
-    loaded_result = ARIMAResults.load(path)
+    # モデルの保存
+    save_path = f'{SAVE_PATH}Model/{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
 
-    # 読み込んだモデルで予測を実行
-    # forecast = loaded_result.forecast(steps=10)
-    # print(loaded_result.summary())
-    # print(loaded_result.params)
-    # print(list(loaded_result.model.data.row_labels)[-10:])
-    # print(forecast)
+    total_time = 0
+    try:
+        start_time = com.time_start()
 
-def _optimize_Arima(data, str_pqd):
+        window = com.progress('', ['ARIMAモデル作成中', 1], interrupt=True)
+        event, values = window.read(timeout=0)
 
-    if 0 == str_pqd.count(','):
-        ps = range(0, 4)
-        # d = range(0, 2)
-        d = range(1, 2)
-        qs = range(0, 4)
-        order_list = list(product(ps, d, qs))
-    else:
-        str_pqd = str_pqd.split(',')
-        ps = int(str_pqd[0])
-        d = int(str_pqd[1])
-        qs = int(str_pqd[2])
-        order_list = [(ps, d, qs)]
+        # 基本データからデータ作成
+        eq = df.rename(columns={'Close': currency})
+        pdq = str_pdq.split(',')
+        pdq = (int(pdq[0]), int(pdq[1]), int(pdq[2]))
 
-    results = []
-    for order in order_list:
-        try:
-            model = SARIMAX(data, order=(order[0], order[1], order[2])).fit(disp=False)
-        except: continue
+        model = _create_model(eq, arima_type, pdq, span)
+        model.save(f'{save_path}_{currency}_ARIMA{str(pdq).replace(' ', '')}.pkl')
+        window.close()
 
-        aic = model.aic
-        results.append([order, aic])
+        run_time = com.time_end(start_time)
+        total_time += run_time
+        com.log(f'ARIMAモデル作成完了({com.conv_time_str(run_time)})')
+        com.dialog(f'ARIMAモデル作成が完了、保存しました。\n{com.conv_time_str(run_time)}', 'ARIMAモデル作成', )
 
-    if 0 == len(results): return None, None
+    finally:
+        try: window.close()
+        except: pass
 
-    result_df = pd.DataFrame(results)
-    result_df.columns = ['(p,d,q)', 'AIC']
+def _create_model(df, arima_type, pdq, span):
+    try:
+        if 'A' == arima_type:
+            model = AutoReg(df, lags=span).fit()
+        elif 'S' == arima_type:
+            # model = SARIMAX(df, order=pdq).fit(disp=False)
+            model = SARIMAX(df, order=pdq, seasonal_order=(pdq[0], pdq[1], pdq[2], span)).fit(disp=False)
+        else:
+            model = ARIMA(df, order=pdq).fit()
+    except:
+        return None
 
-    return result_df, model
-
-## テストデータの株価を指定日数ごとに分けて小分けに予測する。
-def rolling_forecast(df, train_len, test_len, interval, pdq):
-
-    total_len = train_len + test_len
-    pred_arima = []
-    ## トレーニングデータ以降を始点としてテストデータをintervalで指定した数ごとに分けてループする。
-    for i in range(train_len, total_len, interval):
-        model = SARIMAX(df[:i], order=pdq).fit(disp=False)
-        predictions = model.get_prediction(0, i + interval - 1)
-        oos_pred = predictions.predicted_mean.iloc[-interval:]
-        pred_arima.extend(oos_pred)
-
-    return pred_arima
+    return model
 
 # 中断イベント
 def _is_interrupt(window, event):

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import os
 import datetime
 
 from common import com
@@ -30,16 +31,17 @@ class Base:
     def do(self):
         getattr(self, '_' + self.function)()
 
-    def _main(self):
+    def _analytics(self):
 
         now = datetime.datetime.now().year
-        inputs = com.input_box('選択してください。', 'モデル選択', [
+        inputs = com.input_box('選択してください。', '分析選択', [
             ['時間足', cst.MODEL_PERIODS, cst.MODEL_PERIODS[0]],
             ['通貨　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
             ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 4)],
             # ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 12)],
-            ['終了年', [str(year) for year in range(now - 15, now)], str(now)],
-            ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA'], 'ARIMA'],
+            # ['終了年', [str(year) for year in range(now - 15, now)], str(now)],
+            ['終了年', [str(year) for year in range(now - 15, now)], str(now - 1)],
+            ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA', 'ARIMA(PDQ)'], 'ARIMA'],
             # ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA'], '移動平均'],
         ], obj='combo')
         if inputs[0] <= 0:
@@ -77,30 +79,135 @@ class Base:
                 # from business.predict import rnn
                 # rnn.create(inputs[1][0], self.df, self.input)
 
-            case 'ARIMA':
+            case 'ARIMA(PDQ)':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
-                    ['学習量　　　　', '0.8'],
-                    ['季節周期　　　', '12'],
-                    ['未来日　　　　', '300'],
-                    ['予測間隔　　　', '3'],
-                    ['PDQ　　　　', '2,1,2'],
+                    ['季節周期　　　　　', '130' if 'D1' ==self.period else '120'],
                 ], obj='input')
 
                 if inputs[0] <= 0:
                     return
 
                 from business.predict import arima
-                arima.create(self.currency, self.df, float(inputs[1][0]), int(inputs[1][1]),
-                             int(inputs[1][2]), int(inputs[1][3]), inputs[1][4])
+                arima.optimize_Arima(self.currency, self.df, int(inputs[1][0]))
+            case 'ARIMA':
+                inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
+                    ['季節周期　　　　　', '130' if 'D1' ==self.period else '120'],
+                    ['予測期間　　　　　', str(self._get_forecast_start())],
+                    ['予測間隔　　　　　', str(int(self._get_forecast_start() / 26))],
+                    ['シミュレーション　', '1000'],
+                    ['バンド幅　　　　　', '25'],
+                    ['PDQ　　　　　　', '2,1,2'],
+                ], obj='input')
+
+                if inputs[0] <= 0:
+                    return
+
+                from business.predict import arima
+                arima.run(self.currency, self.df, int(inputs[1][0]), int(inputs[1][1]), int(inputs[1][2]),
+                             int(inputs[1][3]), int(inputs[1][4]), inputs[1][5])
 
     def _save_model(self):
-        pass
+        now = datetime.datetime.now().year
+        inputs = com.input_box('選択してください。', 'モデル作成', [
+            ['時間足', cst.MODEL_PERIODS, cst.MODEL_PERIODS[0]],
+            ['通貨　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
+            ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 4)],
+            # ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 12)],
+            # ['終了年', [str(year) for year in range(now - 15, now)], str(now)],
+            ['終了年', [str(year) for year in range(now - 15, now)], str(now - 1)],
+            ['モデル', ['LSTM', 'GRU', 'RNN', 'ARIMA', 'ARIMA(PDQ)'], 'ARIMA'],
+        ], obj='combo')
+        if inputs[0] <= 0:
+            return
+
+        self.period = inputs[1][0]
+        self.currency = inputs[1][1]
+        self.years = [inputs[1][2], inputs[1][3]]
+        self.model = inputs[1][4]
+
+        self._get_data()
+
+        match self.model:
+            case 'LSTM' | 'GRU'| 'RNN':
+                inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
+                    ['学習量　　　　', '0.8'],
+                    ['予測期間　　　', '90'],
+                    ['エポック　　　', '5'],
+                ], obj='input')
+
+                if inputs[0] <= 0:
+                    return
+
+                from business.predict import keras_models
+                keras_models.create(self.currency, self.model,  self.df,
+                                    float(inputs[1][0]), int(inputs[1][1]) ,int(inputs[1][2]))
+                # from business.predict import rnn
+                # rnn.create(inputs[1][0], self.df, self.input)
+
+            case 'ARIMA':
+                inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
+                    ['季節周期　　　　　', '130' if 'D1' ==self.period else '120'],
+                    ['PDQ　　　　　　', '2,1,2'],
+                ], obj='input')
+
+                if inputs[0] <= 0:
+                    return
+
+                from business.predict import arima
+                arima.save(self.currency, self.df, int(inputs[1][0]), inputs[1][1])
 
     def _load_model(self):
+
+        path = f'{cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'models')}/Model'
+        files = os.listdir(path)
+
+        if 0 == len(files):
+            com.dialog('モデルファイルが存在しません。', 'モデルファイル不在')
+            return
+        files = list(sorted([file for file in files if 0 <= file.find('.pkl')], reverse=True))
+        if 0 == len(files):
+            com.dialog('モデルファイルが存在しません。', 'モデルファイル不在')
+            return
+
+        inputs = com.input_box('モデルファイルを選択してください。', 'モデル実行', [
+            ['', files, files[0]],
+        ], obj='combo')
+        if inputs[0] <= 0:
+            return
+        path += '/' + inputs[1][0]
+
+        if path.endswith('.pkl'):
+
+            # モデルの読み込み
+            from statsmodels.tsa.arima.model import ARIMAResults
+            loaded_result = ARIMAResults.load(path)
+
+            self.period = list(loaded_result.model.data.row_labels)[0]
+            self.period = ('D1' if 10 == len(self.period) else 'H1')
+
+            summary = str(loaded_result.summary()).splitlines()
+            for i in range(len(summary)):
+                row = summary[i]
+                if row.startswith('Dep. Variable:'):
+                    self.currency = row.split()[2]
+                elif row.startswith('Sample:'):
+                    self.years = [row.split()[1][-4:], str(int(summary[i + 1].split()[1][-4:]) + 2)]
+                elif row.startswith('Model:'):
+                    span = row.split('(')[-1].split(')')[0].split()[-1]
+                    str_pdq = row.split('(')[1].split(')')[0].replace(' ', '')
+
+        self._get_data()
+        inputs = com.input_box(f'予測内容を設定してください。\n{inputs[1][0]}\n季節周期({span}) , PDQ({str_pdq})','モデル実行', [
+            ['予測期間　　　　　', str(self._get_forecast_start())],
+            ['シミュレーション　', '1000'],
+            ['バンド幅　　　　　', '25'],
+        ], obj='input')
+        if inputs[0] <= 0:
+            return
+
         from business.predict import arima
-        path = cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'models/') \
-                 + 'EURUSD_2022_2024_0.8_30_9_3_2,1,2.pkl'
-        arima.load(path)
+        arima.run(self.currency, self.df, int(span), int(inputs[1][0]), '-', int(inputs[1][1]),
+                     int(inputs[1][2]), str_pdq, loaded_result)
 
     def _create_data(self):
 
@@ -199,24 +306,24 @@ class Base:
         fig, ax = plt.subplots(1, 1, figsize=cst.FIG_SIZE, sharex=True)
         fig.suptitle(self.currency + '[' + str(len(self.df)) + '] ', fontsize=cst.FIG_FONT_SIZE)
 
-        plt.plot(self.df.index, self.df['Close'], linewidth=2)
-
+        plt.plot(self.df.index, self.df['Close'], linewidth=2, alpha=0.5)
         for ma in spans:
             col_name = f'MA {ma}'
             self.df[col_name] = self.df['Close'].rolling(int(ma)).mean()
-            plt.plot(self.df[col_name], linewidth=1, linestyle='dashed')
+            plt.plot(self.df[col_name], linewidth=1, linestyle='dashed', label=col_name, alpha=0.7)
 
         plt.gcf().autofmt_xdate()
         plt.tight_layout()
         plt.xticks(np.arange(0, len(self.df), step=(len(self.df) / 10) + 1))
-        plt.legend(['MA ' + str(ma) for ma in spans], ncol=(len(spans)), loc='upper left')
+        plt.legend(ncol=(len(spans)), loc='upper left')
         plt.grid()
         plt.grid()
         plt.show()
 
-# 中断イベント
-def _is_interrupt(window, event):
-    if event in [sg.WIN_CLOSED, 'interrupt']:
-        window.close()
-        return True
-    return False
+    def _get_forecast_start(self):
+        forecast = 0
+        for i in range(len(self.df)):
+            if int(self.years[1]) - 1 <= int(self.df.index[i][:4]):
+                forecast = i
+                break
+        return len(self.df) - forecast

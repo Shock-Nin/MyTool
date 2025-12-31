@@ -86,15 +86,17 @@ def input_box(msg, title, forms, obj='', cancel=False):
     elif 'input' == obj:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], font=('', 16), size=(len(forms[i][0]) * 2, 1), text_color='#000000', background_color='#77CCFF')],
-                [sg.InputText(default_text=forms[i][1], font=('', 16), size=(len(forms[i][0]) * 2, 1))]
+                [sg.Text(forms[i][0], font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                         text_color='#000000', background_color='#77CCFF'),
+                sg.InputText(default_text=forms[i][1], font=('', 16), size=(len(forms[i][0]) * 2, 1))]
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]
     elif 'combo' == obj:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], key='act', font=('', 16), size=(len(msg) * 2, 1), text_color='#000000', background_color='#77CCFF')],
-                [sg.Combo(forms[i][1], font=('', 16), size=(len(msg) * 2, 1),
+                [sg.Text(forms[i][0], key='act', font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                         text_color='#000000', background_color='#77CCFF'),
+                sg.Combo(forms[i][1], font=('', 16), size=(len(msg) * 2, 1),
                           default_value=forms[i][2], readonly=True)]
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]
@@ -207,7 +209,8 @@ def progress(title, bar1, bar2=None, bar3=None, interrupt=False):
         lists.append(bar3)
 
     layout = [
-        [sg.Text(title, background_color=color, text_color='#000000', font=('', 16), pad=((10, 10), (20, 10)))], [[
+        [sg.Text('', background_color=color, text_color='#000000', font=('', 0), pad=((0, 0), (0, 0))) if 0 == len(title) else
+         sg.Text(title, background_color=color, text_color='#000000', font=('', 16), pad=((10, 10), (20, 10)))], [[
             [sg.Text(bar[0], key=bar[0], background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (5, 5)))],
             [sg.ProgressBar(key=bar[0] + '_', max_value=bar[1], bar_color='#008000', size=(30, 20), pad=((15, 15), (5, 5)))]]
             for bar in lists]

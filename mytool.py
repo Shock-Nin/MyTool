@@ -42,8 +42,9 @@ BTNS = {cst.DEV_IP: {
     }}
 PREDICT_MENU = {
     'データ作成': 'predict.base/create_data',
-    '推論実行': 'predict.base/load_model',
-    'メイン': 'predict.base/main',
+    'モデル実行': 'predict.base/load_model',
+    'モデル作成': 'predict.base/save_model',
+    '分析': 'predict.base/analytics',
 }
 ANOMALY_MENU = {
     'H1データ作成': 'windows.anomaly_hst/create_h1',
@@ -82,7 +83,7 @@ HEIGHT = 2 + (2 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP e
 DP_XY_WIDTH = {
     cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 40), 16, 1],
     cst.WEB_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
-    cst.MAC_IP: [150, 30 + (int(len(BTN) + HEIGHT) * 50), 13, 1]}
+    cst.MAC_IP: [150, 50 + (int(len(BTN) + HEIGHT) * 50), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
 

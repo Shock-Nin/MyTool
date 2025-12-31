@@ -45,16 +45,16 @@ class MyAsset:
                         self.cnx.update(columns, values, TARGET_TABLES[1], '\'' + str(invests[1][i][0]) + '\' = ソート番号')
                         self.cnx.commit()
 
-            payments = self.cnx.select('*', TARGET_TABLES[3], '', '')
+            payments = self.cnx.select('*', TARGET_TABLES[3], '', 'ORDER BY 年月 DESC, 種別 ASC LIMIT 12')
             payment_type = {}
 
-            for i in reversed(range(len(payments[1]))):
+            for i in range(len(payments[1])):
                 payment = payments[1][i]
                 val = payment[3].replace(')', '').split('(')
                 space = (''.join('  ' for _ in range(6 - len(str(payment[2])))) if len(str(payment[2])) < 5 else '')
                 val = ('  [' + str(round(float(val[0]), 1)).replace('.0', '') +
-                      (']           ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace('.0', '') + ')]')
-                       + ('  ' if float(val[0]) < 10 else ''))
+                      (']          ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace('.0', '') + ')]')
+                       + ('    ' if float(val[0]) < 10 else ''))
                 val = space + format(int(str(payment[2])), ',') + val
 
                 try:
