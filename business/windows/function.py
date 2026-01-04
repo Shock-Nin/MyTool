@@ -56,9 +56,9 @@ class Function:
 
         elif 'hstコピー(テスト)' == fnc:
             self.copy_history_test(
-                fnc, in_path=['MT4_DEV/OANDA', 'MT4_DEV/OANDA'],
+                fnc, in_path=['OANDA', 'OANDA'],
                 out_path=['Test1', 'Test2'],
-                hst_name=['Demo', 'Demo']
+                hst_name=['OANDA-Japan FX Live', 'OANDA-Japan FX Live']
             )
         # elif 'hst転送(Web)' == fnc:
         #     self.copy_history_web(fnc, in_path='MT4_DEV/OANDA', hst_name='Demo')
@@ -398,7 +398,7 @@ class Function:
                     files = [file for file in files if 0 <= file.find('.hst')]
 
                     # 進捗表示
-                    bar1 = in_path[i] + ' → MT4_TEST/' + out_path[i]
+                    bar1 = in_path[i] + ' → ' + out_path[i]
                     bar2 = files[0]
                     window = com.progress('ヒストリカルデータコピー中',
                                           [bar1, len(in_path)], [bar2, len(files)], interrupt=True)
@@ -406,16 +406,16 @@ class Function:
 
                     for k in range(0, len(files)):
 
-                        window[in_path[i] + ' → MT4_TEST/' + out_path[i]].update(
-                            in_path[i] + ' → MT4_TEST/' + out_path[i] + '(' + str(i) + ' / ' + str(len(in_path)) + ')')
+                        window[in_path[i] + ' → ' + out_path[i]].update(
+                            in_path[i] + ' → ' + out_path[i] + '(' + str(i) + ' / ' + str(len(in_path)) + ')')
                         window[files[0]].update(files[k] + '(' + str(k) + ' / ' + str(len(files)) + ')')
-                        window[in_path[i] + ' → MT4_TEST/' + out_path[i] + '_'].update(i)
+                        window[in_path[i] + ' → ' + out_path[i] + '_'].update(i)
                         window[files[0] + '_'].update(k)
 
                         shutil.copy2(cst.MT4_PATH + in_path[i] + '/history/' + hst_path + '/' + files[k],
-                                     cst.MT4_PATH + 'MT4_TEST/' + out_path[i] + '/history/' + hst_path)
+                                     cst.MT4_PATH + out_path[i] + '/history/' + hst_path)
                         com.log('コピー中: ' + hst_path + '/' + files[k] + ' | ' +
-                                in_path[i] + ' → ' + 'MT4_TEST/' + out_path[i])
+                                in_path[i] + ' → ' + out_path[i])
 
                         # 中断イベント
                         if _is_interrupt(window, event):
@@ -430,7 +430,7 @@ class Function:
                     run_time = com.time_end(start_time)
                     total_time += run_time
                     com.log('コピー完了(' + com.conv_time_str(run_time) + ')  [' + cst.MT4_PATH[:-1] + '] ' +
-                            in_path[i] + ' → MT4_TEST/' + out_path[i])
+                            in_path[i] + ' → ' + out_path[i])
 
             finally:
                 try: window.close()

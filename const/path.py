@@ -25,8 +25,8 @@ IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MAC_IP: 'Mac'}
 IP_LIST = [DEV_IP, WEB_IP, MAC_IP]
 
 CURRENT_PATH = {'Mac': '/Users/dsk_nagaoka/',
-                'Win': 'C:/Users/dskna/'}
-                # 'Win': 'C:/Users/Administrator/'}
+                # 'Win': 'C:/Users/dskna/'}
+                'Win': 'C:/Users/Administrator/'}
 # GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
 GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Library/CloudStorage/GoogleDrive-dsk.nagaoka.0226@gmail.com/マイドライブ/',
                'Win': 'G:/マイドライブ/'}
@@ -38,10 +38,10 @@ RUN_PATH = {'Mac': '/usr/local/bin/python3.13',
 TXT_APP_PATH = {'Mac': 'open',
             'Win': 'C:/Windows/notepad.exe'}
 # MT4のパス
-MT4_PATH = CURRENT_PATH['Win'] + 'Documents/MT4/'
+MT4_PATH = CURRENT_PATH['Win'] + 'Documents/FX/MT/MT4_TEST/'
 # 開発MT4のパス
 MT4_DEV = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/',
-           'Win': MT4_PATH + 'MT4_DEV/OANDA/'}
+           'Win': MT4_PATH + 'OANDA/'}
 # パラメータ・集計データのCSV・HTML格納フォルダ
 DATA_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/frame/',
              'Win': 'C:/inetpub/wwwroot/menu/frame/'}
