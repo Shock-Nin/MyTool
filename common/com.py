@@ -70,7 +70,7 @@ def clip_copy(string, enter=None):
 
 # ログをレベルに応じて出力
 def log(msg, lv=''):
-    txt = str_time(True) + ' [' + ('ERROR' if 'E' == lv else 'WARNING' if 'E' == lv else 'INFO')
+    txt = str_time(True) + ' [' + ('ERROR' if 'E' == lv else 'WARNING' if 'W' == lv else 'INFO')
     txt += '] ' + get_method() + ' | ' + msg
     with open(cst.TEMP_PATH[cst.PC] + 'Log/' + str_time().split(' ')[0].replace('-', '') + '.log',
               'a', encoding='utf8') as f:

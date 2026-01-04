@@ -43,7 +43,7 @@ BTNS = {cst.DEV_IP: {
 PREDICT_MENU = {
     'データ作成': 'predict.base/create_data',
     'モデル実行': 'predict.base/load_model',
-    'モデル作成': 'predict.base/save_model',
+    'モデル作成': 'predict.base/create_model',
     '分析': 'predict.base/analytics',
 }
 ANOMALY_MENU = {

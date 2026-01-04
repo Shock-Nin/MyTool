@@ -8,12 +8,21 @@ from const import cst
 
 import numpy as np
 import pandas as pd
-import FreeSimpleGUI as sg
+
+from statsmodels.tsa.seasonal import STL
+from statsmodels.tsa.stattools import adfuller
 
 import japanize_matplotlib
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
+YEAR_MINUS = 1
+
+now = datetime.datetime.now().year - YEAR_MINUS
+START_YEAR = ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 4)]
+# START_YEAR = ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 12)]
+# START_YEAR = ['終了年', [str(year) for year in range(now - 15, now)], str(now)]
+END_YEAR = ['終了年', [str(year) for year in range(now - 15, now)], str(now - 1)]
 
 class Base:
 
@@ -32,16 +41,12 @@ class Base:
         getattr(self, '_' + self.function)()
 
     def _analytics(self):
-
-        now = datetime.datetime.now().year
         inputs = com.input_box('選択してください。', '分析選択', [
             ['時間足', cst.MODEL_PERIODS, cst.MODEL_PERIODS[0]],
             ['通貨　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
-            ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 4)],
-            # ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 12)],
-            # ['終了年', [str(year) for year in range(now - 15, now)], str(now)],
-            ['終了年', [str(year) for year in range(now - 15, now)], str(now - 1)],
-            ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA', 'ARIMA(PDQ)'], 'ARIMA'],
+            START_YEAR,
+            END_YEAR,
+            ['モデル', ['季節トレンド', 'LSTM', 'GRU', 'RNN', 'ARIMA', 'AR', 'AUTO_ARIMA', 'AUTO_ARIMA_S'], 'ARIMA'],
             # ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA'], '移動平均'],
         ], obj='combo')
         if inputs[0] <= 0:
@@ -55,13 +60,15 @@ class Base:
         self._get_data()
 
         match self.model:
-            case '移動平均':
+            case '季節トレンド':
                 inputs = com.input_box('期間を設定してください。', '期間選択', [
-                    ['MA　　　　　', '7,21,50,150,300']], obj='input')
+                    ['MA　　　　　　　', '7,21,50,150,300'],
+                    ['季節周期　　　　　', '130' if 'D1' ==self.period else '120']
+                ], obj='input')
 
                 if inputs[0] <= 0:
                     return
-                self._open_chart(inputs[1][0].split(','))
+                self._open_chart(inputs[1][0].split(','), int(inputs[1][1]))
 
             case 'LSTM' | 'GRU'| 'RNN':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
@@ -79,7 +86,7 @@ class Base:
                 # from business.predict import rnn
                 # rnn.create(inputs[1][0], self.df, self.input)
 
-            case 'ARIMA(PDQ)':
+            case 'AUTO_ARIMA' | 'AUTO_ARIMA_S':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
                     ['季節周期　　　　　', '130' if 'D1' ==self.period else '120'],
                 ], obj='input')
@@ -88,34 +95,45 @@ class Base:
                     return
 
                 from business.predict import arima
-                arima.optimize_Arima(self.currency, self.df, int(inputs[1][0]))
-            case 'ARIMA':
+                arima.optimize_Arima(self.currency, self.df, int(inputs[1][0]), 'AUTO_ARIMA_S' == self.model)
+            case 'ARIMA' | 'AR':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
                     ['季節周期　　　　　', '130' if 'D1' ==self.period else '120'],
                     ['予測期間　　　　　', str(self._get_forecast_start())],
-                    ['予測間隔　　　　　', str(int(self._get_forecast_start() / 26))],
                     ['シミュレーション　', '1000'],
                     ['バンド幅　　　　　', '25'],
                     ['PDQ　　　　　　', '2,1,2'],
+                    ['PDQS　　　　　', '2,1,2'],
+                    ['予測間隔　　　　　', 1],
+                    ['ARラグ　　　　　', '100']
+                ] if 'ARIMA' == self.model else [
+                    ['予測期間　　　　　', str(self._get_forecast_start())],
+                    ['予測間隔　　　　　', 1],
+                    ['ARラグ　　　　　', '100']
                 ], obj='input')
 
                 if inputs[0] <= 0:
                     return
 
                 from business.predict import arima
-                arima.run(self.currency, self.df, int(inputs[1][0]), int(inputs[1][1]), int(inputs[1][2]),
-                             int(inputs[1][3]), int(inputs[1][4]), inputs[1][5])
+                arima.run(self.currency, self.df,
+                          ('-' if 'AR' == self.model else int(inputs[1][0])),
+                          int(inputs[1][0 if 'AR' == self.model else 1]),
+                          int(inputs[1][1 if 'AR' == self.model else 6]),
+                          ('-' if 'AR' == self.model else int(inputs[1][2])),
+                          ('-' if 'AR' == self.model else int(inputs[1][3])),
+                          ('-' if 'AR' == self.model else inputs[1][4]),
+                          ('-' if 'AR' == self.model else inputs[1][5]),
+                          int(inputs[1][2 if 'AR' == self.model else 7]),
+                          ar_only='AR' == self.model)
 
-    def _save_model(self):
-        now = datetime.datetime.now().year
+    def _create_model(self):
         inputs = com.input_box('選択してください。', 'モデル作成', [
             ['時間足', cst.MODEL_PERIODS, cst.MODEL_PERIODS[0]],
             ['通貨　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
-            ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 4)],
-            # ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 12)],
-            # ['終了年', [str(year) for year in range(now - 15, now)], str(now)],
-            ['終了年', [str(year) for year in range(now - 15, now)], str(now - 1)],
-            ['モデル', ['LSTM', 'GRU', 'RNN', 'ARIMA', 'ARIMA(PDQ)'], 'ARIMA'],
+            START_YEAR,
+            END_YEAR,
+            ['モデル', ['LSTM', 'GRU', 'RNN', 'ARIMA'], 'ARIMA'],
         ], obj='combo')
         if inputs[0] <= 0:
             return
@@ -148,15 +166,19 @@ class Base:
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
                     ['季節周期　　　　　', '130' if 'D1' ==self.period else '120'],
                     ['PDQ　　　　　　', '2,1,2'],
+                    ['PDQS　　　　　', '2,1,2'],
+                    ['ARラグ　　　　　', '100'],
                 ], obj='input')
 
                 if inputs[0] <= 0:
                     return
 
                 from business.predict import arima
-                arima.save(self.currency, self.df, int(inputs[1][0]), inputs[1][1])
+                arima.save(self.currency, self.df, int(inputs[1][0]), inputs[1][1], inputs[1][2], int(inputs[1][3]))
 
     def _load_model(self):
+
+        self._get_year_blank('D1')
 
         path = f'{cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'models')}/Model'
         files = os.listdir(path)
@@ -169,8 +191,10 @@ class Base:
             com.dialog('モデルファイルが存在しません。', 'モデルファイル不在')
             return
 
-        inputs = com.input_box('モデルファイルを選択してください。', 'モデル実行', [
-            ['', files, files[0]],
+        inputs = com.input_box('選択してください。', 'モデル実行', [
+            ['モデル', files, files[0]],
+            START_YEAR,
+            END_YEAR,
         ], obj='combo')
         if inputs[0] <= 0:
             return
@@ -186,28 +210,45 @@ class Base:
             self.period = ('D1' if 10 == len(self.period) else 'H1')
 
             summary = str(loaded_result.summary()).splitlines()
+            print(loaded_result.summary())
             for i in range(len(summary)):
                 row = summary[i]
                 if row.startswith('Dep. Variable:'):
                     self.currency = row.split()[2]
+                    start_len = int(row.split('No. Observations:')[1])
                 elif row.startswith('Sample:'):
-                    self.years = [row.split()[1][-4:], str(int(summary[i + 1].split()[1][-4:]) + 2)]
+                    sample = [row.split()[1], summary[i + 1].replace(' ', '')]
                 elif row.startswith('Model:'):
+                    model_type = row.split()[1].split('(')[0]
+                    str_pdq = '(' + row.split('(')[1].split(')')[0] + ')'
                     span = row.split('(')[-1].split(')')[0].split()[-1]
-                    str_pdq = row.split('(')[1].split(')')[0].replace(' ', '')
+                    str_pdqs = ('' if 0 == row.count('x') else row.split('x')[1].split(')')[0] + ')')
 
+        print(start_len, sample)
+        self.years = [str(inputs[1][1]), str(int(inputs[1][2]))]
         self._get_data()
-        inputs = com.input_box(f'予測内容を設定してください。\n{inputs[1][0]}\n季節周期({span}) , PDQ({str_pdq})','モデル実行', [
+
+        msg = (f'PDQ{str_pdq}, PDQS{str_pdqs}' if 'SARIMAX' == model_type else f'ARラグ({span})')
+        if 'SARIMAX' == model_type:
+            input = [['シミュレーション　', '1000'], ['バンド幅　　　　　', '25']]
+        else:
+            input = [['予測間隔　　　　　', 1]]
+        inputs = com.input_box(f'予測内容を設定してください。\n\n{inputs[1][0]}\n{str(self.years[0])} - {str(self.years[1])} , {msg}',
+                               'モデル実行', [
             ['予測期間　　　　　', str(self._get_forecast_start())],
-            ['シミュレーション　', '1000'],
-            ['バンド幅　　　　　', '25'],
-        ], obj='input')
+
+        ] + input, obj='input')
         if inputs[0] <= 0:
             return
 
+        str_pdqs = str(str_pdqs.split(' ')[:3]).replace('\'', '').replace('[', '').replace(']', '').replace(' ', '')[1:]
         from business.predict import arima
-        arima.run(self.currency, self.df, int(span), int(inputs[1][0]), '-', int(inputs[1][1]),
-                     int(inputs[1][2]), str_pdq, loaded_result)
+        if 'SARIMAX' == model_type:
+            arima.run(self.currency, self.df, int(span), int(inputs[1][0]), '-', int(inputs[1][1]),
+                      int(inputs[1][2]), str_pdq.replace(' ', '')[1: -1], str_pdqs, int(span), loaded_result=loaded_result)
+        else:
+            arima.run(self.currency, self.df, '-', int(inputs[1][0]), int(inputs[1][1]), '-',
+                      '-', '-', '-', int(span), loaded_result=loaded_result)
 
     def _create_data(self):
 
@@ -301,29 +342,75 @@ class Base:
         print('取得完了: ' + self.period + ': ' + str(self.currency) + ' '
               + str(self.years[0])[:10] + '～' + str(self.years[1])[:10])
 
-    def _open_chart(self, spans):
+    def _open_chart(self, mas, span):
 
-        fig, ax = plt.subplots(1, 1, figsize=cst.FIG_SIZE, sharex=True)
-        fig.suptitle(self.currency + '[' + str(len(self.df)) + '] ', fontsize=cst.FIG_FONT_SIZE)
+        # 季節性分析用のデータ作成
+        df_seasonal = self.df.copy().rename(columns={'Close': self.currency})
 
-        plt.plot(self.df.index, self.df['Close'], linewidth=2, alpha=0.5)
-        for ma in spans:
+        # 季節性・残差・対数差分の取得
+        advanced_decomposition = STL(df_seasonal[self.currency], period=span, robust=True).fit()
+        eq_diff = np.diff(df_seasonal[self.currency], n=1)
+        ad_fuller_result = adfuller(eq_diff)
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=cst.FIG_SIZE,
+                                        gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
+        fig.suptitle(f'{self.currency}[{str(len(self.df))}] 季節周期: {str(span)}, ADF: {str(round(ad_fuller_result[0], 7))}, P-val: {str(round(ad_fuller_result[1], 7))}', fontsize=cst.FIG_FONT_SIZE)
+
+        ax1.plot(self.df.index, self.df['Close'], linewidth=2, alpha=0.5)
+        for ma in mas:
             col_name = f'MA {ma}'
             self.df[col_name] = self.df['Close'].rolling(int(ma)).mean()
-            plt.plot(self.df[col_name], linewidth=1, linestyle='dashed', label=col_name, alpha=0.7)
+            ax1.plot(self.df[col_name], linewidth=1, linestyle='dashed', label=col_name, alpha=0.7)
+        ax1.plot(advanced_decomposition.trend, label='Trend', linewidth=1, color='pink', alpha=0.7)
+
+        ax2.plot(advanced_decomposition.seasonal, label='季節性(' + str(span) + ')', linewidth=1, alpha=0.5)
+        ax2.plot(advanced_decomposition.resid, label='残差', linewidth=1, alpha=0.2)
+        ax2.plot(eq_diff, '.', label='対数差分', linewidth=1, alpha=0.2)
 
         plt.gcf().autofmt_xdate()
         plt.tight_layout()
         plt.xticks(np.arange(0, len(self.df), step=(len(self.df) / 10) + 1))
-        plt.legend(ncol=(len(spans)), loc='upper left')
+
+        ax1.legend(ncol=(len(mas) + 1), loc='upper left')
+        ax2.legend(ncol=3, loc='upper left')
         plt.grid()
         plt.grid()
         plt.show()
 
+    # 予測を開始するデータのインデックスを取得
     def _get_forecast_start(self):
         forecast = 0
+        # インデックスの日付から、終了年の一年前を取得
         for i in range(len(self.df)):
-            if int(self.years[1]) - 1 <= int(self.df.index[i][:4]):
+            if int(self.years[1][:4]) - 1 <= int(self.df.index[i][:4]):
                 forecast = i
                 break
         return len(self.df) - forecast
+
+    # 現在年の前年・現在年の営業日で、空値データを設定
+    def _get_year_blank(self, period):
+        years = datetime.datetime.now().year
+        years = [years - 1, years, years + 1]
+
+        list_year = []
+        for i in range(len(years) - 1):
+            dt = datetime.datetime(years[i], 1, 1)
+            end = datetime.datetime(years[i + 1], 1, 1)
+            list_dt = []
+
+            while dt < end:
+                if dt.weekday() not in [5, 6] and not (dt.month == 1 and dt.day == 1):
+                    if 'D1' == period:
+                        list_dt.append(dt)
+                    else:
+                        for h in range(0, 24):
+                            list_dt.append(datetime.datetime(dt.year, dt.month, dt.day, dt.hour, 0, 0))
+
+                dt += datetime.timedelta(days=1)
+
+            df = pd.DataFrame(index=range(len(list_dt)), columns=['Time', 'Close'])
+            df['Time'] = pd.DataFrame(list_dt).astype(str)
+            df = df.set_index('Time')
+
+            list_year.append(df)
+        return list_year

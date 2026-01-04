@@ -1,25 +1,17 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import datetime
-import math
-import os
-
-from soupsieve.util import lower
+import subprocess
 
 from common import com
 from const import cst
 
 import numpy as np
-import statistics
 import pandas as pd
 import FreeSimpleGUI as sg
-
-from statsmodels.tsa.seasonal import STL
-from statsmodels.tsa.stattools import adfuller
+#
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.ar_model import AutoReg
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-from statsmodels.tsa.arima.model import ARIMAResults
 
 from itertools import product
 from sklearn.metrics import mean_squared_error
@@ -36,8 +28,9 @@ SAVE_PATH = f'{cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', 'model
 
 # ARIMAのPDQリスト作成
 ORDERS = list(product(range(1, 6), range(1, 3), range(1, 6)))
+ORDERS_PDQS = list(product(range(0, 3), range(0, 3), range(0, 3)))
 
-def optimize_Arima(currency, df, span):
+def optimize_Arima(currency, df, span, pdqs):
     com.log('AUTO_ARIMA取得開始')
 
     # 保存パス
@@ -48,41 +41,40 @@ def optimize_Arima(currency, df, span):
         start_time = com.time_start()
 
         # 基本データからデータ作成
-        df_seasonal = df.copy().rename(columns={'Close': currency})
         eq = df.rename(columns={'Close': currency})
-
-        # 季節性・残差・対数差分の取得
-        advanced_decomposition = STL(df_seasonal[currency], period=span, robust=True).fit()
-        eq_diff = np.diff(df_seasonal[currency], n=1)
-        ad_fuller_result = adfuller(eq_diff)
-
-        run_time = com.time_end(start_time)
-        total_time += run_time
-        com.log(f'季節性取得完了({com.conv_time_str(run_time)})')
 
         # ARIMAのPDQ設定
         result_dfs = []
-        msg = f'季節周期: {str(span)}, ADF: {str(round(ad_fuller_result[0], 7))}, P-val: {str(round(ad_fuller_result[1], 7))}\n'
-        for pqd_type in ['', 'S']:
-            results = []
+        msg = ''
 
-            window = com.progress('AUTO_ARIMA(S)定義中', [currency, len(ORDERS)], interrupt=True)
+        for pqd_type in ['SARIMA', '']:
+            results = []
+            orders = (ORDERS_PDQS if pdqs and 'SARIMA' == pqd_type else ORDERS)
+
+            window = com.progress(f'AUTO_ARIMA{'_S' if pdqs and 'SARIMA' == pqd_type else ''} 定義中', [currency, len(orders)], interrupt=True)
             event, values = window.read(timeout=0)
 
-            for i in range(len(ORDERS)):
+            for i in range(len(orders)):
 
-                if 'S' == pqd_type:
-                    window[currency].update(f'{currency} {str(i)} / {str(len(ORDERS))}')
-                    window[currency + '_'].update(i)
-
-                    if 0 == i % 5:
-                        com.log(f'{pqd_type} {str(i)} / {str(len(ORDERS))}')
                 try:
-                    model = _create_model(eq[currency], pqd_type, (ORDERS[i][0], ORDERS[i][1], ORDERS[i][2]), span)
+                    if 'SARIMA' == pqd_type:
+                        window[currency].update(f'{currency} {str(orders[i])} {str(i)} / {str(len(orders))}')
+                        window[currency + '_'].update(i)
+
+                        if 0 == i % (2 if pdqs else 5):
+                            com.log(f'{pqd_type} {str(i)} / {str(len(orders))}')
+
+                    if pdqs:
+                        model = _create_model(eq[currency], pqd_type, (1, 1, 1), span, orders[i])
+                    else:
+                        model = _create_model(eq[currency], pqd_type, (orders[i][0], orders[i][1], orders[i][2]), span)
+
+                    aic = model.aic
+                    results.append([orders[i], aic])
+                    model.remove_data()
+
                 except:
                     continue
-                aic = model.aic
-                results.append([ORDERS[i], aic])
 
             # 中断イベント
             if _is_interrupt(window, event):
@@ -101,41 +93,21 @@ def optimize_Arima(currency, df, span):
             model = _create_model(eq[currency], pqd_type, pdq, span)
             result_dfs.append([pqd_type, pdq, aic, result_df])
 
-            msg += f'\n\n{pqd_type} {str(result_df)}\n\n{model.summary().as_text()}\n\n{str(ad_fuller_result)}\n'
-
+            msg += f'\n\n{pqd_type} {str(result_df)}\n\n{str(model.summary())}'
             window.close()
-
-        # チャートの表示定義
-        fig1, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=cst.FIG_SIZE,
-                                        gridspec_kw={'height_ratios': [3, 1]}, sharex=True)
-        fig1.suptitle(f'AUTO_ARIMA: {currency}[{str(len(eq))}]', fontsize=cst.FIG_FONT_SIZE)
-
-        ax1.plot(df_seasonal, label='Actual', linewidth=1, color='blue', alpha=0.3)
-        ax1.plot(advanced_decomposition.trend, ':', label='Trend', linewidth=1, color='pink', alpha=0.5)
-
-        ax2.plot(advanced_decomposition.seasonal, label='季節性(' + str(span) + ')', linewidth=1, alpha=0.5)
-        ax2.plot(advanced_decomposition.resid, label='残差', linewidth=1, alpha=0.2)
-        ax2.plot(eq_diff, '.', label='対数差分', linewidth=1, alpha=0.2)
-
-        fig1.autofmt_xdate()
-        plt.tight_layout()
-        plt.xticks(np.arange(0, len(df), step=((len(df)) / 10)))
-        ax1.legend(ncol=2, loc='upper left')
-        ax2.legend(ncol=3, loc='upper left')
-        plt.grid()
-        plt.grid()
+            model.remove_data()
 
         run_time = com.time_end(start_time)
         total_time += run_time
         com.log(f'AUTO_ARIMA取得完了({com.conv_time_str(run_time)})')
 
         # モデル情報の保存
-        with open(f'{save_path}_{currency}_ARIMA(PDQ).txt', 'a') as f:
-            f.write(f'実行時間: {com.conv_time_str(run_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]\n{msg}')
-        plt.savefig(f'{save_path}_{currency}_ARIMA(PDQ).png', format='png')
+        path = f'{save_path}_{currency}_AUTO_ARIMA{('_S' if pdqs else '')}.txt'
+        with open(path, 'w') as f:
+            f.write(f'実行時間: {com.conv_time_str(run_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]{msg}')
 
-        # 表示の実行
-        plt.show()
+        com.dialog(f'AUTO_ARIMA取得が完了、保存しました。\n{com.conv_time_str(run_time)}', 'AUTO_ARIMA取得', )
+        subprocess.Popen([cst.TXT_APP_PATH[cst.PC], path])
 
     finally:
         try: window.close()
@@ -143,8 +115,7 @@ def optimize_Arima(currency, df, span):
 
     return
 
-def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, loaded_result=None):
-    arima_type = 'S'
+def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, str_pdqs, lag, loaded_result=None, ar_only=False):
     com.log(f'ARIMAモデル予測開始')
 
     # 保存パス
@@ -164,7 +135,11 @@ def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, 
         eq = df.rename(columns={'Close': currency})
 
         pdq = str_pdq.split(',')
-        pdq = (int(pdq[0]), int(pdq[1]), int(pdq[2]))
+        if 3 == len(pdq):
+            pdq = (int(pdq[0]), int(pdq[1]), int(pdq[2]))
+        pdqs = str_pdqs.split(',')
+        if 3 == len(pdqs):
+            pdqs = (int(pdqs[0]), int(pdqs[1]), int(pdqs[2]))
 
         # 学習データ作成
         split_len = int(np.ceil(len(eq)))
@@ -176,25 +151,26 @@ def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, 
         test_len = len(test_data)
         total_len = train_len + test_len
 
-        if loaded_result is None:
+        if '-' != interval:
             predict_arima = []
 
             window = com.progress('ARIMAモデル予測中', ['Predict', int(test_len / interval)], interrupt=True)
             event, values = window.read(timeout=0)
 
-            ## トレーニングデータ以降を始点としてテストデータをintervalで指定した数ごとに分けてループする。
+            # トレーニングデータ以降を始点としてテストデータをintervalで指定した数ごとに分けてループする。
             for i in range(train_len, total_len, interval):
 
                 window['Predict'].update(f'{currency} Predict ({str(int((i - train_len) / interval))} / {str(int(test_len / interval))})')
                 window['Predict_'].update(int((i - train_len) / interval))
 
-                if 0 == int((i - train_len) / interval) % 5:
+                if 0 == int((i - train_len) / interval) % 10:
                     com.log(f'Predict: {str(int((i - train_len) / interval))} / {str(int(test_len / interval))}')
 
-                model = _create_model(df[:i], arima_type, pdq, span)
+                model = _create_model(df[:i], 'AR', '', lag, pdqs)
                 predictions = model.get_prediction(0, i + interval - 1)
                 oos_pred = predictions.predicted_mean.iloc[-interval:]
                 predict_arima.extend(oos_pred)
+                model.remove_data()
 
                 # 中断イベント
                 if _is_interrupt(window, event):
@@ -213,23 +189,22 @@ def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, 
 
             window.close()
 
-        window = com.progress('ARIMAモデル予測中', ['シミュレーション', simu_try], interrupt=True)
-        event, values = window.read(timeout=0)
+        if not ar_only and 3 == len(pdq):
+            window = com.progress('ARIMAモデル予測中', ['シミュレーション', simu_try], interrupt=True)
+            event, values = window.read(timeout=0)
 
-        # モデルで予測を実行
-        if loaded_result is None:
-            model = _create_model(train_data, arima_type, pdq, span)
-        else:
-            model = loaded_result
+            # モデルで予測を実行
+            if loaded_result is None:
+                model = _create_model(train_data, 'SARIMA', pdq, span, pdqs)
+            else:
+                model = loaded_result
 
-        if 'A' != arima_type:
             # 予測データ作成
             forecast_data = pd.DataFrame({'test': test_data})
 
             simulations = []
             for i in range(simu_try):
-
-                window['シミュレーション'].update(f'シミュレーション {str(i)} / {str(simu_try)}')
+                window['シミュレーション'].update(f'{currency} シミュレーション {str(i)} / {str(simu_try)}')
                 window['シミュレーション_'].update(i)
 
                 if 0 == i % 100:
@@ -242,6 +217,9 @@ def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, 
                 if _is_interrupt(window, event):
                     return None
 
+            model_summary    = str(model.summary())
+            model.remove_data()
+
             forecast_median = np.median(simulations, axis=0)
             forecast_percentiles = np.percentile(simulations, [simu_height, 100 - simu_height], axis=0)
 
@@ -249,22 +227,25 @@ def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, 
             forecast_data.loc[:, 'forecast_lower'] = forecast_percentiles[0]
             forecast_data.loc[:, 'forecast_median'] = forecast_median
 
-        msg = (f'\n\nARIMA: {str(pdq).strip().replace(',', '')}'
-               + f', RMSE: {str(round(predict_rmse, 7))}' if loaded_result is None else '')
+            window.close()
+
+        msg = ', '.join([msg for msg in [
+            (f'SARIMA: ({str_pdq.replace(',', ' ')})({str_pdqs.replace(',', ' ')} {str(span)})' if not ar_only and 3 == len(pdq) else ''),
+            (f'AR({str(lag)})RMSE: {str(round(predict_rmse, 7))}' if '-' != interval else '')] if '' != msg])
 
         # チャートの表示定義
         fig1, (ax1) = plt.subplots(nrows=1, ncols=1, figsize=cst.FIG_SIZE, sharex=True)
-        fig1.suptitle(currency + '[' + str(len(eq)) + ' - ' + str(forecast) + '] ' + msg, fontsize=cst.FIG_FONT_SIZE)
+        fig1.suptitle(currency + '[' + str(len(eq)) + ' - ' + str(forecast) + '] ' + msg.replace('\n', ''), fontsize=cst.FIG_FONT_SIZE)
 
         ax1.plot(df_seasonal, label='Actual', linewidth=1, color='blue', alpha=0.3)
 
-        if loaded_result is None:
-            ax1.plot(predict_data['predict'], label='Predict', linewidth=1, color='red', alpha=0.5)
+        if '-' != interval:
+            ax1.plot(predict_data['predict'], label='AR', linewidth=1, color='red', alpha=0.5)
 
-        if 'A' != arima_type:
+        if not ar_only and 3 == len(pdq):
             ax1.fill_between(np.arange(split_len, split_len + len(forecast_data['forecast_median']), 1),
                              forecast_data['forecast_upper'], forecast_data['forecast_lower'], color='orange', alpha=0.2)
-            ax1.plot(forecast_data['forecast_median'], label='Median', linewidth=1, color='green', alpha=0.3)
+            ax1.plot(forecast_data['forecast_median'], label='SARIMA', linewidth=1, color='green', alpha=0.5)
 
         fig1.autofmt_xdate()
         plt.tight_layout()
@@ -278,30 +259,27 @@ def run(currency, df, span, forecast, interval, simu_try, simu_height, str_pdq, 
         com.log('ARIMAモデル予測完了(' + com.conv_time_str(total_time) + ')')
 
         # モデル情報の保存
-        file_name = f'_ARIMA{str(pdq).replace(' ', '')}'
-        file_name += ('Analytics' if loaded_result is None else '_Result')
-        save_path = f'{SAVE_PATH}{'Analytics' if loaded_result is None else 'Result'}/{save_path}_{currency}{file_name}'
+        if not ar_only and 3 == len(pdq):
+            file_name = f'_ARIMA({str_pdq})({str_pdqs},{span})_AR({str(lag)})'
+            file_name += ('Analytics' if loaded_result is None else '_Result')
+            save_path = f'{SAVE_PATH}{'Analytics' if loaded_result is None else 'Result'}/{save_path}_{currency}{file_name}'
 
-        with open(f'{save_path}.txt', 'w') as f:
-            f.write(f'学習時間: {com.conv_time_str(run_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]\n'
-                    + f'季節周期: {str(span)}, 予測期間: {str(forecast)}, '
-                    + (f'予測間隔: {str(interval)}, ' if loaded_result is None else '')
-                    + f'シミュレーション: {str(simu_try)}, バンド幅: {str(simu_height)}'
-                    + f'{msg}\n\n{model.summary().as_text()}\n\n'
-                    + f'{str(model.params)}\n\n{str(model.bse)}\n\n{str(model.tvalues)}\n\n'
-                    + f'{str(model.pvalues)}\n{str(model.conf_int())}')
-        plt.savefig(f'{save_path}.png',  format='png')
+            with open(f'{save_path}.txt', 'w') as f:
+                f.write(f'学習時間: {com.conv_time_str(run_time)} [{df.index[0][:4]} - {df.index[-1][:4]}] '
+                        + f'予測期間: {str(forecast)}, ' + (f'予測間隔: {str(interval)}, ' if loaded_result is None else '')
+                        + f'シミュレーション: {str(simu_try)}, バンド幅: {str(simu_height)}'
+                        + f'\n{msg}\n\n{model_summary}')
+            plt.savefig(f'{save_path}.png',  format='png')
 
+            subprocess.Popen([cst.TXT_APP_PATH[cst.PC], f'{save_path}.txt'])
         # 表示の実行
-        window.close()
         plt.show()
 
     finally:
         try: window.close()
         except: pass
 
-def save(currency, df, span, str_pdq):
-    arima_type = 'S'
+def save(currency, df, span, str_pdq, str_pdqs, lag):
     com.log('ARIMAモデル作成開始')
 
     # モデルの保存
@@ -311,16 +289,30 @@ def save(currency, df, span, str_pdq):
     try:
         start_time = com.time_start()
 
-        window = com.progress('', ['ARIMAモデル作成中', 1], interrupt=True)
+        window = com.progress('', ['ARIMAモデル作成中', 2], interrupt=True)
         event, values = window.read(timeout=0)
 
         # 基本データからデータ作成
         eq = df.rename(columns={'Close': currency})
         pdq = str_pdq.split(',')
         pdq = (int(pdq[0]), int(pdq[1]), int(pdq[2]))
+        pdqs = str_pdqs.split(',')
+        pdqs = (int(pdqs[0]), int(pdqs[1]), int(pdqs[2]))
 
-        model = _create_model(eq, arima_type, pdq, span)
-        model.save(f'{save_path}_{currency}_ARIMA{str(pdq).replace(' ', '')}.pkl')
+        arima_types = ['AR', 'SARIMA']
+        for i in range(len(arima_types)):
+            window['ARIMAモデル作成中'].update(f'{currency} {arima_types[i]} モデル作成中')
+            window['ARIMAモデル作成中_'].update(i)
+
+            com.log(f'ARIMAモデル作成中: {arima_types[i]} ')
+            model = _create_model(eq, arima_types[i], pdq, (lag if 'AR' == arima_types[i] else span), pdqs)
+            model_name = (f'AR({str(lag)})' if 'AR' == arima_types[i] else f'SARIMA({str_pdq})({str_pdqs},{span})')
+            model.save(f'{save_path}_{currency}_{model_name}.pkl')
+
+            # 中断イベント
+            if _is_interrupt(window, event):
+                return None
+
         window.close()
 
         run_time = com.time_end(start_time)
@@ -332,16 +324,19 @@ def save(currency, df, span, str_pdq):
         try: window.close()
         except: pass
 
-def _create_model(df, arima_type, pdq, span):
+def _create_model(df, arima_type, pdq, span, pdqs=None):
     try:
-        if 'A' == arima_type:
+        if 'AR' == arima_type:
             model = AutoReg(df, lags=span).fit()
-        elif 'S' == arima_type:
-            # model = SARIMAX(df, order=pdq).fit(disp=False)
-            model = SARIMAX(df, order=pdq, seasonal_order=(pdq[0], pdq[1], pdq[2], span)).fit(disp=False)
+        elif 'SARIMA' == arima_type:
+            if pdqs is None:
+                model = SARIMAX(df, order=pdq, seasonal_order=(1, 1, 1, span)).fit(disp=False)
+            else:
+                model = SARIMAX(df, order=pdq, seasonal_order=(pdqs[0], pdqs[1], pdqs[2], span)).fit(disp=False)
         else:
             model = ARIMA(df, order=pdq).fit()
     except:
+        com.log(f'ARIMAモデル作成失敗: {str(pdq)}' + ('' if pdqs is None else f', {str(pdqs)}'), lv='W')
         return None
 
     return model

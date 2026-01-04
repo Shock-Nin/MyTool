@@ -35,7 +35,8 @@ TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
 RUN_PATH = {'Mac': '/usr/local/bin/python3.13',
             'Win': CURRENT_PATH['Win'] + 'AppData/Local/Programs/Python/Python313/python.exe'}
             # 'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python313/python.exe'}
-
+TXT_APP_PATH = {'Mac': 'open',
+            'Win': 'C:/Windows/notepad.exe'}
 # MT4のパス
 MT4_PATH = CURRENT_PATH['Win'] + 'Documents/MT4/'
 # 開発MT4のパス
