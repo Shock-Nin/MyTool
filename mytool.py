@@ -53,7 +53,7 @@ ANOMALY_MENU = {
     '統計CSV作成': 'windows.anomaly_data/create_stat_csv',
     'アノマリ〜編集': 'windows.anomaly_data/edit_anomaly',
     'CSV ⇨ JS変換': 'windows.anomaly_data/conv_csv_js',
-    'モデル作成': 'windows.anomaly_learn/create_model',
+    # 'モデル作成': 'windows.anomaly_learn/create_model', ###
     # 'MTFデータ編集': 'windows.anomaly_hst/edit_mtf',
     # 'アノマリ〜': 'windows.anomaly_data/edit_judge',
     # 'スペシャル': 'windows.anomaly_data/specials',
