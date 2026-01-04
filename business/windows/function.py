@@ -292,7 +292,7 @@ class Function:
             total_time = 0
 
             out_path = cst.HST_PATH[cst.PC]
-            base_files = glob.glob(out_path + '/2024/*.csv')
+            # base_files = glob.glob(out_path + '/2024/*.csv')
             add_files = glob.glob(out_path + '/add/*.csv')
 
             if 0 == len(add_files):
@@ -301,17 +301,17 @@ class Function:
 
             err_msg = ''
             try:
-                for i in range(len(base_files)):
+                for i in range(len(add_files)):
 
                     start_time = com.time_start()
 
                     # 進捗表示
-                    file = base_files[i].split('\\')[-1]
+                    file = add_files[i].split('\\')[-1]
 
-                    window = com.progress('ヒストリカルデータ編集中', [file, len(base_files)], interrupt=True)
+                    window = com.progress('ヒストリカルデータ編集中', [file, len(add_files)], interrupt=True)
                     event, values = window.read(timeout=0)
 
-                    window[file].update(file + ' (' + str(i) + ' / ' + str(len(base_files)) + ')')
+                    window[file].update(file + ' (' + str(i) + ' / ' + str(len(add_files)) + ')')
                     window[file + '_'].update(i)
 
                     add_data = pd.read_csv(out_path + '/add/' + file)

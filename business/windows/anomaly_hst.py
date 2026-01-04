@@ -163,7 +163,7 @@ class AnomalyHst:
                 window[file].update(file + ' (' + str(i) + ' / ' + str(len(files)) + ')')
                 window[file + '_'].update(i)
 
-                con.delete(table, '')
+                # con.delete(table, '')
 
                 start_time = com.time_start()
                 inserts = []
