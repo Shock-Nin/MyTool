@@ -40,11 +40,10 @@ BTNS = {cst.DEV_IP: {
     '資産': 'mac.my_asset',
     # 'タイマー': 'mac.alert_timer',
     }}
-PREDICT_MENU = {
-    'データ作成': 'predict.base/create_data',
-    'モデル実行': 'predict.base/load_model',
-    'モデル作成': 'predict.base/create_model',
-    '分析': 'predict.base/analytics',
+MODEL_MENU = {
+    'データ更新': 'predict.base/create_data',
+    '再現実行': 'predict.base/load_model',
+    '分析・作成': 'predict.base/analytics',
 }
 ANOMALY_MENU = {
     'H1データ作成': 'windows.anomaly_hst/create_h1',
@@ -151,8 +150,8 @@ def main():
 
         is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev or cst.MAC_IP == WORK_IP:
-            layout.append([sg.Combo([key for key in PREDICT_MENU],
-                                    default_value='　予測推論', key='Predict', enable_events=True, readonly=True,
+            layout.append([sg.Combo([key for key in MODEL_MENU],
+                                    default_value='　時系列モデル', key='Model', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
         if is_dev:
             layout.append([sg.Combo([key for key in ANOMALY_MENU],
@@ -182,7 +181,7 @@ def main():
                 return
 
             # セレクト選択した場合、ターミナルコマンドを実行
-            if event in ['Fold', 'Web', 'EA', 'Predict', 'Anomaly', '機能']:
+            if event in ['Fold', 'Web', 'EA', 'Model', 'Anomaly', '機能']:
 
                 if event in ['Fold', 'Web']:
                     menu = cst.MENU_CSV[event]
@@ -219,9 +218,9 @@ def main():
                         [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
                          '-m', EA_MENU[select], '-e', select]))
 
-                # Predict or Anomalyセレクトで選択した場合
-                elif event in['Predict', 'Anomaly']:
-                    obj = (PREDICT_MENU if 'Predict' == event else ANOMALY_MENU)
+                # Model or Anomalyセレクトで選択した場合
+                elif event in['Model', 'Anomaly']:
+                    obj = (MODEL_MENU if 'Model' == event else ANOMALY_MENU)
                     # 動的モジュールを実行
                     processes.append(subprocess.Popen(
                         [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
@@ -240,7 +239,7 @@ def main():
                     is_run = 5 < int(com.conv_time_str(com.time_start() - event_time).replace(':', ''))
 
                 window['act'].update('  ' + event)
-                print(cst.RUN_PATH[cst.PC])
+
                 # 動的モジュールを実行
                 if is_run:
                     processes.append(subprocess.Popen(

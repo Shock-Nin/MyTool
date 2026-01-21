@@ -25,9 +25,7 @@ IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MAC_IP: 'Mac'}
 IP_LIST = [DEV_IP, WEB_IP, MAC_IP]
 
 CURRENT_PATH = {'Mac': '/Users/dsk_nagaoka/',
-                # 'Win': 'C:/Users/dskna/'}
                 'Win': 'C:/Users/Administrator/'}
-# GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Google ドライブ/',
 GDRIVE_PATH = {'Mac': CURRENT_PATH['Mac'] + 'Library/CloudStorage/GoogleDrive-dsk.nagaoka.0226@gmail.com/マイドライブ/',
                'Win': 'G:/マイドライブ/'}
 TEMP_PATH = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/',
@@ -37,6 +35,8 @@ RUN_PATH = {'Mac': '/usr/local/bin/python3.13',
             # 'Win': 'C:/Users/Administrator/AppData/Local/Programs/Python/Python313/python.exe'}
 TXT_APP_PATH = {'Mac': 'open',
             'Win': 'C:/Windows/notepad.exe'}
+IMG_APP_PATH = {'Mac': 'open',
+            'Win': 'C:/Windows/system32/mspaint.exe'}
 # MT4のパス
 MT4_PATH = CURRENT_PATH['Win'] + 'Documents/FX/MT/MT4_TEST/'
 # 開発MT4のパス
@@ -59,6 +59,7 @@ TEST_LINK = {'Mac': CURRENT_PATH['Mac'] + 'MyToolTmp/Test/out_test/',
 TICK_STORY = 'C:/Program Files (x86)/Tickstory/Tickstory.exe'
 HST_PATH = {'Mac': GDRIVE_PATH['Mac'] + 'fx/history',
             'Win': GDRIVE_PATH['Win'] + 'fx/history'}
+MODEL_PATH = TEMP_PATH
 
 # アノマリー MT4パス
 ANM_FOLD = '/anm/anomaly_'

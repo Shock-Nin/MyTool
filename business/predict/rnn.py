@@ -30,10 +30,10 @@ NUM_LSTM = 90
 NUM_MIDDLE = 200
 
 
-def create(model_type, dict_df, inputs):
+def create(model_type, dict_df, epochs):
     com.log(model_type + 'モデル作成開始')
 
-    fig, ax = plt.subplots(1, len(dict_df), figsize=(cst.FIG_SIZE))
+    fig, ax = plt.subplots(1, len(dict_df), figsize=cst.FIG_SIZE)
     fig.suptitle(model_type + ' [' + ', '.join(currency.replace('USD', '') for currency in dict_df) + ']')
 
     total_time = 0
@@ -52,9 +52,9 @@ def create(model_type, dict_df, inputs):
 
             for term in range(1, TERM_PART[0] + 1):
 
-                n, date, x, y, l_x, l_y = _get_x_y_lx_ly(df, term)
+                n, date, x, y, l_x, l_y = _get_x_y_lx_ly(currency, df, term)
                 model = _build_model(model_type)
-                history = model.fit(l_x, l_y, epochs=int(inputs[1]), batch_size=32,
+                history = model.fit(l_x, l_y, epochs=epochs, batch_size=32,
                                     validation_split=0.25, verbose=0)
 
                 _plot_result(ax, cnt, model, n, date, x, y, l_x, l_y)
@@ -84,11 +84,11 @@ def create(model_type, dict_df, inputs):
 
     com.log('RNNモデル作成完了(' + com.conv_time_str(total_time) + ')')
 
-def _get_x_y_lx_ly(df, term_part):
+def _get_x_y_lx_ly(currency, df, term_part):
 
     date = np.array(df.index[TERM_PART[1] * term_part: TERM_PART[1] * (1 + term_part)])
     x = np.array(df.index.values[TERM_PART[1] * term_part: TERM_PART[1] * (1 + term_part)])
-    y = np.array(df['Close'][TERM_PART[1] * term_part: TERM_PART[1] * (1 + term_part)])
+    y = np.array(df[TERM_PART[1] * term_part: TERM_PART[1] * (1 + term_part)])
 
     n = len(y) - NUM_LSTM
 

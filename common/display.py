@@ -96,7 +96,7 @@ def input_box(msg, title, forms, obj='', cancel=False):
             sg.Frame('', background_color='#77CCFF', layout=[
                 [sg.Text(forms[i][0], key='act', font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
                          text_color='#000000', background_color='#77CCFF'),
-                sg.Combo(forms[i][1], font=('', 16), size=(len(msg) * 2, 1),
+                sg.Combo(forms[i][1], font=('', 16), size=((len(forms[i][1][0]) if 0 == len(forms[i][0]) else len(forms[i][0])) * 2, 1),
                           default_value=forms[i][2], readonly=True)]
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]
