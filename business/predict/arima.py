@@ -30,7 +30,7 @@ SAVE_PATH = f'{cst.MODEL_PATH[cst.PC]}models/'
 # AUTO_ARIMAのPDQリスト作成
 ORDERS = list(product(range(1, 3), range(1, 3), range(1, 3),
                       range(1, 3), range(1, 3), range(1, 3),
-                      [10, 25, 50, 75, 100, 150]))
+                      [10, 25, 50, 75, 100]))
 
 def optimize_Arima(currency, df):
     com.log(f'AUTO_ARIMAチューニング開始')
