@@ -50,7 +50,8 @@ def time_end(start_time):
 
 # 時間の文字列変換
 def conv_time_str(num):
-    return datetime.datetime.fromtimestamp(float(num) + (3600 * 15)).strftime('%H:%M:%S')
+    dt = datetime.datetime.fromtimestamp(float(num) + (3600 * -9))
+    return f'{'' if 1 == dt.day else str(dt.day - 1) + ' '}{dt.strftime('%H:%M:%S')}'
 
 
 # 実行機能の取得

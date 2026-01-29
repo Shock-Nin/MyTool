@@ -19,13 +19,11 @@ plt.style.use('fivethirtyeight')
 import warnings
 warnings.simplefilter(action='ignore')
 
-YEAR_MINUS = 0
+YEAR_MINUS = 1
 
 now = datetime.datetime.now().year - YEAR_MINUS
-START_YEAR = ['開始年　　　　', [str(year) for year in range(2004, now - 2)], str(now - 6)]
-# START_YEAR = ['開始年', [str(year) for year in range(2004, now - 2)], str(now - 12)]
-# START_YEAR = ['終了年', [str(year) for year in range(now - 15, now)], str(now)]
 END_YEAR = ['終了年　　　　', [str(year) for year in range(now - 15, now + 1)], str(now - 1)]
+TERM_YEAR = ['期間　　　　　', [str(term) for term in range(1, 15)], '5']
 
 MAIN_MODELS = ['LSTM', 'GRU', 'RNN', 'ARIMA']
 
@@ -45,13 +43,13 @@ class Base:
     def do(self):
         getattr(self, '_' + self.function)()
 
-    def _analytics(self):
+    def _optimize(self):
         inputs = com.input_box('選択してください。', '分析選択', [
             ['時間足　　　　', cst.MODEL_PERIODS, cst.MODEL_PERIODS[0]],
             ['通貨　　　　　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
-            START_YEAR,
             END_YEAR,
-            ['モデル　　　　', ['季節トレンド'] + MAIN_MODELS + ['AR', 'AUTO_ARIMA'], 'LSTM'],
+            TERM_YEAR,
+            ['モデル　　　　', ['簡易チャート', 'AUTO_ARIMA', 'AutoReg'], '簡易チャート'],
             # ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA'], '移動平均'],
         ], obj='combo')
         if inputs[0] <= 0:
@@ -59,13 +57,13 @@ class Base:
 
         self.period = inputs[1][0]
         self.currency = inputs[1][1]
-        self.years = [inputs[1][2], inputs[1][3]]
+        self.years = [str(int(inputs[1][2]) - int(inputs[1][3]) + 1), str(int(inputs[1][2]) + 1)]
         self.model = inputs[1][4]
 
         self._get_data()
 
         match self.model:
-            case '季節トレンド':
+            case '簡易チャート':
                 inputs = com.input_box('期間を設定してください。', '期間選択', [
                     ['MA　　　　　　　', '7,21,50,150,300'],
                     ['季節周期　　　　　', '130' if 'D1' ==self.period else '120']
@@ -75,6 +73,50 @@ class Base:
                     return
                 self._open_chart(inputs[1][0].split(','), int(inputs[1][1]))
 
+            case 'AUTO_ARIMA':
+                inputs = com.input_box('最適化範囲を設定してください。', '最適化範囲選択', [
+                    ['PDQ　　　　　　', '1,2'],
+                    ['PDQ(季)　　　', '1,2'],
+                    ['季節周期　　　　　', '5,10,21,43,65,87,130'],
+                ], obj='input')
+
+                if inputs[0] <= 0:
+                    return
+
+                from business.predict import arima
+                arima.optimize_Arima(self.currency, self.df,
+                                     inputs[1][0].split(','), inputs[1][1].split(','), inputs[1][2].split(','))
+            case 'AutoReg':
+                inputs = com.input_box('最適化範囲を設定してください。', '最適化範囲選択', [
+                    ['ARラグ　　　　　　　　　　　', ','.join([str(lag) for lag in range(5, 205, 5)])],
+                ], obj='input')
+
+                if inputs[0] <= 0:
+                    return
+
+                from business.predict import arima
+                arima.optimize_Ar(self.currency, self.df, inputs[1][0].split(','))
+
+    def _analytics(self):
+        inputs = com.input_box('選択してください。', '分析選択', [
+            ['時間足　　　　', cst.MODEL_PERIODS, cst.MODEL_PERIODS[0]],
+            ['通貨　　　　　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
+            END_YEAR,
+            TERM_YEAR,
+            ['モデル　　　　', MAIN_MODELS + ['AutoReg'], 'LSTM'],
+            # ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA'], '移動平均'],
+        ], obj='combo')
+        if inputs[0] <= 0:
+            return
+
+        self.period = inputs[1][0]
+        self.currency = inputs[1][1]
+        self.years = [str(int(inputs[1][2]) - int(inputs[1][3]) + 1), str(int(inputs[1][2]) + 1)]
+        self.model = inputs[1][4]
+
+        self._get_data()
+
+        match self.model:
             case 'LSTM' | 'GRU'| 'RNN':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
                     ['予測期間　　　', str(self._get_forecast_start())],
@@ -92,13 +134,7 @@ class Base:
                 keras_models.run(self.model, self.currency, self.df, int(inputs[1][0]), int(inputs[1][1]),
                                  int(inputs[1][2]), int(inputs[1][3]), float(inputs[1][4]), int(inputs[1][5]))
 
-            case 'AUTO_ARIMA':
-                if com.question('AUTO_ARIMAチューニングを開始しますか？', 'AUTO_ARIMA') <= 0:
-                    return
-
-                from business.predict import arima
-                arima.optimize_Arima(self.currency, self.df)
-            case 'ARIMA' | 'AR':
+            case 'ARIMA' | 'AutoReg':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
                     ['予測期間　　　　　', str(self._get_forecast_start())],
                     ['シミュレーション　', '1000'],
@@ -116,13 +152,13 @@ class Base:
 
                 from business.predict import arima
                 arima.run(self.currency, self.df,
-                          int(inputs[1][0 if 'AR' == self.model else 0]),
-                          ('-' if 'AR' == self.model else int(inputs[1][1])),
-                          ('-' if 'AR' == self.model else int(inputs[1][2])),
-                          ('-' if 'AR' == self.model else inputs[1][3]),
-                          ('-' if 'AR' == self.model else inputs[1][4]),
-                          int(inputs[1][1 if 'AR' == self.model else 5]),
-                          ar_only='AR' == self.model)
+                          int(inputs[1][0 if 'AutoReg' == self.model else 0]),
+                          ('-' if 'AutoReg' == self.model else int(inputs[1][1])),
+                          ('-' if 'AutoReg' == self.model else int(inputs[1][2])),
+                          ('-' if 'AutoReg' == self.model else inputs[1][3]),
+                          ('-' if 'AutoReg' == self.model else inputs[1][4]),
+                          int(inputs[1][1 if 'AutoReg' == self.model else 5]),
+                          ar_only='AutoReg' == self.model)
 
     def _load_model(self):
 

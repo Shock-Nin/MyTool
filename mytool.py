@@ -44,6 +44,7 @@ MODEL_MENU = {
     'データ更新': 'predict.base/create_data',
     '再現実行': 'predict.base/load_model',
     '分析・作成': 'predict.base/analytics',
+    '簡易・最適化': 'predict.base/optimize',
 }
 ANOMALY_MENU = {
     'H1データ作成': 'windows.anomaly_hst/create_h1',
@@ -151,11 +152,11 @@ def main():
         is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev or cst.MAC_IP == WORK_IP:
             layout.append([sg.Combo([key for key in MODEL_MENU],
-                                    default_value='　時系列モデル', key='Model', enable_events=True, readonly=True,
+                                    default_value='　時系列モデル', key='時系列モデル', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
         if is_dev:
             layout.append([sg.Combo([key for key in ANOMALY_MENU],
-                                    default_value='　アノマリ〜', key='Anomaly', enable_events=True, readonly=True,
+                                    default_value='　アノマリ〜', key='アノマリ〜', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
             layout.append([sg.Combo([key for key in EA_MENU],
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
@@ -181,7 +182,7 @@ def main():
                 return
 
             # セレクト選択した場合、ターミナルコマンドを実行
-            if event in ['Fold', 'Web', 'EA', 'Model', 'Anomaly', '機能']:
+            if event in ['Fold', 'Web', 'EA', '時系列モデル', 'アノマリ〜', '機能']:
 
                 if event in ['Fold', 'Web']:
                     menu = cst.MENU_CSV[event]
@@ -218,9 +219,9 @@ def main():
                         [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
                          '-m', EA_MENU[select], '-e', select]))
 
-                # Model or Anomalyセレクトで選択した場合
-                elif event in['Model', 'Anomaly']:
-                    obj = (MODEL_MENU if 'Model' == event else ANOMALY_MENU)
+                # 時系列モデル or アノマリ〜をセレクトで選択した場合
+                elif event in['時系列モデル', 'アノマリ〜']:
+                    obj = (MODEL_MENU if '時系列モデル' == event else ANOMALY_MENU)
                     # 動的モジュールを実行
                     processes.append(subprocess.Popen(
                         [cst.RUN_PATH[cst.PC], os.getcwd() + '/run.py',
