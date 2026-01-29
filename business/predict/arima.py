@@ -15,8 +15,6 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.ar_model import AutoReg
 
 from itertools import product
-from sklearn.metrics import mean_squared_error
-from math import sqrt
 
 import japanize_matplotlib
 import matplotlib.pyplot as plt
@@ -27,21 +25,19 @@ warnings.simplefilter(action='ignore')
 
 SAVE_PATH = f'{cst.MODEL_PATH[cst.PC]}models/'
 
-# AUTO_ARIMAのPDQリスト作成
-ORDERS = list(product(range(1, 3), range(1, 3), range(1, 3),
-                      range(1, 3), range(1, 3), range(1, 3),
-                      [10, 25, 50, 75, 100]))
 
-def optimize_Arima(currency, df):
+def optimize_Arima(currency, df, pdq1, pdq2, span):
     com.log(f'AUTO_ARIMAチューニング開始')
 
+    # AUTO_ARIMAのPDQリスト作成
+    orders = list(product(pdq1, pdq1, pdq1, pdq2, pdq2, pdq2, span))
+
     # 保存パス
-    save_path = f'{SAVE_PATH}ARIMA/{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
+    save_path = f'{SAVE_PATH}ARIMA/Analytics/{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
 
     total_time = 0
+    start_time = com.time_start()
     try:
-        start_time = com.time_start()
-
         # 基本データからデータ作成
         eq = df.rename(columns={'Close': currency})
         # データを0〜1の範囲に正規化
@@ -51,36 +47,38 @@ def optimize_Arima(currency, df):
         # ARIMAのPDQ設定
         results = []
 
-        window = com.progress(f'AUTO_ARIMAチューニング中', [currency, len(ORDERS)], interrupt=True)
+        window = com.progress(f'AUTO_ARIMAチューニング中', [currency, len(orders)], interrupt=True)
         event, values = window.read(timeout=0)
 
-        for i in range(len(ORDERS)):
+        for i in range(len(orders)):
 
-            pdq = (ORDERS[i][0], ORDERS[i][1], ORDERS[i][2])
-            pdqs = (ORDERS[i][3], ORDERS[i][4], ORDERS[i][5], ORDERS[i][6])
+            pdq = (int(orders[i][0]), int(orders[i][1]), int(orders[i][2]))
+            pdqs = (int(orders[i][3]), int(orders[i][4]), int(orders[i][5]), int(orders[i][6]))
 
             try:
-                window[currency].update(f'{currency} {str(pdq)}{str(pdqs)} {str(i)} / {str(len(ORDERS))}')
+                window[currency].update(
+                    f'{currency}[{com.conv_time_str(total_time)}] {str(pdq)}{str(pdqs)} {str(i)} / {str(len(orders))}')
                 window[currency + '_'].update(i)
 
                 if 0 == i % 2:
-                    com.log(f'AUTO_ARIMA {str(i)} / {str(len(ORDERS))}')
+                    com.log(f'AUTO_ARIMA[{com.conv_time_str(total_time)}] {str(i)} / {str(len(orders))}')
                 model = _create_model(scaled_data, 'SARIMA', pdq, pdqs)
 
-                aic = model.aic
-                results.append([[pdq, pdqs], aic])
+                results.append([[pdq, pdqs], model.aic, model.bic, model.hqic])
                 model.remove_data()
             except:
                 continue
+
+            run_time = com.time_end(start_time)
+            start_time = com.time_start()
+            total_time += run_time
 
             # 中断イベント
             if _is_interrupt(window, event):
                 return
 
-            if 0 == len(results): continue
-
         result_df = pd.DataFrame(results)
-        result_df.columns = ['(p,d,q)(p,q,d,s)', 'AIC']
+        result_df.columns = ['(p,d,q)(p,q,d,s)', 'AIC', 'BIC', 'HQIC']
 
         # AIC低い順でソート、PDQの抽出
         result_df = result_df.sort_values(by='AIC')
@@ -95,21 +93,99 @@ def optimize_Arima(currency, df):
         for i in range(len(result_df)):
             result_df.at[i, '(p,d,q)(p,q,d,s)'] = \
                 str(result_df.at[i, '(p,d,q)(p,q,d,s)']).replace('[', '').replace(']', '').replace(' ', '')
-            msg += f'\n{result_df.at[i, '(p,d,q)(p,q,d,s)']}'
+            msg += f'\n{str(i)}: {result_df.at[i, '(p,d,q)(p,q,d,s)']} | {result_df.at[i, 'AIC']}, {result_df.at[i, 'BIC']}, {result_df.at[i, 'HQIC']}'
         msg = f'\n\n{str(model.summary())}{msg}'
         window.close()
         model.remove_data()
 
-        run_time = com.time_end(start_time)
-        total_time += run_time
-        com.log(f'AUTO_ARIMAチューニング完了({com.conv_time_str(run_time)})')
-
         # モデル情報の保存
         path = f'{save_path}_{currency}_AUTO_ARIMA.txt'
         with open(path, 'w') as f:
-            f.write(f'実行時間: {com.conv_time_str(run_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]{msg}')
+            f.write(f'実行時間: {com.conv_time_str(total_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]{msg}')
 
-        com.dialog(f'AUTO_ARIMAチューニングが完了、保存しました。\n{com.conv_time_str(run_time)}', f'AUTO_ARIMAチューニング')
+        com.dialog(f'AUTO_ARIMAチューニングが完了、保存しました。\n{com.conv_time_str(total_time)}',
+                   f'AUTO_ARIMAチューニング')
+        subprocess.Popen([cst.TXT_APP_PATH[cst.PC], path], shell='Win' == cst.PC)
+
+    finally:
+        try:
+            window.close()
+        except:
+            pass
+
+    return
+
+def optimize_Ar(currency, df, lag):
+    com.log(f'AutoRegチューニング開始')
+
+    # AutoRegのラグリスト作成
+    orders = list(product(lag))
+
+    # 保存パス
+    save_path = f'{SAVE_PATH}ARIMA/Analytics/{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
+
+    total_time = 0
+    start_time = com.time_start()
+    try:
+        # 基本データからデータ作成
+        eq = df.rename(columns={'Close': currency})
+        # データを0〜1の範囲に正規化
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaled_data = scaler.fit_transform(eq.filter([currency]).values)
+
+        # ARのラグ設定
+        results = []
+
+        window = com.progress(f'AutoRegチューニング中', [currency, len(orders)], interrupt=True)
+        event, values = window.read(timeout=0)
+
+        for i in range(len(orders)):
+            try:
+                window[currency].update(
+                    f'{currency}[{com.conv_time_str(total_time)}] {str(orders[i][0])} {str(i)} / {str(len(orders))}')
+                window[currency + '_'].update(i)
+
+                if 0 == i % 5:
+                    com.log(f'AutoReg[{com.conv_time_str(total_time)}] {str(i)} / {str(len(orders))}')
+                model = _create_model(scaled_data, 'AutoReg', int(orders[i][0]))
+
+                results.append([int(orders[i][0]), model.aic, model.bic, model.hqic])
+                model.remove_data()
+            except:
+                continue
+
+            run_time = com.time_end(start_time)
+            start_time = com.time_start()
+            total_time += run_time
+
+            # 中断イベント
+            if _is_interrupt(window, event):
+                return None
+
+        result_df = pd.DataFrame(results)
+        result_df.columns = ['lag', 'AIC', 'BIC', 'HQIC']
+
+        # AIC低い順でソート、ラグの抽出
+        result_df = result_df.sort_values(by='AIC')
+        lag = list(result_df['lag'])[0]
+
+        model = _create_model(scaled_data, 'AutoReg', lag)
+
+        msg = '\n'
+        result_df = result_df.reset_index(drop=True)
+        for i in range(len(result_df)):
+            result_df.at[i, 'lag'] = \
+                str(result_df.at[i, 'lag']).replace('[', '').replace(']', '').replace(' ', '')
+            msg += f'\n{str(i)}: {result_df.at[i, 'lag']} | {result_df.at[i, 'AIC']}, {result_df.at[i, 'BIC']}, {result_df.at[i, 'HQIC']}'
+        msg = f'\n\n{str(model.summary())}{msg}'
+        window.close()
+        model.remove_data()
+
+        # モデル情報の保存
+        path = f'{save_path}_{currency}_AutoReg.txt'
+        with open(path, 'w') as f:
+            f.write(f'実行時間: {com.conv_time_str(total_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]{msg}')
+        com.dialog(f'AutoRegチューニングが完了、保存しました。\n{com.conv_time_str(total_time)}', f'AutoRegチューニング')
         subprocess.Popen([cst.TXT_APP_PATH[cst.PC], path], shell='Win' == cst.PC)
 
     finally:
@@ -186,7 +262,7 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
 
         # 呼び出しモデルがなければ、作成
         if loaded_result is None:
-            model = _create_model(train_data, 'AR', lag, '')
+            model = _create_model(train_data, 'AutoReg', lag, '')
             model.save(f'{model_path}_{currency}_AR({str(lag)}).pkl')
 
         # 呼び出しモデルがあれば、そのまま利用
@@ -203,7 +279,7 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
         # 中断イベント
         if _is_interrupt(window, event):
             return None
-
+        print(model_summary)
         predictions = np.array(predictions)
         predictions = np.reshape(predictions, (predictions.shape[0], 1))
 
@@ -225,7 +301,6 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
         # predict_data = predict_data[-split_len:] + np.array(new_predictions)
 
         run_time = com.time_end(start_time)
-        total_time += run_time
         com.log('ARモデル完了(' + com.conv_time_str(run_time) + ') ')
 
         window.close()
@@ -241,6 +316,10 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
                 model = _create_model(train_data, 'SARIMA', pdq, pdqs)
                 # モデルの保存
                 model.save(f'{model_path}_{currency}_SARIMA({str_pdq})({str_pdqs}).pkl')
+
+                run_time = com.time_end(start_time)
+                com.log('ARIMAモデル作成・保存完了(' + com.conv_time_str(run_time) + ') ')
+
             # 呼び出しモデルがあれば、そのまま利用
             else:
                 model = loaded_result
@@ -267,12 +346,19 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
             model_summary = '\n' + str(model.summary()) + model_summary
             model.remove_data()
 
-            forecast_median = np.median(simulations, axis=0)
             forecast_percentiles = np.percentile(simulations, [simu_height, 100 - simu_height], axis=0)
+            forecast_upper = np.array(forecast_percentiles[1])
+            forecast_upper = np.reshape(forecast_upper, (forecast_upper.shape[0], 1))
+            forecast_lower = np.array(forecast_percentiles[0])
+            forecast_lower = np.reshape(forecast_lower, (forecast_lower.shape[0], 1))
 
-            forecast_data.loc[:, 'forecast_upper'] = forecast_percentiles[1]
-            forecast_data.loc[:, 'forecast_lower'] = forecast_percentiles[0]
-            forecast_data.loc[:, 'forecast_median'] = forecast_median
+            forecast_median = np.median(simulations, axis=0)
+            forecast_median = np.array(forecast_median)
+            forecast_median = np.reshape(forecast_median, (forecast_median.shape[0], 1))
+
+            forecast_data.loc[:, 'forecast_upper'] = scaler.inverse_transform(forecast_upper)
+            forecast_data.loc[:, 'forecast_lower'] = scaler.inverse_transform(forecast_lower)
+            forecast_data.loc[:, 'forecast_median'] = scaler.inverse_transform(forecast_median)
 
             window.close()
 
@@ -322,58 +408,9 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
         try: window.close()
         except: pass
 
-# def save(currency, df, str_pdq, str_pdqs, lag):
-#     com.log('ARIMAモデル作成開始')
-#
-#     # モデルの保存
-#     save_path = f'{SAVE_PATH}Model/ARIMA/{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
-#
-#     total_time = 0
-#     try:
-#         start_time = com.time_start()
-#
-#         window = com.progress('', [currency, 2], interrupt=True)
-#         event, values = window.read(timeout=0)
-#
-#         # 基本データからデータ作成
-#         eq = df.rename(columns={'Close': currency})
-#         # データを0〜1の範囲に正規化
-#         scaler = MinMaxScaler(feature_range=(0, 1))
-#         scaled_data = scaler.fit_transform(eq.filter([currency]).values)
-#
-#         pdq = str_pdq.split(',')
-#         pdq = (int(pdq[0]), int(pdq[1]), int(pdq[2]))
-#         pdqs = str_pdqs.split(',')
-#         pdqs = (int(pdqs[0]), int(pdqs[1]), int(pdqs[2]), int(pdqs[3]))
-#
-#         arima_types = ['AR', 'SARIMA']
-#         for i in range(len(arima_types)):
-#             window[currency].update(f'{currency} {arima_types[i]} モデル作成中')
-#             window[currency + '_'].update(i)
-#
-#             com.log(f'ARIMAモデル作成中: {arima_types[i]} ')
-#             model = _create_model(scaled_data, arima_types[i], (lag if 'AR' == arima_types[i] else pdq), pdqs)
-#             model_name = (f'AR({str(lag)})' if 'AR' == arima_types[i] else f'SARIMA({str_pdq})({str_pdqs})')
-#             model.save(f'{save_path}_{currency}_{model_name}.pkl')
-#
-#             # 中断イベント
-#             if _is_interrupt(window, event):
-#                 return None
-#
-#         window.close()
-#
-#         run_time = com.time_end(start_time)
-#         total_time += run_time
-#         com.log(f'ARIMAモデル作成完了({com.conv_time_str(run_time)})')
-#         com.dialog(f'ARIMAモデル作成が完了、保存しました。\n{com.conv_time_str(run_time)}', 'ARIMAモデル作成', )
-#
-#     finally:
-#         try: window.close()
-#         except: pass
-
 def _create_model(df, arima_type, pdq, pdqs=None):
     try:
-        if 'AR' == arima_type:
+        if 'AutoReg' == arima_type:
             model = AutoReg(df, lags=pdq).fit()
         elif 'SARIMA' == arima_type:
             model = SARIMAX(df, order=pdq, seasonal_order=pdqs).fit(disp=False)
