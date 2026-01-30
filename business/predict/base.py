@@ -205,18 +205,18 @@ class Base:
         train_end = [inputs[1][3], inputs[1][4], inputs[1][5]]
         train_start = [int(inputs[1][3]) - int(inputs[1][7]), inputs[1][4], inputs[1][5]]
         test_days = _get_test_days(train_end, forecast)
-
+        print(train_start, train_end)
         self._get_data(train_start, test_days)
 
         df_date = self.df.index[-1].split('-')
         df_date = datetime.datetime(int(df_date[0]), int(df_date[1]), int(df_date[2]))
-        add_df = _add_forecast_data(self.period, df_date, test_days, self.df.at[self.df.index[-1], 'Close'])
+        # add_df = _add_forecast_data(self.period, df_date, test_days, self.df.at[self.df.index[-1], 'Close'])
+        #
+        # if add_df is not None:
+        #     self.df = pd.concat([self.df, add_df])
 
-        if add_df is not None:
-            self.df = pd.concat([self.df, add_df])
-
-        msg = f'予測内容を設定してください\n\n{str(self.df.index[0])} - {str(df_date)[:10]}' \
-              + f'{'' if add_df is None else ' | ' + add_df.index[-1]}\n'
+        msg = f'予測内容を設定してください\n\n{str(self.df.index[0])} - {str(df_date)[:10]}'
+              # + f'{'' if add_df is None else ' | ' + add_df.index[-1]}\n'
 
         if path.endswith('.keras'):
 
@@ -454,34 +454,34 @@ class Base:
             cnt -= 1
         return len(self.df) - forecast
 
-# 現在年の前年・現在年の営業日で、空値データを設定
-def _add_forecast_data(period, start, test_days, price=None):
-    ymd = start + datetime.timedelta(days=1)
-
-    list_dt = []
-    list_price = []
-    while ymd < test_days[-1]:
-        if ymd.weekday() not in [5, 6] and not (ymd.month == 1 and ymd.day == 1):
-            if 'D1' == period:
-                list_dt.append(ymd)
-                list_price.append(price)
-            else:
-                for h in range(0, 24):
-                    list_dt.append(datetime.datetime(ymd.year, ymd.month, ymd.day, ymd.hour, 0, 0))
-                    list_price.append(price)
-
-        ymd += datetime.timedelta(days=1)
-
-    if 0 == len(list_dt):
-        return None
-
-    df = pd.DataFrame(index=range(len(list_dt)), columns=['Time', 'Close'])
-    df['Time'] = pd.DataFrame(list_dt).astype(str)
-    if price is not None:
-        df['Close'] = pd.DataFrame(list_price).astype(float)
-    df = df.set_index('Time')
-
-    return df
+# # 現在年の前年・現在年の営業日で、空値データを設定
+# def _add_forecast_data(period, start, test_days, price=None):
+#     ymd = start + datetime.timedelta(days=1)
+#
+#     list_dt = []
+#     list_price = []
+#     while ymd < test_days[-1]:
+#         if ymd.weekday() not in [5, 6] and not (ymd.month == 1 and ymd.day == 1):
+#             if 'D1' == period:
+#                 list_dt.append(ymd)
+#                 list_price.append(price)
+#             else:
+#                 for h in range(0, 24):
+#                     list_dt.append(datetime.datetime(ymd.year, ymd.month, ymd.day, ymd.hour, 0, 0))
+#                     list_price.append(price)
+#
+#         ymd += datetime.timedelta(days=1)
+#
+#     if 0 == len(list_dt):
+#         return None
+#
+#     df = pd.DataFrame(index=range(len(list_dt)), columns=['Time', 'Close'])
+#     df['Time'] = pd.DataFrame(list_dt).astype(str)
+#     if price is not None:
+#         df['Close'] = pd.DataFrame(list_price).astype(float)
+#     df = df.set_index('Time')
+#
+#     return df
 
 def _get_test_days(input_date, forecast):
     test_days = []

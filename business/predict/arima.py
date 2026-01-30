@@ -223,42 +223,13 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
         if 4 == len(pdqs):
             pdqs = (int(pdqs[0]), int(pdqs[1]), int(pdqs[2]), int(pdqs[3]))
 
-        # 学習データ作成
+        # 学習・テストデータ作成
         split_len = int(np.ceil(len(eq)))
-
         train_data = scaled_data[:split_len]
-        # test_data = df_all[currency][split_len:]
-
-        # テストデータ作成
-        # test_data = scaled_data[split_len:]
         test_data = df_all[currency][split_len:]
-
-        # valid = df_all[currency][split_len:]
-
-
-
-        # train_data = scaled_data[0: split_len, :]
-        # x_train = []
-        # for i in range(len(train_data)):
-        #     x_train.append(train_data[i: i, 0])
-        # x_train = np.array(train_data)
-        # train_data = np.reshape(np.array(train_data), (np.array(train_data).shape[0], 1))
-
-
-
-        # if '-' != interval:
 
         window = com.progress('ARIMAモデル予測中', [currency, 0], interrupt=True)
         event, values = window.read(timeout=0)
-
-        # # トレーニングデータ以降を始点としてテストデータをintervalで指定した数ごとに分けてループする。
-        # for i in range(train_len, total_len, interval):
-
-        # window[currency].update(f'{currency} Predict ({str(int((i - train_len) / interval))} / {str(int(test_len / interval))})')
-        # window[currency + '_'].update(int((i - train_len) / interval))
-        #
-        # if 0 == int((i - train_len) / interval) % 10:
-        #     com.log(f'Predict: {str(int((i - train_len) / interval))} / {str(int(test_len / interval))}')
 
         # 呼び出しモデルがなければ、作成
         if loaded_result is None:
@@ -268,7 +239,8 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
         # 呼び出しモデルがあれば、そのまま利用
         else:
             model = loaded_result
-            model.append(train_data)
+            model.append(test_data)
+            # model.append(scaled_data[split_len:])
 
         # predictions = model.predict(split_len, len(scaled_data) - 1)
         predictions = model.forecast(steps=forecast)
@@ -279,26 +251,14 @@ def run(currency, df, forecast, simu_try, simu_height, str_pdq, str_pdqs, lag, l
         # 中断イベント
         if _is_interrupt(window, event):
             return None
-        print(model_summary)
+        if loaded_result is None:
+            print(model_summary)
+
         predictions = np.array(predictions)
         predictions = np.reshape(predictions, (predictions.shape[0], 1))
 
-        # valid['predictions'] = scaler.inverse_transform(predictions)
-        # print(valid)
-
         predict_data = pd.DataFrame({'test': test_data})
         predict_data.loc[:, 'predict'] = scaler.inverse_transform(predictions)
-
-
-
-        # predict_data = scaled_data
-        #
-        # new_predictions = []
-        # for prediction in predictions:
-        #     new_predictions.append(np.array(prediction))
-        #
-        # print(len(predict_data), len(predict_data[-split_len:]), len(predictions), predict_data, np.array(predictions))
-        # predict_data = predict_data[-split_len:] + np.array(new_predictions)
 
         run_time = com.time_end(start_time)
         com.log('ARモデル完了(' + com.conv_time_str(run_time) + ') ')
