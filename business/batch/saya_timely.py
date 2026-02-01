@@ -67,6 +67,8 @@ class SayaTimely:
             return
 
         finally:
+            try: wd.close()
+            except: pass
             try: wd.quit()
             except: pass
 

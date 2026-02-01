@@ -11,6 +11,7 @@ import pandas as pd
 
 from statsmodels.tsa.seasonal import STL
 from statsmodels.tsa.stattools import adfuller
+import joblib
 
 import japanize_matplotlib
 import matplotlib.pyplot as plt
@@ -75,17 +76,14 @@ class Base:
 
             case 'AUTO_ARIMA':
                 inputs = com.input_box('最適化範囲を設定してください。', '最適化範囲選択', [
-                    ['PDQ　　　　　　', '1,2'],
-                    ['PDQ(季)　　　', '1,2'],
-                    ['季節周期　　　　　', '5,10,21,43,65,87,130'],
+                    ['PDQ　　　　　　', '0,1,2']
                 ], obj='input')
 
                 if inputs[0] <= 0:
                     return
 
                 from business.predict import arima
-                arima.optimize_Arima(self.currency, self.df,
-                                     inputs[1][0].split(','), inputs[1][1].split(','), inputs[1][2].split(','))
+                arima.optimize_Arima(self.currency, self.df, inputs[1][0].split(','))
             case 'AutoReg':
                 inputs = com.input_box('最適化範囲を設定してください。', '最適化範囲選択', [
                     ['ARラグ　　　　　　　　　　　', ','.join([str(lag) for lag in range(5, 205, 5)])],
@@ -137,13 +135,14 @@ class Base:
             case 'ARIMA' | 'AutoReg':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
                     ['予測期間　　　　　', str(self._get_forecast_start())],
-                    ['シミュレーション　', '1000'],
-                    ['バンド幅　　　　　', '25'],
+                    ['予測間隔　　　　　', '5'],
+                    # ['シミュレーション　', '1000'],
+                    # ['バンド幅　　　　　', '25'],
                     ['PDQ　　　　　　', '2,1,2'],
-                    ['PDQS　　　　　', '2,1,2,' + ('130' if 'D1' ==self.period else '120')],
                     ['ARラグ　　　　　', '100']
                 ] if 'ARIMA' == self.model else [
                     ['予測期間　　　　　', str(self._get_forecast_start())],
+                    ['予測間隔　　　　　', '5'],
                     ['ARラグ　　　　　', '100']
                 ], obj='input')
 
@@ -152,12 +151,13 @@ class Base:
 
                 from business.predict import arima
                 arima.run(self.currency, self.df,
-                          int(inputs[1][0 if 'AutoReg' == self.model else 0]),
-                          ('-' if 'AutoReg' == self.model else int(inputs[1][1])),
-                          ('-' if 'AutoReg' == self.model else int(inputs[1][2])),
-                          ('-' if 'AutoReg' == self.model else inputs[1][3]),
-                          ('-' if 'AutoReg' == self.model else inputs[1][4]),
-                          int(inputs[1][1 if 'AutoReg' == self.model else 5]),
+                          int(inputs[1][0]),
+                          int(inputs[1][1]),
+                          ('-' if 'AutoReg' == self.model else inputs[1][2]),
+                          int(inputs[1][2 if 'AutoReg' == self.model else 3]),
+                          # ('-' if 'AutoReg' == self.model else int(inputs[1][2])),
+                          # ('-' if 'AutoReg' == self.model else inputs[1][3]),
+                          # int(inputs[1][1 if 'AutoReg' == self.model else 4]),
                           ar_only='AutoReg' == self.model)
 
     def _load_model(self):
@@ -241,11 +241,6 @@ class Base:
                 if 'Dropout' == layer_name:
                     dropout = layer_config.get('rate', -1)
 
-
-
-
-
-
             inputs = com.input_box(f'{msg}モデル: {model_type}, middle={middle}, dropout={dropout}', 'モデル実行', [
                 ['予測間隔　　　', '120'],
                 ['予測数　　　　', '90'],
@@ -264,11 +259,7 @@ class Base:
         elif path.endswith('.pkl'):
 
             # モデルの読み込み
-            from statsmodels.tsa.arima.model import ARIMAResults
-            loaded_result = ARIMAResults.load(path)
-            # from statsmodels.tsa.ar_model import AutoRegResults
-            # loaded_result = AutoRegResults.load(path)
-
+            loaded_result = joblib.load(path)
             summary = str(loaded_result.summary()).splitlines()
             print(loaded_result.summary())
 
@@ -282,27 +273,28 @@ class Base:
                 elif row.startswith('Model:'):
                     model_type = row.split()[1].split('(')[0]
                     str_pdq = '(' + row.split('(')[1].split(')')[0] + ')'
-                    str_pdqs = ('' if 0 == row.count('x') else row.split('x')[1].split(')')[0] + ')')
                     str_model = row.split('(')[-1].split(')')[0].split()[-1]
 
 
 
+            print(start_len, sample)
 
-
-            if 'SARIMAX' == model_type:
-                inputs = com.input_box(msg + f'PDQ{str_pdq}, PDQS{str_pdqs}', 'モデル実行', [
-                    ['シミュレーション　', '1000'], ['バンド幅　　　　　', '25']], obj='input')
-                if inputs[0] <= 0:
-                    return
+            # if 'SARIMAX' == model_type:
+            # if 'ARIMA' == model_type:
+            inputs = com.input_box(msg, 'モデル実行', [
+                ['予測間隔　　　', '5']], obj='input')
+                # ['シミュレーション　', '1000'], ['バンド幅　　　　　', '25']], obj='input')
+            if inputs[0] <= 0:
+                return
 
             from business.predict import arima
-            if 'SARIMAX' == model_type:
-                arima.run(self.currency, self.df, forecast, int(inputs[1][0]), int(inputs[1][1]),
-                          str_pdq.replace(' ', '')[1: -1],
-                          str_pdqs.replace(' ', '')[1: -1], '', loaded_result=loaded_result)
+            # if 'SARIMAX' == model_type:
+            if 'ARIMA' == model_type:
+                arima.run(self.currency, self.df, forecast, int(inputs[1][0]),# int(inputs[1][1]),
+                          str_pdq.replace(' ', '')[1: -1], '', loaded_result=loaded_result)
             else:
-                arima.run(self.currency, self.df, forecast, '-',
-                          '-', '-', '-', str_model, loaded_result=loaded_result)
+                arima.run(self.currency, self.df, forecast, int(inputs[1][0]),
+                          '-', str_model, loaded_result=loaded_result)
 
             # if 2 == sample[0].count('-'):
             #     self.years = [sample[0][-4:], str(int(sample[1][-4:]) + 2)]
