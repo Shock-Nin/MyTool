@@ -101,7 +101,7 @@ class Base:
             ['通貨　　　　　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
             END_YEAR,
             TERM_YEAR,
-            ['モデル　　　　', MAIN_MODELS + ['AutoReg'], 'LSTM'],
+            ['モデル　　　　', MAIN_MODELS, 'LSTM'],
             # ['モデル', ['移動平均', 'LSTM', 'GRU', 'RNN', 'ARIMA'], '移動平均'],
         ], obj='combo')
         if inputs[0] <= 0:
@@ -132,17 +132,13 @@ class Base:
                 keras_models.run(self.model, self.currency, self.df, int(inputs[1][0]), int(inputs[1][1]),
                                  int(inputs[1][2]), int(inputs[1][3]), float(inputs[1][4]), int(inputs[1][5]))
 
-            case 'ARIMA' | 'AutoReg':
+            case 'ARIMA':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
                     ['予測期間　　　　　', str(self._get_forecast_start())],
                     ['予測間隔　　　　　', '5'],
                     # ['シミュレーション　', '1000'],
                     # ['バンド幅　　　　　', '25'],
                     ['PDQ　　　　　　', '2,1,2'],
-                    ['ARラグ　　　　　', '100']
-                ] if 'ARIMA' == self.model else [
-                    ['予測期間　　　　　', str(self._get_forecast_start())],
-                    ['予測間隔　　　　　', '5'],
                     ['ARラグ　　　　　', '100']
                 ], obj='input')
 
@@ -153,12 +149,12 @@ class Base:
                 arima.run(self.currency, self.df,
                           int(inputs[1][0]),
                           int(inputs[1][1]),
-                          ('-' if 'AutoReg' == self.model else inputs[1][2]),
-                          int(inputs[1][2 if 'AutoReg' == self.model else 3]),
+                          inputs[1][2],
+                          int(inputs[1][3]),
                           # ('-' if 'AutoReg' == self.model else int(inputs[1][2])),
                           # ('-' if 'AutoReg' == self.model else inputs[1][3]),
                           # int(inputs[1][1 if 'AutoReg' == self.model else 4]),
-                          ar_only='AutoReg' == self.model)
+                          )
 
     def _load_model(self):
 
