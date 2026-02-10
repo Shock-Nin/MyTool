@@ -237,7 +237,8 @@ def main():
                 # 二度押し対策、5秒以内同一ボタン無効
                 is_run = True
                 if '  ' + event == window['act'].get():
-                    is_run = 5 < int(com.conv_time_str(com.time_start() - event_time).replace(':', ''))
+                    res = com.conv_time_str(com.time_start() - event_time).replace(':', '')
+                    is_run = 5 < int(res.sprit(' ')[1] if res.count(' ') else res)
 
                 window['act'].update('  ' + event)
 
