@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nヒストリカルデータ処理の修正\n\n- anomaly_hst: テーブル削除処理を無効化\n- function: add_filesのみを対象にヒストリカルデータを編集するよう変更\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git push:*)",
+      "Bash(tasklist:*)",
+      "Bash(taskkill:*)",
+      "Bash(git commit:*)",
+      "Bash(pyinstaller:*)",
+      "Bash(pushd \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\")",
+      "Bash(copy \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\\\\dist\\\\mytool.exe\" \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\\\\mytool.exe\")",
+      "Bash(copy \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\\\\dist\\\\mytool.exe\" \"G:\\\\マイドライブ\\\\受け渡し\\\\mytool.exe\")",
+      "Bash(cp:*)"
+    ]
+  }
+}
