@@ -252,11 +252,7 @@ def main():
 
     # バッチ起動の場合
     elif 'Batch' == args.Function:
-        msg = Batch(args.Function).do()
-        if 0 < len(msg):
-            com.log('Batch終了: ' + msg)
-        else:
-            com.log('Batch稼働なし: ' + cst.IP)
+        Batch(args.Function).do()
 
     # 機能単独起動の場合
     elif 0 < len(args.Function):

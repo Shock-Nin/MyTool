@@ -11,6 +11,15 @@ import numpy as np
 import pandas as pd
 import FreeSimpleGUI as sg
 
+
+import pmdarima as pm
+from pmdarima import datasets
+from pmdarima import utils
+from pmdarima import arima
+from pmdarima import model_selection
+from sklearn.metrics import mean_absolute_error
+from statistics import mean
+
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from statsmodels.tsa.arima.model import ARIMA
@@ -457,15 +466,10 @@ def _create_model(df, arima_type, pdq, model_path=None):
     try:
         if 'AutoReg' == arima_type:
             model = AutoReg(df, lags=pdq).fit()
-        else:
+        if 'ARIMA' == arima_type:
             model = ARIMA(df, order=pdq).fit()
-        # elif 'SARIMA' == arima_type:
-            # model = SARIMAX(df, order=pdq, seasonal_order=(1, 1, 1, 130)).fit(disp=False)
-            # model = SARIMAX(df, order=pdq, seasonal_order=pdqs).fit(disp=False)
-            # model = pm.auto_arima(df,
-            #                       start_p=pdq[0], d=pdq[1], start_q=pdq[2], max_p=pdq[0], max_d=pdq[1], max_q=pdq[2],
-            #                       start_P=pdqs[0], D=pdqs[1], start_Q=pdqs[2], max_P=pdqs[0], max_D=pdqs[1], max_Q=pdqs[2],
-            #                       m=pdqs[3], seasonal=True)
+        else:
+            model = pm.auto_arima(df, start_p=pdq[0], max_p=pdq[0], max_d=pdq[1], start_q=pdq[1], max_q=pdq[1], seasonal=False)
     except Exception as e:
         com.log(f'ARIMAモデル作成失敗: {str(pdq)} | {str(e)}', lv='W')
         return None

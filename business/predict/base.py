@@ -138,7 +138,7 @@ class Base:
                     ['予測間隔　　　　　', '5'],
                     # ['シミュレーション　', '1000'],
                     # ['バンド幅　　　　　', '25'],
-                    ['PDQ　　　　　　', '2,1,2'],
+                    ['PDQ　　　　　　', '0,1,0'],
                     ['ARラグ　　　　　', '100']
                 ], obj='input')
 
@@ -442,35 +442,6 @@ class Base:
             cnt -= 1
         return len(self.df) - forecast
 
-# # 現在年の前年・現在年の営業日で、空値データを設定
-# def _add_forecast_data(period, start, test_days, price=None):
-#     ymd = start + datetime.timedelta(days=1)
-#
-#     list_dt = []
-#     list_price = []
-#     while ymd < test_days[-1]:
-#         if ymd.weekday() not in [5, 6] and not (ymd.month == 1 and ymd.day == 1):
-#             if 'D1' == period:
-#                 list_dt.append(ymd)
-#                 list_price.append(price)
-#             else:
-#                 for h in range(0, 24):
-#                     list_dt.append(datetime.datetime(ymd.year, ymd.month, ymd.day, ymd.hour, 0, 0))
-#                     list_price.append(price)
-#
-#         ymd += datetime.timedelta(days=1)
-#
-#     if 0 == len(list_dt):
-#         return None
-#
-#     df = pd.DataFrame(index=range(len(list_dt)), columns=['Time', 'Close'])
-#     df['Time'] = pd.DataFrame(list_dt).astype(str)
-#     if price is not None:
-#         df['Close'] = pd.DataFrame(list_price).astype(float)
-#     df = df.set_index('Time')
-#
-#     return df
-
 def _get_test_days(input_date, forecast):
     test_days = []
     dt = datetime.datetime(int(input_date[0]), int(input_date[1]), int(input_date[2]))
@@ -480,50 +451,3 @@ def _get_test_days(input_date, forecast):
             test_days.append(datetime.datetime(dt.year, dt.month, dt.day))
         dt += datetime.timedelta(days=1)
     return test_days
-
-    # def _create_model(self):
-    #     inputs = com.input_box('選択してください。', 'モデル作成', [
-    #         ['時間足　　', cst.MODEL_PERIODS, cst.MODEL_PERIODS[0]],
-    #         ['通貨　　　', cst.MODEL_CURRENCIES, cst.MODEL_CURRENCIES[0]],
-    #         START_YEAR,
-    #         END_YEAR,
-    #         ['モデル　　', MAIN_MODELS, 'ARIMA'],
-    #     ], obj='combo')
-    #     if inputs[0] <= 0:
-    #         return
-    #
-    #     self.period = inputs[1][0]
-    #     self.currency = inputs[1][1]
-    #     self.years = [inputs[1][2], inputs[1][3]]
-    #     self.model = inputs[1][4]
-    #
-    #     self._get_data()
-    #
-    #     match self.model:
-    #         case 'LSTM' | 'GRU'| 'RNN':
-    #             inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
-    #                 ['予測間隔　　　', '120'],
-    #                 ['中間層　　　　', '200'],
-    #                 ['ドロップ　　　', '0.2'],
-    #                 ['エポック　　　', '30'],
-    #             ], obj='input')
-    #
-    #             if inputs[0] <= 0:
-    #                 return
-    #
-    #             from business.predict import keras_models
-    #             keras_models.save(self.model, self.currency, self.df, int(inputs[1][0]), int(inputs[1][1]),
-    #                               float(inputs[1][2]), int(inputs[1][3]))
-    #
-    #         case 'ARIMA':
-    #             inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
-    #                 ['PDQ　　　　　　', '2,1,2'],
-    #                 ['PDQS　　　　　', '2,1,2,' + ('130' if 'D1' ==self.period else '120')],
-    #                 ['ARラグ　　　　　', '100'],
-    #             ], obj='input')
-    #
-    #             if inputs[0] <= 0:
-    #                 return
-    #
-    #             from business.predict import arima
-    #             arima.save(self.currency, self.df, inputs[1][0], inputs[1][1], int(inputs[1][2]))

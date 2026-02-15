@@ -54,7 +54,13 @@ class Batch:
                 if 0 < len(job):
                     jobs.append(job)
 
-        return ", ".join([job for job in jobs])
+        msg = ", ".join([job for job in jobs])
+        if 0 < len(msg):
+            com.log('Batch終了: ' + msg)
+        else:
+            com.log('Batch稼働なし: ' + cst.IP)
+
+        return
 
     # WindowsServer 共通バッチ
     def __windows(self):
