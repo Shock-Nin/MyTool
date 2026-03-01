@@ -266,7 +266,10 @@ class MyAsset:
         try:
             for i in range(0, 2):
                 for k in range(0, 2):
-                    wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(k))
+                    try:
+                        wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(k))
+                    except:
+                        com.sleep(5)
                     com.sleep(1)
 
                     j_idt = wd.page_source

@@ -24,23 +24,23 @@ def driver(headless=False):
         else:
             wd = webdriver.Chrome(ChromeDriverManager().install())
     except:
-        com.log('Change WebDriver local')
-        path = os.getcwd() + '/item/setting/' + (
-            'Windows/chromedriver.exe' if 'Win' == cst.PC else 'mac/chromedriver')
+        # com.log('Change WebDriver local')
+        # path = os.getcwd() + '/item/setting/' + (
+        #     'Windows/chromedriver.exe' if 'Win' == cst.PC else 'mac/chromedriver')
+        # try:
+        #     if headless:
+        #         wd = webdriver.Chrome(path, options=options)
+        #     else:
+        #         wd = webdriver.Chrome(path)
+        # except:
+        #     com.log('Change WebDriver Binary')
         try:
             if headless:
-                wd = webdriver.Chrome(path, options=options)
+                wd = webdriver.Chrome(options=options)
             else:
-                wd = webdriver.Chrome(path)
-        except:
-            com.log('Change WebDriver Binary')
-            try:
-                if headless:
-                    wd = webdriver.Chrome(options=options)
-                else:
-                    wd = webdriver.Chrome(options=None)
-            except Exception as e:
-                com.log('WebDriver local error: ' + str(e))
+                wd = webdriver.Chrome(options=None)
+        except Exception as e:
+            com.log('WebDriver error: ' + str(e))
 
     if wd is not None:
         wd.implicitly_wait(5)
