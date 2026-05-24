@@ -122,7 +122,7 @@ class Base:
                     ['予測数　　　　', '90'],
                     ['中間層　　　　', '200'],
                     ['ドロップ　　　', '0.2'],
-                    ['エポック　　　', '30'],
+                    ['エポック　　　', '300'],
                 ], obj='input')
 
                 if inputs[0] <= 0:
@@ -162,10 +162,15 @@ class Base:
         files = []
         is_exist = False
         for fold in MAIN_MODELS:
-            target = [f for f in os.listdir(f'{path}/{fold}/Model') if f.find('.DS') < 0]
-            files.append([fold, list(sorted(target, reverse=True))])
-            if 0 < len(target):
-                is_exist = True
+
+            for ymd_hm in reversed(sorted(os.listdir(f'{path}/{fold}'))):
+                if 0 <= ymd_hm.find('.DS') or 0 <= ymd_hm.find('.png'):
+                    continue
+
+                target = [f for f in os.listdir(f'{path}/{fold}/{ymd_hm}') if f.find('.DS') < 0 or f.find('.png') < 0]
+                files.append([fold, ymd_hm, list(sorted(target, reverse=True))])
+                if 0 < len(target):
+                    is_exist = True
 
         if not is_exist:
             com.dialog('モデルファイルが存在しません。', 'モデルファイル不在')
@@ -173,9 +178,12 @@ class Base:
 
         layout = []
         for fold in files:
-            if 0 < len(fold[1]):
-                for file in fold[1]:
-                    layout.append(fold[0] + ''.join('  ' for _ in range(6 - len(fold[0]))) + '/' + file)
+            if 0 == len(fold[1]):
+                continue
+            for file in fold[2]:
+                if not (file.endswith('.keras') or file.endswith('.pkl')):
+                    continue
+                layout.append(fold[0] + ''.join('  ' for _ in range(6 - len(fold[0]))) + '/' + fold[1]+ '/' + file)
         # layout = [[fold[0] + '/' + file for file in fold[1]] for fold in files if 0 < len(fold[1])]
 
         inputs = com.input_box('選択してください。', 'データ選択', [
@@ -192,8 +200,8 @@ class Base:
             return
 
 
-        path += f'/{inputs[1][0].split('/')[0].replace(' ', '')}/Model/{inputs[1][0].split('/')[1]}'
-
+        path += f'/{inputs[1][0].split('/')[0].replace(' ', '')}/{inputs[1][0][inputs[1][0].find('/') + 1:]}'
+        save_path = inputs[1][0].split('/')[1]
         self.period = inputs[1][1]
         self.currency = inputs[1][2]
         forecast = inputs[1][6]
@@ -242,7 +250,7 @@ class Base:
                 ['予測数　　　　', '90'],
                 ['中間層　　　　', str(middle) if middle else '200'],
                 ['ドロップ　　　', str(dropout) if 0 <= dropout else '0.2'],
-                ['エポック　　　', '30'],
+                # ['エポック　　　', '30'],
             ], obj='input')
 
             if inputs[0] <= 0:
@@ -250,7 +258,7 @@ class Base:
 
             from business.predict import keras_models
             keras_models.run(model_type, self.currency, self.df, forecast, int(inputs[1][0]),
-                             int(inputs[1][1]), int(inputs[1][2]), float(inputs[1][3]), int(inputs[1][4]), loaded_result)
+                             int(inputs[1][1]), int(inputs[1][2]), float(inputs[1][3]), 0, loaded_result, save_path)
 
         elif path.endswith('.pkl'):
 

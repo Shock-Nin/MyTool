@@ -23,17 +23,16 @@ import japanize_matplotlib
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
-
 SAVE_PATH = f'{cst.MODEL_PATH[cst.PC]}models/'
 
-
-def run(model_type, currency, df, forecast, interval, count, middle, dropout, epochs, loaded_result=None):
+def run(model_type, currency, df, forecast, interval, count, middle, dropout, epochs, loaded_result=None, save_path=None):
     com.log(model_type + 'モデル予測開始')
 
     # 保存パス
     save_time = f'{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'
-    save_path = f'{SAVE_PATH}{model_type}/{'Analytics' if loaded_result is None else 'Result'}/{save_time}_{currency}'
-    model_path = f'{SAVE_PATH}{model_type}/Model/{save_time}_{currency}'
+    save_path = f'{save_time + '/' if loaded_result is None else '' if save_path is None else save_path + '/'}'
+    save_path = f'{SAVE_PATH}{model_type}/{save_path}{currency}'
+    model_path = f'{SAVE_PATH}{model_type}/{save_time}/{currency}'
 
     total_time = 0
     try:
@@ -42,7 +41,7 @@ def run(model_type, currency, df, forecast, interval, count, middle, dropout, ep
         window = com.progress( '', [currency, 2], interrupt=True)
         event, values = window.read(timeout=0)
 
-        window[currency].update(f'{currency} {model_type}モデル推論中: {epochs}エポック')
+        window[currency].update(f'{currency} {model_type}モデル推論中' + ('' if 0 == epochs else f': {epochs}エポック'))
         window[currency + '_'].update(0)
 
         # データ作成
@@ -96,6 +95,7 @@ def run(model_type, currency, df, forecast, interval, count, middle, dropout, ep
             val_loss = history.history['val_loss']
 
             # モデルの保存
+            os.mkdir(model_path.replace('/' + currency, ''))
             model.save(f'{model_path}_{model_type}.keras')
 
         # 呼び出しモデルがあれば、そのまま利用
@@ -114,24 +114,31 @@ def run(model_type, currency, df, forecast, interval, count, middle, dropout, ep
         com.log(model_type + '[' + currency + ']予測完了(' + com.conv_time_str(run_time) + ') ')
 
         # Lossチャートの表示定義(非表示・保存専用)
-        str_title = f'{currency}[{str(epochs)}] {df.index[0][:4]} - {df.index[-1][:4]}: {model_type}'
+        str_title = f'{currency}{'' if 0 == epochs else ' ' + str(epochs) + 'エポック'}: {df.index[0][:4]} - {df.index[-1][:4]}: {model_type}'
 
         msg = f'予測期間: {str(forecast)}, 予測間隔: {str(interval)}, 予測数: {str(count)}, ' \
               + f'中間層: {str(middle)}, ドロップ: {'-' if dropout < 0 else str(dropout)}' \
-              + f'\n学習時間: {com.conv_time_str(run_time)}, ' \
+              + '\n' + ('' if 0 == epochs else f'学習時間: {com.conv_time_str(run_time)}, ') \
               + f'RMSE: {str(round(np.sqrt(np.mean(((predictions - y_test) ** 2))), 7))}, ' \
               + f'r2: {str(round(r2_score(y_test, predictions), 7))}'
 
         # 呼び出しモデルがない場合は、Lossチャートを作成
         if loaded_result is None:
-            str_loss = f'Loss Curve({str(round(loss[-1], 7))}, {str(round(val_loss[-1], 7))})'
+            best_loss = [0, loss[0], 0, val_loss[0]]
+            for i in range(1, len(val_loss)):
+                if loss[i] < best_loss[1]:
+                    best_loss[0] = i
+                    best_loss[1] = loss[i]
+                if val_loss[i] < best_loss[3]:
+                    best_loss[2] = i
+                    best_loss[3] = val_loss[i]
+            str_loss = f'loss {best_loss[0]}: {str(round(best_loss[1], 7))}, val_loss {best_loss[2]}: {str(round(best_loss[3], 7))}'
             msg += f' | {str_loss}'
 
-            fig2, (ax2) = plt.subplots(1, 1, figsize=(int (cst.FIG_SIZE[0] * 0.5), int(cst.FIG_SIZE[1] * 0.8)), sharex=True)
-            fig2.suptitle(f'{str_title} | {msg}', fontsize=int(cst.FIG_FONT_SIZE * 0.7))
+            fig2, (ax2) = plt.subplots(1, 1, figsize=(int (cst.FIG_SIZE[0] * 0.5), int(cst.FIG_SIZE[1] * 0.5)), sharex=True)
+            # fig2.suptitle(f'{str_title} | {msg}', fontsize=int(cst.FIG_FONT_SIZE * 0.7))
             ax2.plot(np.arange(len(loss)), loss, label='loss', linewidth=1)
             ax2.plot(np.arange(len(val_loss)), val_loss, label='val_loss', linewidth=1)
-
             plt.tight_layout()
             plt.xticks(np.arange(0, epochs, step=(epochs / 10)))
             ax2.legend(ncol=2, loc='upper right')

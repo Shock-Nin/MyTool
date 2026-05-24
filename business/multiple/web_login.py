@@ -30,11 +30,17 @@ class WebLogin:
         # クリック情報を取得
         id1, id2, pw, btn = _get_info(name)
         err_msg = ''
-        
+
         # ログイン画面を開いて、
         if 0 < len(id1):
             com.sleep(1)
             try:
+                if name in ['FXブロード365', '外為オンライン365']:
+                    com.input_box(name, 'ログイン情報',
+                        [['ID　　　', str(menu['ID1'].values[0])], ['パスワード', str(menu['PASS'].values[0])]],
+                        'input')
+
+                    return self.wd
                 # 事前画面あり
                 if name in ['ガス']:
                     url += '/login.html'
@@ -236,6 +242,16 @@ def _get_info(name):
         info = ['ID1', 'loginTuskLoginId'], ['', ''], 'gnziLoginPswd', 'buttonLogin'
     elif '岡三365' == name:
         info = ['ID1', 'loginId'], ['', ''], 'password', '//*[@id="loginBtn"]/input'
+    elif 'KOYO証券' == name:
+        info = ['ID1', 'userId'], ['', ''], 'password', '/html/body/div/form/div/div[5]/div/div'
+    elif 'FXブロード365' == name:
+        info = ['ID1', 'loginId'], ['', ''], 'password', '/html/body/div/form/div[1]/p/input'
+    elif '外為オンライン365' == name:
+        info = ['ID1', 'loginId'], ['', ''], 'password', '//*[@id="login"]/form/dl/dd[5]/input'
+    elif 'フジトミ365' == name:
+        info = ['ID1', 'txtUserId'], ['', ''], 'txtPassword', '//*[@id="btnLogin"]/div/span'
+    elif 'AIゴールド365' == name:
+        info = ['ID1', 'userId'], ['', ''], 'password', 'doLogin'
     elif 'FxPro' == name:
         info = ['ID2', 'input-email'], ['', ''], 'login-input-password', 'login-signin-button'
     elif 'MyFx' == name:

@@ -466,7 +466,7 @@ def _create_model(df, arima_type, pdq, model_path=None):
     try:
         if 'AutoReg' == arima_type:
             model = AutoReg(df, lags=pdq).fit()
-        if 'ARIMA' == arima_type:
+        elif 'ARIMA' == arima_type:
             model = ARIMA(df, order=pdq).fit()
         else:
             model = pm.auto_arima(df, start_p=pdq[0], max_p=pdq[0], max_d=pdq[1], start_q=pdq[1], max_q=pdq[1], seasonal=False)

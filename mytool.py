@@ -40,6 +40,11 @@ BTNS = {cst.DEV_IP: {
     '資産': 'mac.my_asset',
     # 'タイマー': 'mac.alert_timer',
     }}
+FXDATA_MENU = {
+    'Tick→OHLC': 'mac.tick_to_ohlc/create_all',
+    'Base作成': 'mac.tick_to_ohlc/create_base',
+    'H1D1作成': 'mac.tick_to_ohlc/create_h1_d1',
+    }
 MODEL_MENU = {
     'データ更新': 'predict.base/create_data',
     '再現実行': 'predict.base/load_model',
@@ -65,7 +70,7 @@ EA_MENU = {
     'EA連続テスト': 'windows.ea_auto_test',
     'EAテスト結合': 'windows.ea_merge_test',
 }
-FUNC_MENU = {
+MT4_MENU = {
     '最適化セット': 'DEV',
     '最適化起動': 'DEV',
     'MT4起動': 'ALL',
@@ -81,8 +86,8 @@ WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])
 BTN = BTNS[WORK_IP]
 HEIGHT = 2 + (2 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
 DP_XY_WIDTH = {
-    cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 40), 16, 1],
-    cst.WEB_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 2],
+    cst.DEV_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 1],
+    cst.WEB_IP: [0, 100 + (int(len(BTN) + HEIGHT) * 70), 16, 1],
     cst.MAC_IP: [150, 50 + (int(len(BTN) + HEIGHT) * 50), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
@@ -162,8 +167,11 @@ def main():
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
         if cst.MAC_IP != WORK_IP:
-            layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
-                                    default_value='　機能', key='機能', enable_events=True, readonly=True,
+            layout.append([sg.Combo([key for key in FXDATA_MENU if is_dev or (not is_dev and 'ALL' == FXDATA_MENU[key])],
+                                    default_value='　ヒストリカル', key='ヒストリカル', enable_events=True, readonly=True,
+                                    font=('', 16 * DP[3]), size=XY_SIZE)])
+            layout.append([sg.Combo([key for key in MT4_MENU if is_dev or (not is_dev and 'ALL' == MT4_MENU[key])],
+                                    default_value='　MT4', key='MT4', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
 
         location = (None, None) if 0 == DP[0] + DP[1] else (

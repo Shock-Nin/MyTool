@@ -10,7 +10,7 @@ Windowsタスクスケジューラ
 　　C:/Users/Administrator/Documents/MyTool
 　実行コマンド
 　　cd C:/Users/Administrator/Documents/MyTool; python mytool.py -f Batch
-　　cd dsk_nagaoka@MacBookAir202012 MyTool; python mytool.py -f Batch
+　　/Library/Frameworks/Python.framework/Versions/3.13/bin/python3.13 /Users/dsk_nagaoka/MyTool/mytool.py -f Batch
 """
 from common import com
 from const import cst

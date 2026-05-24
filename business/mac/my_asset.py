@@ -10,7 +10,7 @@ import datetime
 from selenium.webdriver.support.select import Select
 
 TARGET_TABLES = ['per_month', 'asset_balance', 'asset_history', 'payment_avg']
-BANKS = ['Viewカード', '楽天カード(M)', '楽天カード(S)', 'PayPayカード', '三井住友', '三菱UFJ', '楽天銀行', 'JREBANK']
+BANKS = ['Viewカード', '楽天カード(M)', '楽天カード(S)', 'PayPayカード', '都市銀行', 'その他銀行', '楽天銀行', 'JREBANK']
 
 class MyAsset:
 
@@ -105,12 +105,13 @@ class MyAsset:
 
         before_view = [before[1][1], before[1][5]]
         before_paypay = [before[1][4], before[1][8]]
-        before_smbc = before[1][9]
+        before_bank = [before[1][9], before[1][10]]
 
         flg, inputs = com.input_box(
             ('　　　　　本日は16日です。　　　　　\n\n' if 16 == datetime.datetime.now().day else '')
             + str_payment + '\n\n' + str_summary + '　　' + '開始しますか？', '開始確認',
-            [['Viewカード', str(before_view[0])], ['PayPay　', str(before_paypay[0])], ['三井住友　　　', str(before_smbc)]],
+            [['Viewカード', str(before_view[0])], ['PayPay　', str(before_paypay[0])],
+             ['都市銀行　　　', str(before_bank[0])], ['その他銀行　　', str(before_bank[1])]],
             'input')
         if flg <= 0:
             return
@@ -139,7 +140,7 @@ class MyAsset:
             # 楽天カード取得
             target = targets[('楽天カード' == targets['Name'])]
             rmcard, rscard, wd2 = self.__get_rakuten_card(target)
-            if rmcard is None or '0' == str(rmcard[0]):
+            if rmcard is None:
                 com.dialog('データ取得に失敗しました', '楽天カード(M)', 'W')
                 return
             web_drivers.append(wd2)
@@ -149,24 +150,8 @@ class MyAsset:
 
             cards = [vcard, rmcard, rscard, pcard]
 
-            # 三井住友銀行取得
-            banks = [inputs[2]]
-
-            # target = targets[('三井住友' == targets['Name'])]
-            # result, wd4 = self._get_smbc_bank(target)
-            # if result is None:
-            #     return
-            # else:
-            #     banks.append(result)
-
-            # 三菱UFJ銀行取得
-            target = targets[('三菱UFJ' == targets['Name'])]
-            result, wd5 = self.__get_mufg_bank(target)
-            if result is None:
-                return
-            else:
-                banks.append(result)
-            web_drivers.append(wd5)
+            # 都市銀行、その他銀行取得
+            banks = [inputs[2], inputs[3]]
 
             # 楽天銀行取得
             target = targets[('楽天銀行' == targets['Name'])]
@@ -264,8 +249,8 @@ class MyAsset:
 
         # 金額取得(未確定・1月前)
         try:
-            for i in range(0, 2):
-                for k in range(0, 2):
+            for i in range(2):
+                for k in range(2):
                     try:
                         wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(k))
                     except:
@@ -291,73 +276,48 @@ class MyAsset:
 
         return results[:2], results[2:], wd
 
-    # PayPayカード
-    def __get_paypay_card(self, target):
 
-        # ログイン
-        results = []
-        wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
-        if wd is None:
-            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return None, None
-
-        # 金額取得(未確定・1月前)
-        try:
-            for i in range(0, 2):
-                wd.get('https://www.rakuten-card.co.jp/e-navi/members/statement/index.xhtml?tabNo=' + str(i))
-                com.sleep(1)
-                try:
-                    results.append(web_driver.find_element(wd, 'span.stmt-u-font-roboto').text.replace(',', ''))
-                except:
-                    results.append('0')
-        except Exception as e:
-            com.log('WebDriverエラー: PayPayカード, ' + str(e), 'E')
-            com.dialog('PayPayカードで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
-            return None, None
-
-        return results, wd
-
-    # 三井住友
-    def __get_smbc_bank(self, target):
-
-        # ログイン
-        result = ''
-        wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
-        if wd is None:
-            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return None, None
-
-        # 金額取得
-        try:
-            result = web_driver.find_element(wd, 'ryudoAccountBalance').text.replace(',', '')
-        except Exception as e:
-            com.log('WebDriverエラー: 三井住友, ' + str(e), 'E')
-            com.dialog('三井住友で、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
-            return None, None
-
-        return result, wd
-
-    # 三菱UFJ
-    def __get_mufg_bank(self, target):
-
-        # ログイン
-        result = ''
-        wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
-        if wd is None:
-            com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
-            return None, None
-
-        # 金額取得
-        try:
-            result = web_driver.find_element(
-                wd, '/html/body/app-root/app-lgpu01-wf/div/main/div/app-lgpu01-lg0002-m00-c01/form/section/div/div[1]/div/div[2]/section[1]/a/div[1]/div[3]/span[1]') \
-                .text.replace(',', '').replace('円', '')
-        except Exception as e:
-            com.log('WebDriverエラー: 三菱UFJ, ' + str(e), 'E')
-            com.dialog('三菱UFJで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
-            return None, None
-
-        return result, wd
+    # # 三井住友
+    # def __get_smbc_bank(self, target):
+    #
+    #     # ログイン
+    #     result = ''
+    #     wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
+    #     if wd is None:
+    #         com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+    #         return None, None
+    #
+    #     # 金額取得
+    #     try:
+    #         result = web_driver.find_element(wd, 'ryudoAccountBalance').text.replace(',', '')
+    #     except Exception as e:
+    #         com.log('WebDriverエラー: 三井住友, ' + str(e), 'E')
+    #         com.dialog('三井住友で、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+    #         return None, None
+    #
+    #     return result, wd
+    #
+    # # 三菱UFJ
+    # def __get_mufg_bank(self, target):
+    #
+    #     # ログイン
+    #     result = ''
+    #     wd = WebLogin(self.myjob).do(target['Name'].values[0], target['URL'].values[0])
+    #     if wd is None:
+    #         com.dialog('WebDriverで異常が発生しました。', 'WebDriver異常', 'E')
+    #         return None, None
+    #
+    #     # 金額取得
+    #     try:
+    #         result = web_driver.find_element(
+    #             wd, '/html/body/app-root/app-lgpu01-wf/div/main/div/app-lgpu01-lg0002-m00-c01/form/section/div/div[1]/div/div[2]/section[1]/a/div[1]/div[3]/span[1]') \
+    #             .text.replace(',', '').replace('円', '')
+    #     except Exception as e:
+    #         com.log('WebDriverエラー: 三菱UFJ, ' + str(e), 'E')
+    #         com.dialog('三菱UFJで、WebDriverエラーが発生しました。\n' + str(e), 'WebDriverエラー', 'E')
+    #         return None, None
+    #
+    #     return result, wd
 
     # 楽天銀行
     def __get_rakuten_bank(self, target):
@@ -424,7 +384,7 @@ def _edit_data(before, cards, banks):
         columns.append(before[0][i])
         values.append(cards[i - num][1])
 
-    # 銀行(三井住友, 三菱UFJ, 楽天銀行, JREBANK)
+    # 銀行(都市銀行, その他銀行, 楽天銀行, JREBANK)
     for i in range(num + 4, num + 4 + 4):
         layout[num].append(BANKS[i - num])
         __append_data(before[1][i], banks[i - (num + 4)], before[0][i], is_change, layout, columns, values, num=num)

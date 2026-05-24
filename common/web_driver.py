@@ -24,16 +24,6 @@ def driver(headless=False):
         else:
             wd = webdriver.Chrome(ChromeDriverManager().install())
     except:
-        # com.log('Change WebDriver local')
-        # path = os.getcwd() + '/item/setting/' + (
-        #     'Windows/chromedriver.exe' if 'Win' == cst.PC else 'mac/chromedriver')
-        # try:
-        #     if headless:
-        #         wd = webdriver.Chrome(path, options=options)
-        #     else:
-        #         wd = webdriver.Chrome(path)
-        # except:
-        #     com.log('Change WebDriver Binary')
         try:
             if headless:
                 wd = webdriver.Chrome(options=options)
