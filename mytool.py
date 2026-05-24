@@ -40,11 +40,6 @@ BTNS = {cst.DEV_IP: {
     '資産': 'mac.my_asset',
     # 'タイマー': 'mac.alert_timer',
     }}
-FXDATA_MENU = {
-    'Tick→OHLC': 'mac.tick_to_ohlc/create_all',
-    'Base作成': 'mac.tick_to_ohlc/create_base',
-    'H1D1作成': 'mac.tick_to_ohlc/create_h1_d1',
-    }
 MODEL_MENU = {
     'データ更新': 'predict.base/create_data',
     '再現実行': 'predict.base/load_model',
@@ -70,7 +65,12 @@ EA_MENU = {
     'EA連続テスト': 'windows.ea_auto_test',
     'EAテスト結合': 'windows.ea_merge_test',
 }
-MT4_MENU = {
+FXDATA_MENU = {
+    'Tick→OHLC': 'windows.tick_to_ohlc/create_all',
+    'Base作成': 'windows.tick_to_ohlc/create_base',
+    'H1D1作成': 'windows.tick_to_ohlc/create_h1_d1',
+    }
+FUNC_MENU = {
     '最適化セット': 'DEV',
     '最適化起動': 'DEV',
     'MT4起動': 'ALL',
@@ -170,7 +170,7 @@ def main():
             layout.append([sg.Combo([key for key in FXDATA_MENU if is_dev or (not is_dev and 'ALL' == FXDATA_MENU[key])],
                                     default_value='　ヒストリカル', key='ヒストリカル', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
-            layout.append([sg.Combo([key for key in MT4_MENU if is_dev or (not is_dev and 'ALL' == MT4_MENU[key])],
+            layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
                                     default_value='　MT4', key='MT4', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
 
