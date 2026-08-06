@@ -1,6 +1,6 @@
-# FX Data Extraction
+# FX Data Extraction and Merge
 
-このスクリプトは、MySQLデータベース `fx_saya365` の rate と swap テーブルから全データを抽出し、CSVファイルとして出力します。
+このスクリプトは、MySQLデータベース `fx_saya365` の rate と swap テーブルから全データを抽出し、DATE列で結合して単一のCSVファイル（saya365.csv）として出力します。
 
 ## 必要な環境
 
@@ -46,23 +46,28 @@ python3 extract_fx_end_of_month.py
 ## 出力
 
 - **出力先**: `/Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data`
-- **ファイル形式**: `{テーブル名}_end_of_month.csv`
+- **ファイル名**: `saya365.csv`
 - **文字コード**: UTF-8 (BOM付き)
+- **カラム構成**:
+  - DATE
+  - rate_USDJPY, rate_TRYJPY, rate_HKDJPY
+  - swap_USDJPY, swap_TRYJPY, swap_HKDJPY
 
 ## 処理内容
 
 1. データベース接続: `free-liberty.com:3306`
 2. データベース: `fx_saya365`
 3. 対象テーブル: **rate** と **swap**
-4. 以下のカラムを抽出:
+4. 各テーブルから以下のカラムを抽出:
    - DATE (必須)
    - USDJPY
    - TRYJPY
    - HKDJPY
-5. 全期間のデータを抽出
-6. CSVファイルとして出力
-   - `rate.csv`
-   - `swap.csv`
+5. 通貨カラムにテーブル名のプレフィックスを追加:
+   - rate_USDJPY, rate_TRYJPY, rate_HKDJPY
+   - swap_USDJPY, swap_TRYJPY, swap_HKDJPY
+6. DATE列で外部結合（OUTER JOIN）
+7. 単一のCSVファイルとして出力: **saya365.csv**
 
 ## 接続情報
 
@@ -75,9 +80,10 @@ python3 extract_fx_end_of_month.py
 
 - データベースへの接続にはインターネット接続が必要です
 - 出力先ディレクトリが存在しない場合は自動的に作成されます
-- 同名のCSVファイルが存在する場合は上書きされます (`rate.csv`, `swap.csv`)
+- 既存の `saya365.csv` ファイルは上書きされます
 - DATE カラムが存在しないテーブルはスキップされます
-- 必要なカラムが2つ未満のテーブルもスキップされます
+- テーブル結合は外部結合（OUTER JOIN）で実行されます
+  - どちらかのテーブルにしかない日付も含まれます
 
 ## トラブルシューティング
 
@@ -109,11 +115,11 @@ py -m pip install mysql-connector-python pandas
 
 ```
 ======================================================================
-FX Data Extraction
+FX Data Extraction and Merge
 ======================================================================
 Database: fx_saya365
 Tables: rate, swap
-Output: /Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data
+Output: saya365.csv
 ======================================================================
 
 ✓ Output directory ready: /Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data
@@ -125,24 +131,31 @@ MySQL: 接続 [free-liberty.com(fx_saya365)]
 [1/2] Processing table: rate
   Available columns: DATE, USDJPY, TRYJPY, HKDJPY
   ✓ Extracted 1250 records from rate
-    Columns: DATE, USDJPY, TRYJPY, HKDJPY
+    Columns: DATE, rate_USDJPY, rate_TRYJPY, rate_HKDJPY
     Date range: 2020-01-01 to 2026-08-06
-  ✓ Exported to: /Users/dsk_nagaoka/.../rate.csv
 
 [2/2] Processing table: swap
   Available columns: DATE, USDJPY, TRYJPY, HKDJPY
   ✓ Extracted 1250 records from swap
-    Columns: DATE, USDJPY, TRYJPY, HKDJPY
+    Columns: DATE, swap_USDJPY, swap_TRYJPY, swap_HKDJPY
     Date range: 2020-01-01 to 2026-08-06
-  ✓ Exported to: /Users/dsk_nagaoka/.../swap.csv
+
+Merging tables on DATE column...
+  Base: rate (1250 records)
+  + swap (1250 records)
+
+✓ Merged result: 1250 records
+  Columns: DATE, rate_USDJPY, rate_TRYJPY, rate_HKDJPY, swap_USDJPY, swap_TRYJPY, swap_HKDJPY
+  Date range: 2020-01-01 to 2026-08-06
+
+✓ Exported to: /Users/dsk_nagaoka/.../saya365.csv
 
 ======================================================================
 SUMMARY
 ======================================================================
 Tables processed: 2
-Tables exported: 2
-Total records: 2500
-Output location: /Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data
+Total records: 1250
+Output file: /Users/dsk_nagaoka/.../saya365.csv
 ======================================================================
 
 MySQL: 切断

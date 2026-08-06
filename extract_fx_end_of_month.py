@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """
 Extract FX data from fx_saya365 database
-Exports data with DATE, USDJPY, TRYJPY, HKDJPY columns from rate and swap tables
+Merges rate and swap tables on DATE, outputs to saya365.csv
 """
 import sys
 import os
@@ -15,8 +15,9 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common.my_sql import MySql
 from const import cst
 
-# Output directory
+# Output directory and filename
 OUTPUT_DIR = '/Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data'
+OUTPUT_FILENAME = 'saya365.csv'
 
 # Database name
 DB_NAME = 'fx_saya365'
@@ -24,8 +25,8 @@ DB_NAME = 'fx_saya365'
 # Target tables
 TARGET_TABLES = ['rate', 'swap']
 
-# Required columns
-REQUIRED_COLS = ['DATE', 'USDJPY', 'TRYJPY', 'HKDJPY']
+# Required columns (excluding DATE)
+CURRENCY_COLS = ['USDJPY', 'TRYJPY', 'HKDJPY']
 
 
 def setup_db_config():
@@ -54,18 +55,19 @@ def get_table_columns(mysql, table_name):
         return []
 
 
-def extract_fx_data(mysql, table_name, columns):
-    """Extract all FX data from a table."""
+def extract_table_data(mysql, table_name, columns):
+    """Extract all data from a table."""
     try:
-        # Build column list - check which required columns exist
-        available_cols = [col for col in REQUIRED_COLS if col in columns]
-
-        if 'DATE' not in available_cols:
+        # Check if DATE column exists
+        if 'DATE' not in columns:
             print(f"  ⊘ Skipping {table_name}: no DATE column")
             return None
 
-        if len(available_cols) < 2:  # Need at least DATE and one other column
-            print(f"  ⊘ Skipping {table_name}: insufficient required columns (has: {available_cols})")
+        # Build column list - DATE + available currency columns
+        available_cols = ['DATE'] + [col for col in CURRENCY_COLS if col in columns]
+
+        if len(available_cols) < 2:  # Need at least DATE and one currency column
+            print(f"  ⊘ Skipping {table_name}: insufficient columns (has: {available_cols})")
             return None
 
         col_list = ', '.join([f'`{col}`' for col in available_cols])
@@ -90,14 +92,19 @@ def extract_fx_data(mysql, table_name, columns):
             print(f"  ⊘ No data in {table_name}")
             return None
 
+        # Convert DATE to datetime
+        df['DATE'] = pd.to_datetime(df['DATE'])
+
+        # Rename currency columns with table prefix (but not DATE)
+        rename_dict = {col: f"{table_name}_{col}" for col in available_cols if col != 'DATE'}
+        df = df.rename(columns=rename_dict)
+
         print(f"  ✓ Extracted {len(df)} records from {table_name}")
-        print(f"    Columns: {', '.join(available_cols)}")
+        print(f"    Columns: {', '.join(df.columns.tolist())}")
 
         # Show date range
-        df_temp = df.copy()
-        df_temp['DATE'] = pd.to_datetime(df_temp['DATE'])
-        min_date = df_temp['DATE'].min()
-        max_date = df_temp['DATE'].max()
+        min_date = df['DATE'].min()
+        max_date = df['DATE'].max()
         print(f"    Date range: {min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}")
 
         return df
@@ -111,11 +118,11 @@ def extract_fx_data(mysql, table_name, columns):
 
 def main():
     print("="*70)
-    print("FX Data Extraction")
+    print("FX Data Extraction and Merge")
     print("="*70)
     print(f"Database: {DB_NAME}")
     print(f"Tables: {', '.join(TARGET_TABLES)}")
-    print(f"Output: {OUTPUT_DIR}")
+    print(f"Output: {OUTPUT_FILENAME}")
     print("="*70)
     print()
 
@@ -141,9 +148,8 @@ def main():
         return
 
     try:
-        # Process target tables
-        exported_count = 0
-        total_records = 0
+        # Extract data from all target tables
+        dataframes = {}
 
         for i, table_name in enumerate(TARGET_TABLES, 1):
             print(f"[{i}/{len(TARGET_TABLES)}] Processing table: {table_name}")
@@ -159,25 +165,52 @@ def main():
             print(f"  Available columns: {', '.join(columns)}")
 
             # Extract data
-            df = extract_fx_data(mysql, table_name, columns)
+            df = extract_table_data(mysql, table_name, columns)
 
             if df is not None and not df.empty:
-                # Export to CSV
-                output_file = os.path.join(OUTPUT_DIR_ACTUAL, f"{table_name}.csv")
-                df.to_csv(output_file, index=False, encoding='utf-8-sig')
-                print(f"  ✓ Exported to: {output_file}")
-                exported_count += 1
-                total_records += len(df)
+                dataframes[table_name] = df
 
             print()
 
-        print("="*70)
+        # Merge dataframes on DATE
+        if len(dataframes) == 0:
+            print("✗ No data extracted from any table")
+            return
+
+        print("Merging tables on DATE column...")
+
+        # Start with the first dataframe
+        merged_df = None
+        for table_name, df in dataframes.items():
+            if merged_df is None:
+                merged_df = df
+                print(f"  Base: {table_name} ({len(df)} records)")
+            else:
+                merged_df = pd.merge(merged_df, df, on='DATE', how='outer')
+                print(f"  + {table_name} ({len(df)} records)")
+
+        # Sort by DATE
+        merged_df = merged_df.sort_values('DATE').reset_index(drop=True)
+
+        print(f"\n✓ Merged result: {len(merged_df)} records")
+        print(f"  Columns: {', '.join(merged_df.columns.tolist())}")
+
+        # Show date range
+        min_date = merged_df['DATE'].min()
+        max_date = merged_df['DATE'].max()
+        print(f"  Date range: {min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}")
+
+        # Export to CSV
+        output_file = os.path.join(OUTPUT_DIR_ACTUAL, OUTPUT_FILENAME)
+        merged_df.to_csv(output_file, index=False, encoding='utf-8-sig')
+        print(f"\n✓ Exported to: {output_file}")
+
+        print("\n" + "="*70)
         print(f"SUMMARY")
         print("="*70)
-        print(f"Tables processed: {len(TARGET_TABLES)}")
-        print(f"Tables exported: {exported_count}")
-        print(f"Total records: {total_records}")
-        print(f"Output location: {OUTPUT_DIR_ACTUAL}")
+        print(f"Tables processed: {len(dataframes)}")
+        print(f"Total records: {len(merged_df)}")
+        print(f"Output file: {output_file}")
         print("="*70)
 
     finally:
