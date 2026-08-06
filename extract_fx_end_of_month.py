@@ -1,73 +1,77 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Extract end-of-month data from fx_saya365 database
 Exports data with DATE, USDJPY, TRYJPY, HKD, JPY columns from December 2025 onwards
 """
-import mysql.connector
-import pandas as pd
-from datetime import datetime
+import sys
 import os
+import pandas as pd
 import calendar
+from datetime import datetime
 
-# Database connection parameters
-DB_CONFIG = {
-    'host': 'free-liberty.com',
-    'port': 3306,
-    'user': 'master',
-    'password': 'Shock19800226!',
-    'database': 'fx_saya365',
-    'connection_timeout': 30
-}
+# Add project root to path
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+from common.my_sql import MySql
+from const import cst
 
 # Output directory
 OUTPUT_DIR = '/Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data'
 
+# Database name
+DB_NAME = 'fx_saya365'
+
 # Required columns
 REQUIRED_COLS = ['DATE', 'USDJPY', 'TRYJPY', 'HKD', 'JPY']
+
+
+def setup_db_config():
+    """Setup database configuration in MENU_CSV if not already loaded."""
+    if cst.MENU_CSV['Sql'] is None:
+        # Create configuration DataFrame
+        cst.MENU_CSV['Sql'] = pd.DataFrame([{
+            'DBNAME': 'fx_saya365',
+            'HOST': 'free-liberty.com',
+            'USER': 'master',
+            'PASS': 'Shock19800226!'
+        }])
+        print("✓ Database configuration set up")
+
 
 def get_last_day_of_month(year, month):
     """Get the last day of a given month."""
     return calendar.monthrange(year, month)[1]
 
-def connect_to_db():
-    """Connect to MySQL database."""
-    try:
-        connection = mysql.connector.connect(**DB_CONFIG)
-        print(f"✓ Connected to database: {DB_CONFIG['database']}")
-        return connection
-    except mysql.connector.Error as err:
-        print(f"✗ MySQL Error: {err}")
-        return None
-    except Exception as e:
-        print(f"✗ Error connecting to database: {e}")
-        return None
 
-def get_all_tables(connection):
+def get_all_tables(mysql):
     """Get list of all tables in the database."""
     try:
-        cursor = connection.cursor()
-        cursor.execute("SHOW TABLES")
-        tables = [table[0] for table in cursor.fetchall()]
-        cursor.close()
+        result = mysql.free("SHOW TABLES")
+        if not result:
+            return []
+        tables = [table[0] for table in result]
         print(f"✓ Found {len(tables)} tables")
         return tables
     except Exception as e:
         print(f"✗ Error getting tables: {e}")
         return []
 
-def get_table_columns(connection, table_name):
+
+def get_table_columns(mysql, table_name):
     """Get column names for a table."""
     try:
-        cursor = connection.cursor()
-        cursor.execute(f"SHOW COLUMNS FROM `{table_name}`")
-        columns = [col[0] for col in cursor.fetchall()]
-        cursor.close()
+        result = mysql.free(f"SHOW COLUMNS FROM `{table_name}`")
+        if not result:
+            return []
+        columns = [col[0] for col in result]
         return columns
     except Exception as e:
         print(f"✗ Error getting columns for {table_name}: {e}")
         return []
 
-def extract_end_of_month_data(connection, table_name, columns):
+
+def extract_end_of_month_data(mysql, table_name, columns):
     """Extract end-of-month data from a table."""
     try:
         # Build column list - check which required columns exist
@@ -91,7 +95,14 @@ def extract_end_of_month_data(connection, table_name, columns):
         ORDER BY `DATE`
         """
 
-        df = pd.read_sql(query, connection)
+        result = mysql.free(query)
+
+        if not result:
+            print(f"  ⊘ No data in {table_name} from 2025-12-01 onwards")
+            return None
+
+        # Convert to DataFrame
+        df = pd.DataFrame(result, columns=available_cols)
 
         if df.empty:
             print(f"  ⊘ No data in {table_name} from 2025-12-01 onwards")
@@ -128,11 +139,12 @@ def extract_end_of_month_data(connection, table_name, columns):
         traceback.print_exc()
         return None
 
+
 def main():
     print("="*70)
     print("FX End-of-Month Data Extraction")
     print("="*70)
-    print(f"Database: {DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}")
+    print(f"Database: {DB_NAME}")
     print(f"Period: From December 2025 onwards")
     print(f"Output: {OUTPUT_DIR}")
     print("="*70)
@@ -142,22 +154,26 @@ def main():
     try:
         os.makedirs(OUTPUT_DIR, exist_ok=True)
         print(f"✓ Output directory ready: {OUTPUT_DIR}\n")
+        OUTPUT_DIR_ACTUAL = OUTPUT_DIR
     except Exception as e:
         print(f"✗ Error creating output directory: {e}")
         print("  Using current directory instead")
         OUTPUT_DIR_ACTUAL = '.'
-    else:
-        OUTPUT_DIR_ACTUAL = OUTPUT_DIR
 
-    # Connect to database
-    connection = connect_to_db()
-    if not connection:
+    # Setup database configuration
+    setup_db_config()
+
+    # Connect to database using MySql class
+    print(f"Connecting to database: {DB_NAME}")
+    mysql = MySql(DB_NAME)
+
+    if mysql.cnx is None:
         print("\n✗ Failed to connect to database. Exiting.")
         return
 
     try:
         # Get all tables
-        tables = get_all_tables(connection)
+        tables = get_all_tables(mysql)
         print()
 
         if not tables:
@@ -172,7 +188,7 @@ def main():
             print(f"[{i}/{len(tables)}] Processing table: {table_name}")
 
             # Get columns
-            columns = get_table_columns(connection, table_name)
+            columns = get_table_columns(mysql, table_name)
 
             if not columns:
                 print(f"  ⊘ Could not get columns for {table_name}")
@@ -180,7 +196,7 @@ def main():
                 continue
 
             # Extract data
-            df = extract_end_of_month_data(connection, table_name, columns)
+            df = extract_end_of_month_data(mysql, table_name, columns)
 
             if df is not None and not df.empty:
                 # Export to CSV
@@ -202,8 +218,8 @@ def main():
         print("="*70)
 
     finally:
-        connection.close()
-        print("\n✓ Database connection closed")
+        mysql.close()
+
 
 if __name__ == '__main__':
     try:

@@ -5,9 +5,15 @@
 ## 必要な環境
 
 - Python 3.6以上
+- MyToolプロジェクトの環境
 - 必要なパッケージ:
   - mysql-connector-python
   - pandas
+
+## 特徴
+
+- **MyToolの既存MySQLクラスを使用**: `common/my_sql.py` のMySqlクラスを使用して接続
+- **統一されたログ出力**: MyToolのログシステムと統合
 
 ## インストール
 
