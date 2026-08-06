@@ -109,6 +109,31 @@ def input_box(msg, title, forms, obj='', cancel=False):
             ])] for i in range(0, len(forms))], background_color='#77CCFF'
         )]
 
+    for i in range(0, len(forms)):
+        if 'spin' == obj:
+            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
+                [sg.Text(forms[i][0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
+                 sg.Spin(values=[k for k in range(forms[i][1], forms[i][2] + 1)],
+                         font=('', 16), size=(12, 1), readonly=True)] for i in range(0, len(forms))])]]
+        elif 'input' == obj:
+            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
+                [sg.Text(forms[i][0], font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                         text_color='#000000', background_color='#77CCFF'),
+                 sg.InputText(default_text=forms[i][1], font=('', 16), size=(len(forms[i][0]) * 2, 1))] for i in range(0, len(forms))])]]
+        elif 'combo' == obj:
+            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
+                [sg.Text(forms[i][0], key='act', font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                         text_color='#000000', background_color='#77CCFF'),
+                 sg.Combo(forms[i][1], font=('', 16), size=((len(forms[i][1][0]) if 0 == len(forms[i][0]) else len(forms[i][0])) * 2, 1),
+                          default_value=forms[i][2], readonly=True)] for i in range(0, len(forms))])]]
+        else:
+            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
+                [(sg.Text(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1), text_color='#000000', background_color='#77CCFF')
+                  if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1)))
+                for k in range(0, len(forms[i]))] for i in range(0, len(forms))])]]
+
+    layout = [sg.Column(layout, background_color='#77CCFF')]
+
     window = sg.Window(title, keep_on_top=True, modal=True, background_color='#77CCFF',
                        icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[layout, [sg.Text(msg, background_color='#77CCFF', text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])

@@ -66,9 +66,9 @@ EA_MENU = {
     'EAテスト結合': 'windows.ea_merge_test',
 }
 FXDATA_MENU = {
-    # 'Tick→OHLC': 'windows.convert_mt5/create_all',
-    'Base作成': 'windows.convert_mt5/create_base',
-    'H1D1作成': 'windows.convert_mt5/create_h1_d1',
+    # 'Tick→OHLC': 'mac.convert_mt5/create_all',
+    'Base作成': 'mac.convert_mt5/create_base',
+    'H1D1作成': 'mac.convert_mt5/create_h1_d1',
     }
 FUNC_MENU = {
     '最適化セット': 'DEV',
@@ -88,7 +88,7 @@ HEIGHT = 2 + (2 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP e
 DP_XY_WIDTH = {
     cst.DEV_IP: [0, 170 + (int(len(BTN) + HEIGHT) * 70), 16, 1],
     cst.WEB_IP: [0, (int(len(BTN) + HEIGHT) * 70), 16, 1],
-    cst.MAC_IP: [150, 50 + (int(len(BTN) + HEIGHT) * 50), 13, 1]}
+    cst.MAC_IP: [150, 100 + (int(len(BTN) + HEIGHT) * 50), 13, 1]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
 
@@ -156,6 +156,9 @@ def main():
 
         is_dev = (cst.DEV_IP == WORK_IP)
         if is_dev or cst.MAC_IP == WORK_IP:
+            layout.append([sg.Combo([key for key in FXDATA_MENU],
+                                    default_value='　ヒストリカル', key='ヒストリカル', enable_events=True, readonly=True,
+                                    font=('', 16 * DP[3]), size=XY_SIZE)])
             layout.append([sg.Combo([key for key in MODEL_MENU],
                                     default_value='　時系列モデル', key='時系列モデル', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
@@ -167,9 +170,6 @@ def main():
                                     default_value='　EA', key='EA', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])
         if cst.MAC_IP != WORK_IP:
-            layout.append([sg.Combo([key for key in FXDATA_MENU if is_dev or (not is_dev and 'ALL' == FXDATA_MENU[key])],
-                                    default_value='　ヒストリカル', key='ヒストリカル', enable_events=True, readonly=True,
-                                    font=('', 16 * DP[3]), size=XY_SIZE)])
             layout.append([sg.Combo([key for key in FUNC_MENU if is_dev or (not is_dev and 'ALL' == FUNC_MENU[key])],
                                     default_value='　機能', key='機能', enable_events=True, readonly=True,
                                     font=('', 16 * DP[3]), size=XY_SIZE)])

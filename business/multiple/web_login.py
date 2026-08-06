@@ -36,10 +36,11 @@ class WebLogin:
             com.sleep(1)
             try:
                 if name in ['FXブロード365', '外為オンライン365']:
-                    com.input_box(name, 'ログイン情報',
-                        [['ID　　　', str(menu['ID1'].values[0])], ['パスワード', str(menu['PASS'].values[0])]],
-                        'input')
+                    com.clip_copy(str(menu['ID1'].values[0]))
+                    if com.question('IDに貼り付け「はい」、パスワードに貼り付け「ログイン」', name, '') <= 0:
+                        return self.wd.close()
 
+                    com.clip_copy(str(menu['PASS'].values[0]))
                     return self.wd
                 # 事前画面あり
                 if name in ['ガス']:
@@ -252,6 +253,8 @@ def _get_info(name):
         info = ['ID1', 'txtUserId'], ['', ''], 'txtPassword', '//*[@id="btnLogin"]/div/span'
     elif 'AIゴールド365' == name:
         info = ['ID1', 'userId'], ['', ''], 'password', 'doLogin'
+    elif 'インヴァスト365' == name:
+        info = ['ID1', 'portalId'], ['', ''], 'portalPassword', '/html/body/div/div/div/div[2]/div[2]/div/div/button'
     elif 'FxPro' == name:
         info = ['ID2', 'input-email'], ['', ''], 'login-input-password', 'login-signin-button'
     elif 'MyFx' == name:

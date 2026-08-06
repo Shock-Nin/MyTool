@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+import math
+
 from common import com
 from common import my_sql
 from common import web_driver
@@ -45,16 +47,16 @@ class MyAsset:
                         self.cnx.update(columns, values, TARGET_TABLES[1], '\'' + str(invests[1][i][0]) + '\' = ソート番号')
                         self.cnx.commit()
 
-            payments = self.cnx.select('*', TARGET_TABLES[3], '', 'ORDER BY 年月 DESC, 種別 ASC LIMIT 12')
+            payments = self.cnx.select('*', TARGET_TABLES[3], '', 'ORDER BY 年月 DESC, 種別 ASC LIMIT 15')
             payment_type = {}
 
             for i in range(len(payments[1])):
                 payment = payments[1][i]
                 val = payment[3].replace(')', '').split('(')
-                space = (''.join('  ' for _ in range(6 - len(str(payment[2])))) if len(str(payment[2])) < 5 else '')
+                space = ('      ' if 1 == len(val) else '') + (''.join('  ' for _ in range(8 - len(str(payment[2])))) if len(str(payment[2])) < 7 else '')
                 val = ('  [' + str(round(float(val[0]), 1)).replace('.0', '') +
-                      (']          ' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace('.0', '') + ')]')
-                       + ('    ' if float(val[0]) < 10 else ''))
+                      (']' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace('.0', '') + ')]')
+                       + ('    ' if float(val[0]) < 12 else ''))
                 val = space + format(int(str(payment[2])), ',') + val
 
                 try:
@@ -62,29 +64,41 @@ class MyAsset:
                 except:
                     payment_type[payment[1]] = {payment[0]: val}
 
-            str_payment = '　種別　　　  　 ' + '　　　  　　'.join(key for key in payment_type['外食'])
+            str_payment = '　種別　　  　  　 ' + '　　　  　　'.join(key for key in payment_type['外食'])
 
             str_payment += '\n' + '\n'.join(rows + ''.join('   ' for _ in range(6 - len(rows))) + ' '.join(
                 payment_type[rows][col] + ''.join(' ' for _ in range(22 - len(str(payment_type[rows][col]))))
                 for col in payment_type[rows]) for rows in reversed(payment_type))
 
             summary = self.cnx.select('*', TARGET_TABLES[0], '', '')
-            summary[0] = '　　 '.join(['　 ' + summary[0][i] for i in range(len(summary[0]))])
-
-            str_summary = '\n'.join(['　'.join([(''.join(
-                ['  ' for _ in range(len(str(int(summary[1][i][k]))) + int(len(str(int(summary[1][i][k]))) / 3), 10)])
-                                                if 0 < k < len(summary[1][i]) - 1 else '')
-                + (format(int(str(summary[1][i][k]).replace('.0', '  ')), ',')
-                   if 0 < k < len(summary[1][i]) - 1 else str(summary[1][i][k]))
-                                               + (''.join(['  ' for _ in range(len(summary[1][i][k]), 5)]) if 0 == k else '')
-                for k in range(len(summary[1][i]))]) for i in range(len(summary[1]))])
+            summary[0] = '　　 '.join(['　　 ' + summary[0][i] for i in range(len(summary[0]))])
 
             # 最新日のデータ取得
             before = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1')
             before = [before[0], before[1][0]]
 
-            str_summary = ''.join(summary[0][i] for i in range(len(summary[0]))) + '\n' + str_summary \
-                          + '\n\n楽天カード支払　' + format(before[1][6], ',') + ' | '+ format(before[1][7], ',') \
+            str_summary = ''
+            half = math.ceil(len(summary[1]) / 2)
+            for i in range(half):
+                str_summary += '　'.join(
+                    [('' if k != len(summary[1][i]) - 1 else '   ' if 0 < float(summary[1][i][k].replace('%', '')) < 10 else '')
+                     + (''.join(['  ' + ('' if len(str(int(summary[1][i][k]))) < 6 else ' ')
+                               for _ in range(len(str(int(summary[1][i][k]))) + int(len(str(int(summary[1][i][k]))) / 3), 10) ])
+                      if 0 < k < len(summary[1][i]) - 1 else '') + (format(int(str(summary[1][i][k]).replace('.0', '  ')), ',')
+                      if 0 < k < len(summary[1][i]) - 1 else str(summary[1][i][k])) + ('\t' if 0 == k else '')
+                     for k in range(len(summary[1][i]))]).replace('0%', '　    0%').replace('10　    0%', '    100%')
+                try: str_summary += '　：　' + '　'.join(
+                    [('' if k != len(summary[1][i]) - 1 else '   ' if 0 < float(summary[1][i + half][k].replace('%', '')) < 10 else '')
+                     + (''.join(['  ' + ('' if len(str(int(summary[1][i + half][k]))) < 6 else ' ')
+                               for _ in range(len(str(int(summary[1][i + half][k]))) + int(len(str(int(summary[1][i + half][k]))) / 3), 10)])
+                      if 0 < k < len(summary[1][i + half]) - 1 else '') + (format(int(str(summary[1][i + half][k]).replace('.0', '  ')), ',')
+                      if 0 < k < len(summary[1][i + half]) - 1 else str(summary[1][i + half][k])) + ('\t' if 0 == k else '')
+                     for k in range(len(summary[1][i + half]))]).replace('0%', '　    0%').replace('10　    0%', '    100%')
+                except: pass
+                str_summary += '\n'
+
+            str_summary = '   ：　'.join(''.join(summary[0][i] for i in range(len(summary[0]))) for _ in range(2)) + '\n' + str_summary \
+                          + '\n楽天カード支払　' + format(before[1][6], ',') + ' | '+ format(before[1][7], ',') \
 
             # 本日のデータ取得済みなら中断
             if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
@@ -200,7 +214,7 @@ class MyAsset:
             except: pass
 
         com.dialog_cols(com.str_time()[:10] + '(前回 ' + datetime.datetime.strftime(before[1][0], '%Y-%m-%d') +
-                        ')\n\n' + str_payment + '\n\n' + str_summary + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
+                        ')\n\n' + str_summary + '\n\n完了しました。(' + com.conv_time_str(total_time) + ')',
                         layout, ['l', 'r', 'c', 'r', 'c', 'l',  'r', 'c', 'r'], self.myjob)
         for wd in web_drivers:
             try: wd.close()

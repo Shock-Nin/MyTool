@@ -26,6 +26,9 @@ OUT_BASE_PATH = BASE_PATH + '/Base'
 OUT_H1_PATH = BASE_PATH + '/H1'
 OUT_D1_PATH = BASE_PATH + '/D1'
 
+# 取得開始年（現在年からの相対値、例: -10は10年前から）
+START_YEAR = -14
+
 # 対象通貨リスト
 TARGET_CURRENCIES = ['EURUSD', 'GBPUSD', 'AUDUSD', 'NZDUSD', 'USDJPY', 'USDCAD', 'USDCHF',
                      'USDHKD', 'USDSEK', 'USDPLN', 'USDNOK', 'USDTRY', 'USDZAR', 'USDMXN']
@@ -64,7 +67,7 @@ class ConvertMt5:
         import datetime
         from common import display
         current_year = datetime.datetime.now().year
-        years = [str(y) for y in range(current_year - 10, current_year + 1)]
+        years = [str(y) for y in range(current_year + START_YEAR, current_year + 1)]
         
         result = display.input_box(
             'ティックデータからBase(1時間足OHLC)を作成しますか？',
