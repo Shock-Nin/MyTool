@@ -1,6 +1,6 @@
-# FX End-of-Month Data Extraction
+# FX Data Extraction
 
-このスクリプトは、MySQLデータベース `fx_saya365` から2025年12月以降の月末データを抽出し、CSVファイルとして出力します。
+このスクリプトは、MySQLデータベース `fx_saya365` の rate と swap テーブルから全データを抽出し、CSVファイルとして出力します。
 
 ## 必要な環境
 
@@ -53,16 +53,16 @@ python3 extract_fx_end_of_month.py
 
 1. データベース接続: `free-liberty.com:3306`
 2. データベース: `fx_saya365`
-3. 全テーブルをスキャン
-4. 以下のカラムを含むテーブルからデータ抽出:
+3. 対象テーブル: **rate** と **swap**
+4. 以下のカラムを抽出:
    - DATE (必須)
    - USDJPY
    - TRYJPY
-   - HKD
-   - JPY
-5. 2025年12月1日以降のデータを抽出
-6. 各月の最終日のデータのみをフィルタリング
-7. CSVファイルとして出力
+   - HKDJPY
+5. 全期間のデータを抽出
+6. CSVファイルとして出力
+   - `rate.csv`
+   - `swap.csv`
 
 ## 接続情報
 
@@ -75,7 +75,7 @@ python3 extract_fx_end_of_month.py
 
 - データベースへの接続にはインターネット接続が必要です
 - 出力先ディレクトリが存在しない場合は自動的に作成されます
-- 同名のCSVファイルが存在する場合は上書きされます
+- 同名のCSVファイルが存在する場合は上書きされます (`rate.csv`, `swap.csv`)
 - DATE カラムが存在しないテーブルはスキップされます
 - 必要なカラムが2つ未満のテーブルもスキップされます
 
@@ -109,33 +109,41 @@ py -m pip install mysql-connector-python pandas
 
 ```
 ======================================================================
-FX End-of-Month Data Extraction
+FX Data Extraction
 ======================================================================
-Database: free-liberty.com:3306/fx_saya365
-Period: From December 2025 onwards
+Database: fx_saya365
+Tables: rate, swap
 Output: /Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data
 ======================================================================
 
 ✓ Output directory ready: /Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data
 
-✓ Connected to database: fx_saya365
-✓ Found 5 tables
+✓ Database configuration set up
+Connecting to database: fx_saya365
+MySQL: 接続 [free-liberty.com(fx_saya365)]
 
-[1/5] Processing table: forex_data
-  ✓ Extracted 8 end-of-month records from forex_data
-    Columns: DATE, USDJPY, TRYJPY, HKD, JPY
-  ✓ Exported to: /Users/dsk_nagaoka/.../forex_data_end_of_month.csv
+[1/2] Processing table: rate
+  Available columns: DATE, USDJPY, TRYJPY, HKDJPY
+  ✓ Extracted 1250 records from rate
+    Columns: DATE, USDJPY, TRYJPY, HKDJPY
+    Date range: 2020-01-01 to 2026-08-06
+  ✓ Exported to: /Users/dsk_nagaoka/.../rate.csv
 
-...
+[2/2] Processing table: swap
+  Available columns: DATE, USDJPY, TRYJPY, HKDJPY
+  ✓ Extracted 1250 records from swap
+    Columns: DATE, USDJPY, TRYJPY, HKDJPY
+    Date range: 2020-01-01 to 2026-08-06
+  ✓ Exported to: /Users/dsk_nagaoka/.../swap.csv
 
 ======================================================================
 SUMMARY
 ======================================================================
-Tables processed: 5
-Tables exported: 3
-Total records: 24
+Tables processed: 2
+Tables exported: 2
+Total records: 2500
 Output location: /Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキュメント/Data
 ======================================================================
 
-✓ Database connection closed
+MySQL: 切断
 ```

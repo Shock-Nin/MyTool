@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Extract end-of-month data from fx_saya365 database
-Exports data with DATE, USDJPY, TRYJPY, HKD, JPY columns from December 2025 onwards
+Extract FX data from fx_saya365 database
+Exports data with DATE, USDJPY, TRYJPY, HKDJPY columns from rate and swap tables
 """
 import sys
 import os
 import pandas as pd
-import calendar
 from datetime import datetime
 
 # Add project root to path
@@ -22,8 +21,11 @@ OUTPUT_DIR = '/Users/dsk_nagaoka/Library/CloudStorage/OneDrive-個人用/ドキ�
 # Database name
 DB_NAME = 'fx_saya365'
 
+# Target tables
+TARGET_TABLES = ['rate', 'swap']
+
 # Required columns
-REQUIRED_COLS = ['DATE', 'USDJPY', 'TRYJPY', 'HKD', 'JPY']
+REQUIRED_COLS = ['DATE', 'USDJPY', 'TRYJPY', 'HKDJPY']
 
 
 def setup_db_config():
@@ -39,25 +41,6 @@ def setup_db_config():
         print("✓ Database configuration set up")
 
 
-def get_last_day_of_month(year, month):
-    """Get the last day of a given month."""
-    return calendar.monthrange(year, month)[1]
-
-
-def get_all_tables(mysql):
-    """Get list of all tables in the database."""
-    try:
-        result = mysql.free("SHOW TABLES")
-        if not result:
-            return []
-        tables = [table[0] for table in result]
-        print(f"✓ Found {len(tables)} tables")
-        return tables
-    except Exception as e:
-        print(f"✗ Error getting tables: {e}")
-        return []
-
-
 def get_table_columns(mysql, table_name):
     """Get column names for a table."""
     try:
@@ -71,8 +54,8 @@ def get_table_columns(mysql, table_name):
         return []
 
 
-def extract_end_of_month_data(mysql, table_name, columns):
-    """Extract end-of-month data from a table."""
+def extract_fx_data(mysql, table_name, columns):
+    """Extract all FX data from a table."""
     try:
         # Build column list - check which required columns exist
         available_cols = [col for col in REQUIRED_COLS if col in columns]
@@ -87,51 +70,37 @@ def extract_end_of_month_data(mysql, table_name, columns):
 
         col_list = ', '.join([f'`{col}`' for col in available_cols])
 
-        # Query to get data from December 2025 onwards
+        # Query to get all data
         query = f"""
         SELECT {col_list}
         FROM `{table_name}`
-        WHERE `DATE` >= '2025-12-01'
         ORDER BY `DATE`
         """
 
         result = mysql.free(query)
 
         if not result:
-            print(f"  ⊘ No data in {table_name} from 2025-12-01 onwards")
+            print(f"  ⊘ No data in {table_name}")
             return None
 
         # Convert to DataFrame
         df = pd.DataFrame(result, columns=available_cols)
 
         if df.empty:
-            print(f"  ⊘ No data in {table_name} from 2025-12-01 onwards")
+            print(f"  ⊘ No data in {table_name}")
             return None
 
-        # Convert DATE column to datetime
-        df['DATE'] = pd.to_datetime(df['DATE'])
-
-        # Extract year, month, day
-        df['year'] = df['DATE'].dt.year
-        df['month'] = df['DATE'].dt.month
-        df['day'] = df['DATE'].dt.day
-
-        # Get last day of month for each row
-        df['last_day'] = df.apply(lambda x: get_last_day_of_month(x['year'], x['month']), axis=1)
-
-        # Filter only end-of-month records
-        end_of_month_df = df[df['day'] == df['last_day']].copy()
-
-        # Drop helper columns
-        end_of_month_df = end_of_month_df.drop(columns=['year', 'month', 'day', 'last_day'])
-
-        if end_of_month_df.empty:
-            print(f"  ⊘ No end-of-month data in {table_name}")
-            return None
-
-        print(f"  ✓ Extracted {len(end_of_month_df)} end-of-month records from {table_name}")
+        print(f"  ✓ Extracted {len(df)} records from {table_name}")
         print(f"    Columns: {', '.join(available_cols)}")
-        return end_of_month_df
+
+        # Show date range
+        df_temp = df.copy()
+        df_temp['DATE'] = pd.to_datetime(df_temp['DATE'])
+        min_date = df_temp['DATE'].min()
+        max_date = df_temp['DATE'].max()
+        print(f"    Date range: {min_date.strftime('%Y-%m-%d')} to {max_date.strftime('%Y-%m-%d')}")
+
+        return df
 
     except Exception as e:
         print(f"  ✗ Error extracting data from {table_name}: {e}")
@@ -142,10 +111,10 @@ def extract_end_of_month_data(mysql, table_name, columns):
 
 def main():
     print("="*70)
-    print("FX End-of-Month Data Extraction")
+    print("FX Data Extraction")
     print("="*70)
     print(f"Database: {DB_NAME}")
-    print(f"Period: From December 2025 onwards")
+    print(f"Tables: {', '.join(TARGET_TABLES)}")
     print(f"Output: {OUTPUT_DIR}")
     print("="*70)
     print()
@@ -172,20 +141,12 @@ def main():
         return
 
     try:
-        # Get all tables
-        tables = get_all_tables(mysql)
-        print()
-
-        if not tables:
-            print("✗ No tables found in database")
-            return
-
-        # Process each table
+        # Process target tables
         exported_count = 0
         total_records = 0
 
-        for i, table_name in enumerate(tables, 1):
-            print(f"[{i}/{len(tables)}] Processing table: {table_name}")
+        for i, table_name in enumerate(TARGET_TABLES, 1):
+            print(f"[{i}/{len(TARGET_TABLES)}] Processing table: {table_name}")
 
             # Get columns
             columns = get_table_columns(mysql, table_name)
@@ -195,12 +156,14 @@ def main():
                 print()
                 continue
 
+            print(f"  Available columns: {', '.join(columns)}")
+
             # Extract data
-            df = extract_end_of_month_data(mysql, table_name, columns)
+            df = extract_fx_data(mysql, table_name, columns)
 
             if df is not None and not df.empty:
                 # Export to CSV
-                output_file = os.path.join(OUTPUT_DIR_ACTUAL, f"{table_name}_end_of_month.csv")
+                output_file = os.path.join(OUTPUT_DIR_ACTUAL, f"{table_name}.csv")
                 df.to_csv(output_file, index=False, encoding='utf-8-sig')
                 print(f"  ✓ Exported to: {output_file}")
                 exported_count += 1
@@ -211,7 +174,7 @@ def main():
         print("="*70)
         print(f"SUMMARY")
         print("="*70)
-        print(f"Tables processed: {len(tables)}")
+        print(f"Tables processed: {len(TARGET_TABLES)}")
         print(f"Tables exported: {exported_count}")
         print(f"Total records: {total_records}")
         print(f"Output location: {OUTPUT_DIR_ACTUAL}")
