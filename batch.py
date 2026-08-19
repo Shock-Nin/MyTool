@@ -30,7 +30,6 @@ class Batch:
 
     def do(self):
         jobs = []
-        SayaDaily(self.myjob).get_csv()
 
         if 'Win' == cst.PC:
             job = self.__windows()
