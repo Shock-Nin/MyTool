@@ -11,7 +11,14 @@
       "Bash(pushd \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\")",
       "Bash(copy \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\\\\dist\\\\mytool.exe\" \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\\\\mytool.exe\")",
       "Bash(copy \"C:\\\\Users\\\\Administrator\\\\Documents\\\\MyTool\\\\dist\\\\mytool.exe\" \"G:\\\\マイドライブ\\\\受け渡し\\\\mytool.exe\")",
-      "Bash(cp:*)"
+      "Bash(cp:*)",
+      "Bash(dd:*)",
+      "Bash(python3:*)",
+      "Bash(pip3 list:*)",
+      "Bash(timeout 30 sh -c:*)",
+      "mcp__jetbrains-file__WriteFile",
+      "mcp__jetbrains-file__EditFile",
+      "Bash(/Library/Developer/CommandLineTools/usr/bin/python3:*)"
     ]
   }
 }
