@@ -298,12 +298,21 @@ When Claude Code works on this project:
 
 ## Git Workflow
 
-Current branch: `claude/update-claude-md-ZLnZW`
+Current branch: `master`
 
-When making changes:
-1. Develop on the feature branch
-2. Commit with clear Japanese or English messages
-3. Push to origin with: `git push -u origin claude/update-claude-md-ZLnZW`
+### When the user says "コミット" (commit):
+1. Run `git status`, `git diff`, and `git log` to understand changes
+2. Stage relevant files (avoid `.DS_Store` and other system files)
+3. Create a commit with a clear Japanese message
+4. **Automatically push to remote** with `git push`
+5. Verify with `git status`
+
+**IMPORTANT**: When the user requests a commit, always push to remote automatically unless they explicitly say not to.
+
+Commit message format:
+- Use Japanese for commit messages (matching existing style)
+- Include Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+- Use HEREDOC format for proper formatting
 
 ## Project Context
 
