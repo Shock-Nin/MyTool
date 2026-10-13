@@ -1,0 +1,8 @@
+{
+  "backend": "ollama",
+  "models": {
+    "ollama": "qwen3:8b"
+  },
+  "ollama_base": "qwen3:8b",
+  "ollama_name": "my-assistant"
+}
