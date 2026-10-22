@@ -38,13 +38,9 @@ def load_profile(path: Path) -> list[str]:
     return list(dict.fromkeys(t for t in texts if t))   # 空行・重複を除く
 
 
-def main():
-    p = argparse.ArgumentParser(description="profile.json を記憶に反映")
-    p.add_argument("--profile", type=Path, default=PROFILE_FILE)
-    p.add_argument("--no-sync", action="store_true", help="アプリ側への同期をしない")
-    a = p.parse_args()
-
-    texts = load_profile(a.profile)
+def apply_profile(profile: Path = PROFILE_FILE, sync: bool = True) -> None:
+    """profile.json の内容を記憶に反映（update_profile.py からも呼ばれる）"""
+    texts = load_profile(profile)
     today = datetime.now().strftime("%Y-%m-%d")
     stats = {}
 
@@ -69,9 +65,17 @@ def main():
         print("  （変更なし）")
     print(f"  その他の記憶 {stats['kept']}件はそのまま残しています")
 
-    if not a.no_sync:
-        from export_to_apps import sync
-        sync()
+    if sync:
+        from export_to_apps import sync as sync_apps
+        sync_apps()
+
+
+def main():
+    p = argparse.ArgumentParser(description="profile.json を記憶に反映")
+    p.add_argument("--profile", type=Path, default=PROFILE_FILE)
+    p.add_argument("--no-sync", action="store_true", help="アプリ側への同期をしない")
+    a = p.parse_args()
+    apply_profile(a.profile, sync=not a.no_sync)
 
 
 if __name__ == "__main__":
