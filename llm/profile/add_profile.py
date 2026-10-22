@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-profile.json（プロフィールの原本）を記憶 llm_memory.json に反映する
+profile.json（プロフィールの原本）を記憶 data/llm_memory.json に反映する
 
 - profile.json を書き換えて実行すれば、記憶の中のプロフィールも差し替わる
   （/remember で追加した記憶や会話の要約はそのまま残る）
@@ -12,13 +12,16 @@ profile.json の書き方（どちらでもOK）:
     {"facts": [{"text": "プロフィール1"}, ...]}
 
 使い方:
-    python3 add_profile.py
+    python3 ~/MyTool/llm/profile/add_profile.py
 """
 import argparse
 import json
 import sys
 from datetime import datetime
 from pathlib import Path
+
+# 1つ上の llm フォルダにある chat_memory.py を読み込めるようにする
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from chat_memory import MEMORY_FILE, PROFILE_FILE, update_memory
 

@@ -153,7 +153,7 @@ class WebLogin:
                         try:
                             com.sleep(1)
                             account = menu['ID2'].values[0].split('_')
-                            select = web_driver.find_element(self.wd, 'j_id_1h:INPUT_BRANCH_CODE')
+                            select = web_driver.find_element(self.wd, 'j_id_1i:INPUT_BRANCH_CODE')
 
                             options = Select(select).options
                             num = -1
@@ -163,16 +163,16 @@ class WebLogin:
                                     break
                             Select(select).select_by_index(num)
 
-                            elm = '//*[@id="j_id_1h"]/section[2]/div[1]/div/fieldset[2]/label/input'
+                            elm = '//*[@id="j_id_1i"]/section[2]/div[1]/div/fieldset[2]/label/input'
                             web_driver.find_element(self.wd, elm).send_keys('')
                             web_driver.find_element(self.wd, elm).send_keys(account[1])
 
-                            elm = '//*[@id="j_id_1h"]/section[2]/div[2]/div/fieldset[1]/input'
+                            elm = '//*[@id="j_id_1i"]/section[2]/div[2]/div/fieldset[1]/input'
                             web_driver.find_element(self.wd, elm).send_keys('')
                             web_driver.find_element(self.wd, elm).send_keys('ああああ')
 
                             com.sleep(1)
-                            web_driver.find_element(self.wd, 'j_id_7d').click()
+                            web_driver.find_element(self.wd, 'j_id_7e').click()
                         except:
                             pass
 
@@ -232,7 +232,7 @@ def _get_info(name):
     elif '楽天銀行' == name:
         info = ['ID1', 'LOGIN:USER_ID'], ['', ''], 'LOGIN:LOGIN_PASSWORD', '//*[@id="LOGIN"]/div[7]/a'
     elif 'JREBANK' == name:
-        info = ['ID1', '//*[@id="j_id_t"]/div[1]/div[2]/fieldset/p[1]/input'], ['', ''], 'j_id_t:LOGIN_PASSWORD', 'j_id_22'
+        info = ['ID1', '//*[@id="j_id_v"]/div[1]/div[2]/fieldset/p[1]/input'], ['', ''], 'j_id_v:LOGIN_PASSWORD', 'j_id_24'
     # 生活
     elif '水道' == name:
         info = ['ID1', 'userName'], ['', ''], 'password', '//*[@id="loginForm"]/table/tbody/tr[4]/td/input'

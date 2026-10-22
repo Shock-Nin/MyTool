@@ -3,7 +3,7 @@
 記憶を Ollama / LM Studio のアプリ画面でも使えるように書き出す
 
 - Ollama   : 記憶入りのカスタムモデル（既定名 my-assistant）を作成・更新
-- LM Studio: lmstudio_system_prompt.txt を更新（--copy でクリップボードにも入る）
+- LM Studio: export/lmstudio_system_prompt.txt を更新（--copy でクリップボードにも入る）
 
 chat_memory.py の終了時と add_profile.py の実行後に自動で呼ばれるので、
 普段は手で実行する必要はありません。
@@ -19,16 +19,17 @@ import shutil
 import subprocess
 import sys
 
-from chat_memory import (HERE, MEMORY_FILE, build_system_prompt, load_memory,
+from chat_memory import (EXPORT_DIR, MEMORY_FILE, build_system_prompt, load_memory,
                          load_settings, update_settings)
 
-LM_FILE = HERE / "lmstudio_system_prompt.txt"
-MODELFILE = HERE / "Modelfile"
+LM_FILE = EXPORT_DIR / "lmstudio_system_prompt.txt"
+MODELFILE = EXPORT_DIR / "Modelfile"
 
 
 def _write_if_changed(path, text) -> bool:
     if path.exists() and path.read_text(encoding="utf-8") == text:
         return False
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return True
 
@@ -89,7 +90,7 @@ def main():
     a = p.parse_args()
     mem = load_memory(MEMORY_FILE)
     if not mem["facts"] and not mem["summaries"]:
-        sys.exit(f"[エラー] 記憶が空です: {MEMORY_FILE}\n先に add_profile.py を実行してください。")
+        sys.exit(f"[エラー] 記憶が空です: {MEMORY_FILE}\n先に profile/add_profile.py を実行してください。")
     sync(a.base, a.name, a.copy)
 
 

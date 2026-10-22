@@ -18,7 +18,8 @@
       "Bash(timeout 30 sh -c:*)",
       "mcp__jetbrains-file__WriteFile",
       "mcp__jetbrains-file__EditFile",
-      "Bash(/Library/Developer/CommandLineTools/usr/bin/python3:*)"
+      "Bash(/Library/Developer/CommandLineTools/usr/bin/python3:*)",
+      "Bash(git rm:*)"
     ]
   }
 }

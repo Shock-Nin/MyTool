@@ -3,11 +3,12 @@
 記憶付きローカルLLMチャット（Ollama / LM Studio 共通）
 
 このフォルダの中だけで完結します（フォルダごと移動してもそのまま動きます）。
-  llm_memory.json             記憶（プロフィール・/remember・会話の要約）
-  profile.json                プロフィールの原本 → add_profile.py で記憶に反映
-  settings.json               前回のバックエンド・モデル等（自動保存）
-  lmstudio_system_prompt.txt  LM Studio用（自動更新）
-  Modelfile                   Ollama用（自動更新）
+  data/llm_memory.json        記憶（プロフィール・/remember・会話の要約）
+  profile/profile.json        プロフィールの原本 → profile/add_profile.py で記憶に反映
+  profile/*.pdf, *.xlsx       置く・更新するとプロフィールを自動で作り直す（profile/update_profile.py）
+  data/settings.json          前回のバックエンド・モデル等（自動保存）
+  export/lmstudio_system_prompt.txt  LM Studio用（自動更新）
+  export/Modelfile            Ollama用（自動更新）
 
 使い方:
     python3 chat_memory.py                       # 前回と同じ設定で起動
@@ -32,9 +33,11 @@ from pathlib import Path
 
 # ---------- 設定 ----------
 HERE = Path(__file__).resolve().parent
-MEMORY_FILE = HERE / "llm_memory.json"
-SETTINGS_FILE = HERE / "settings.json"
-PROFILE_FILE = HERE / "profile.json"
+DATA_DIR = HERE / "data"
+EXPORT_DIR = HERE / "export"
+MEMORY_FILE = DATA_DIR / "llm_memory.json"
+SETTINGS_FILE = DATA_DIR / "settings.json"
+PROFILE_FILE = HERE / "profile" / "profile.json"
 DEFAULT_MEMORY = MEMORY_FILE  # 旧版との互換用
 
 BACKENDS = {
@@ -85,6 +88,7 @@ def read_json(path: Path, default: dict) -> dict:
 
 def write_json(path: Path, data: dict) -> None:
     path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     tmp.replace(path)
@@ -386,12 +390,23 @@ class Session:
             self.history.append({"role": "assistant", "content": strip_think(reply)})
 
 
+def check_profile_sources(backend, model):
+    """profile フォルダの PDF / Excel が追加・更新されていれば、プロフィールを作り直す"""
+    try:
+        sys.path.insert(0, str(HERE / "profile"))
+        from update_profile import check_and_update
+        check_and_update(backend, model)
+    except Exception as e:   # 失敗してもチャットは起動する
+        print(f"[プロフィール] 資料のチェックをスキップしました: {e}")
+
+
 def main():
     p = argparse.ArgumentParser(description="記憶付きローカルLLMチャット")
     p.add_argument("--backend", choices=BACKENDS, help="省略時は前回と同じ")
     p.add_argument("--model", help="省略時は前回と同じ（初回は最初に見つかったもの）")
     p.add_argument("--memory", type=Path, default=MEMORY_FILE, help="記憶ファイル（通常は指定不要）")
     a = p.parse_args()
+    check_profile_sources(a.backend, a.model)
     try:
         Session(a.backend or load_settings()["backend"], a.model, a.memory).run()
     except ConnectionError as e:
