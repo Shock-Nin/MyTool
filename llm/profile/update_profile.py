@@ -4,7 +4,8 @@ profile フォルダの PDF / Excel からプロフィールを作り、記憶�
 
 - profile/ に置いた .pdf .xlsx .xlsm を読み、ローカルLLMで要点にまとめて profile.json に書き込む
 - 追加・更新・削除されたファイルだけを処理（中身のハッシュで判定するので、無駄に作り直さない）
-- profile.json に手で書いた行（ファイル由来でない行）はそのまま残す
+- profile.json には最新の資料から作った行だけを残す
+  （古い行・手で書いた行は profile_backup.json に日時付きで追記して保管。毎回ファイルは増えない）
 - 反映後、記憶（data/llm_memory.json）・LM Studio用テキスト・Ollamaモデルも自動で更新
 - chat_memory.py の起動時にも自動でチェックされる
 
@@ -24,6 +25,7 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 PROFILE_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROFILE_DIR.parent))   # llm フォルダの chat_memory.py を読み込む
@@ -33,6 +35,7 @@ from chat_memory import (BACKENDS, DATA_DIR, PROFILE_FILE, http_json, load_setti
                          read_json, resolve_model, strip_think, update_json)
 
 SOURCES_FILE = DATA_DIR / "profile_sources.json"   # 取り込み済みファイルのハッシュ
+BACKUP_FILE = PROFILE_DIR / "profile_backup.json"  # 外した古いプロフィールを蓄積する1ファイル
 TARGET_EXT = {".pdf", ".xlsx", ".xlsm"}
 MAX_CHARS = 12000      # LLMに渡す最大文字数（1ファイルあたり）
 MAX_LINES = 12         # 1ファイルから作るプロフィールの最大行数
@@ -151,7 +154,17 @@ def find_changes(force=False):
     return changed, deleted
 
 
-def check_and_update(backend: str | None = None, model: str | None = None,
+def archive(facts: list[dict], reason: str) -> None:
+    """外したプロフィール行をバックアップファイル1つに追記する"""
+    if not facts:
+        return
+    entry = {"archived_at": datetime.now().strftime("%Y-%m-%d %H:%M"), "reason": reason,
+             "facts": [{k: f[k] for k in ("text", "date", "source_file") if k in f} for f in facts]}
+    update_json(BACKUP_FILE, {"history": []}, lambda b: b["history"].append(entry))
+    print(f"  古いプロフィール {len(facts)}行を {BACKUP_FILE.name} に保管しました")
+
+
+def check_and_update(backend: Optional[str] = None, model: Optional[str] = None,
                      force=False, sync=True) -> bool:
     """変更があれば profile.json と記憶を更新。更新したら True"""
     changed, deleted = find_changes(force)
@@ -174,13 +187,21 @@ def check_and_update(backend: str | None = None, model: str | None = None,
         return False
 
     today = datetime.now().strftime("%Y-%m-%d")
+    removed = []
 
     def apply_profile_json(data):
-        # 手書きの行は残し、対象ファイル由来の行だけ差し替える
+        # 最新の資料から作った行だけを残す
+        #   ・今回読み直したファイル → 新しい行に差し替え
+        #   ・変化のないファイル（読み取り失敗を含む） → そのまま
+        #   ・削除されたファイル由来の行・手書きの行 → 外してバックアップへ
         done = set(results) | set(deleted)
-        facts = [f for f in data.get("facts", []) if f.get("source_file") not in done]
+        alive = {p.name for p in target_files()}
+        old = data.get("facts", [])
+        facts = [f for f in old if f.get("source_file") in alive and f.get("source_file") not in done]
         for name, (lines, _) in results.items():
             facts += [{"text": t, "date": today, "source_file": name} for t in lines]
+        new_texts = {f["text"] for f in facts}
+        removed.extend(f for f in old if f["text"] not in new_texts)
         data["facts"] = facts
 
     def apply_sources(src):
@@ -191,6 +212,7 @@ def check_and_update(backend: str | None = None, model: str | None = None,
 
     update_json(PROFILE_FILE, {"facts": []}, apply_profile_json)   # 書く直前に読み直す
     update_json(SOURCES_FILE, {}, apply_sources)
+    archive(removed, "資料の更新: " + ", ".join(list(results) + [f"{n}(削除)" for n in deleted]))
     for name, (lines, _) in results.items():
         print(f"  {name} から {len(lines)}行:")
         for t in lines:

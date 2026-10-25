@@ -1,0 +1,24 @@
+{
+  "description": "英語日記の三者添削。日付付きの英文日記を受け取ったら、下の会話に送り、結果を統合して diary.json に記録する",
+  "created": "2026-10-26",
+  "chats": {
+    "ChatGPT": "https://chatgpt.com/c/6ade7d4d-8d2c-83ee-a5fa-c71df29dc3a3",
+    "Gemini": "https://gemini.google.com/app/ef1c3f9a06003c07",
+    "Copilot": "https://copilot.com/chat/conversation/87a21b6a-9f2f-43f0-92a5-73c081ee37b9"
+  },
+  "format": "①文法チェック（原文→修正文と理由）②修正後の英文全文③日本語訳④解説⑤評価：文法・語彙・自然さ各5段階＋総合CEFR目安⑥弱点と使えた表現",
+  "entry_fields": [
+    "date",
+    "original",
+    "corrected",
+    "ja",
+    "events",
+    "errors",
+    "scores",
+    "cefr",
+    "weak_points",
+    "good_expressions"
+  ],
+  "trigger": "日時の行＋本文がすべて英文のメッセージ",
+  "same_day_rule": "同じ日に複数回送られた場合は指摘を受けての修正。最後のものを正式な記録として上書きし、revision を1つ増やす"
+}

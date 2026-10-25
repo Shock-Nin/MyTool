@@ -18,6 +18,7 @@ import argparse
 import shutil
 import subprocess
 import sys
+from typing import Optional
 
 from chat_memory import (EXPORT_DIR, MEMORY_FILE, build_system_prompt, load_memory,
                          load_settings, update_settings)
@@ -40,7 +41,7 @@ def _ollama_has(name: str) -> bool:
         line.split()[0] in (name, f"{name}:latest") for line in r.stdout.splitlines()[1:] if line.strip())
 
 
-def sync(base: str | None = None, name: str | None = None, copy: bool = False) -> None:
+def sync(base: Optional[str] = None, name: Optional[str] = None, copy: bool = False) -> None:
     if base or name:
         update_settings(lambda s: s.update({k: v for k, v in
                                             (("ollama_base", base), ("ollama_name", name)) if v}))

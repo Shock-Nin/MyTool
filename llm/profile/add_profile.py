@@ -23,7 +23,7 @@ from pathlib import Path
 # 1つ上の llm フォルダにある chat_memory.py を読み込めるようにする
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from chat_memory import MEMORY_FILE, PROFILE_FILE, update_memory
+from chat_memory import MEMORY_FILE, PROFILE_FILE, update_memory  # type: ignore
 
 
 def load_profile(path: Path) -> list[str]:
@@ -66,7 +66,7 @@ def apply_profile(profile: Path = PROFILE_FILE, sync: bool = True) -> None:
     print(f"  その他の記憶 {stats['kept']}件はそのまま残しています")
 
     if sync:
-        from export_to_apps import sync as sync_apps
+        from export_to_apps import sync as sync_apps  # type: ignore
         sync_apps()
 
 

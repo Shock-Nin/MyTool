@@ -30,6 +30,7 @@ import urllib.error
 import urllib.request
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 # ---------- 設定 ----------
 HERE = Path(__file__).resolve().parent
@@ -47,6 +48,7 @@ BACKENDS = {
 MAX_SUMMARIES_IN_PROMPT = 5   # システムプロンプトに入れる直近の要約数
 MAX_SUMMARIES_STORED = 50     # ファイルに残す要約の上限
 BASE_PROMPT = "あなたは日本語で簡潔かつ正確に答えるアシスタントです。"
+PINNED_CATEGORIES = ["PR", "英語力"]  # システムプロンプトの先頭に出すカテゴリ（この順）
 
 EMPTY_MEMORY = {"facts": [], "summaries": []}
 DEFAULT_SETTINGS = {
@@ -121,7 +123,9 @@ def build_system_prompt(mem: dict) -> str:
     parts = [BASE_PROMPT]
     if mem["facts"]:
         parts.append("\n# ユーザーについて覚えていること")
-        parts += [f"- {f['text']}" for f in mem["facts"]]
+        pinned = [f for c in PINNED_CATEGORIES for f in mem["facts"] if f.get("category") == c]
+        rest = [f for f in mem["facts"] if f.get("category") not in PINNED_CATEGORIES]
+        parts += [f"- {f['text']}" for f in pinned + rest]
     recent = mem["summaries"][-MAX_SUMMARIES_IN_PROMPT:]
     if recent:
         parts.append("\n# これまでの会話の要約（古い順）")
@@ -157,7 +161,7 @@ def _norm(name: str) -> str:
     return re.sub(r"[^a-z0-9]", "", name.lower().split("/")[-1])
 
 
-def resolve_model(backend: str, requested: str | None) -> str:
+def resolve_model(backend: str, requested: Optional[str]) -> str:
     """指定 → 前回 → 先頭 の順でモデルを決める。名前の表記ゆれは自動で補正"""
     models = list_models(BACKENDS[backend])
     if not models:
@@ -204,7 +208,7 @@ def strip_think(text: str) -> str:
     return re.sub(r"<think>.*?</think>", "", text, flags=re.S).strip()
 
 
-def summarize(base: str, model: str, history: list) -> str | None:
+def summarize(base: str, model: str, history: list) -> Optional[str]:
     convo = [m for m in history if m["role"] != "system"]
     if not any(m["role"] == "assistant" and m["content"] for m in convo):
         return None
@@ -226,13 +230,13 @@ def summarize(base: str, model: str, history: list) -> str | None:
 # ---------- チャット ----------
 
 class Session:
-    def __init__(self, backend: str, model: str | None, mem_path: Path):
+    def __init__(self, backend: str, model: Optional[str], mem_path: Path):
         self.mem_path = Path(mem_path)
         self.dirty = False   # 記憶が変わったら True（終了時にアプリ側へ同期）
         self.set_backend(backend, model)
         self.reset()
 
-    def set_backend(self, backend: str, model: str | None = None):
+    def set_backend(self, backend: str, model: Optional[str] = None):
         self.model = resolve_model(backend, model)
         self.backend, self.base = backend, BACKENDS[backend]
         remember_choice(self.backend, self.model)
@@ -394,7 +398,7 @@ def check_profile_sources(backend, model):
     """profile フォルダの PDF / Excel が追加・更新されていれば、プロフィールを作り直す"""
     try:
         sys.path.insert(0, str(HERE / "profile"))
-        from update_profile import check_and_update
+        from update_profile import check_and_update  # type: ignore
         check_and_update(backend, model)
     except Exception as e:   # 失敗してもチャットは起動する
         print(f"[プロフィール] 資料のチェックをスキップしました: {e}")
