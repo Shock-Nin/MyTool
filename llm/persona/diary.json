@@ -1,3 +1,68 @@
 {
-  "entries": []
+  "entries": [
+    {
+      "date": "2026-10-26",
+      "original": "I had an online job interview, but the client’s impression of me was not good.\nI thought that I wouldn’t pass it.\n\nAfter the interview, I visited a real estate agency, but when I tried to apply for an apartment, the agent said that I couldn’t apply because I didn’t have an emergency contact.\n\nAfter that, I visited another agency that I currently use and decided to apply for a different apartment.\n\nThen I went home, took a break, and went to have my teeth whitened.\n\nAfter the treatment, I went straight home.",
+      "corrected": "I had an online job interview, but the client's impression of me was not good. I thought that I wouldn't pass the interview.\n\nAfter the interview, I visited a real estate agency, but when I tried to apply for an apartment, the agent said that I couldn't apply because I didn't have an emergency contact.\n\nAfter that, I visited another agency that I currently use and decided to apply for a different apartment.\n\nThen I went home, took a break, and went to have my teeth whitened.\n\nAfter the treatment, I went straight home.",
+      "ja": "オンラインで仕事の面接を受けたが、先方の私への印象は良くなかった。面接には受からないだろうと思った。面接の後、不動産会社に行ったが、物件に申し込もうとしたところ、緊急連絡先がいないので申し込めないと言われた。その後、今使っている別の不動産会社に行き、別の物件に申し込むことにした。それから帰宅して休憩し、歯のホワイトニングを受けに行った。施術の後はまっすぐ帰宅した。",
+      "events": [
+        "オンライン面接（手応えが悪く、不合格を予想）",
+        "不動産会社で物件申し込み→緊急連絡先がなく申し込み不可",
+        "利用中の別の不動産会社で別物件に申し込むことに",
+        "帰宅・休憩",
+        "歯のホワイトニング施術",
+        "施術後まっすぐ帰宅"
+      ],
+      "errors": [
+        {
+          "original": "I wouldn’t pass it",
+          "fix": "I wouldn't pass the interview / I wouldn't get the job",
+          "reason": "itが何を指すか少し曖昧。文法的な誤りではない（三者共通の任意指摘）"
+        }
+      ],
+      "scores": {
+        "ChatGPT": {
+          "overall_5": 4.3,
+          "cefr": "B1+"
+        },
+        "Gemini": {
+          "grammar": 5,
+          "vocabulary": 5,
+          "naturalness": 4.5,
+          "cefr": "B2"
+        },
+        "Copilot": {
+          "grammar": 5,
+          "vocabulary": 4,
+          "naturalness": 4.5,
+          "cefr": "B2"
+        },
+        "total_100": 92,
+        "grammar_40": 40,
+        "vocabulary_30": 26,
+        "naturalness_30": 26
+      },
+      "cefr": "B1+〜B2",
+      "weak_points": [
+        "代名詞で済ませて対象が曖昧になる（pass it）"
+      ],
+      "good_expressions": [
+        "the client's impression of me",
+        "I thought that I wouldn't ...",
+        "tried to apply for an apartment",
+        "couldn't apply because I didn't have an emergency contact（時制の一致）",
+        "apply for a different apartment",
+        "that I currently use",
+        "went home, took a break, and went（並列）",
+        "have my teeth whitened（使役）",
+        "I went straight home"
+      ],
+      "updated_at": "2026-10-26 10:49",
+      "revision": 3,
+      "score_history": [
+        72,
+        85
+      ]
+    }
+  ]
 }

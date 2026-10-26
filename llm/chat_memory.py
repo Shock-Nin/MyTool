@@ -66,6 +66,7 @@ HELP = """\
   /backend <名前>    ollama / lmstudio を切り替え
   /model [名前]      モデル一覧を表示、または切り替え
   /sync              LM Studio用テキストとOllamaモデルを今すぐ更新
+  /health [日数]     健康ログ（ヘルスケアの前日確定値）を会話に読み込む（既定14日。健康の話題では自動）
   /new               今の会話を要約して保存し、新しい会話を始める
   /exit              要約して保存し終了（/exit! で保存せず終了）
   /help              このヘルプ
@@ -243,6 +244,20 @@ class Session:
 
     def reset(self):
         self.history = [{"role": "system", "content": build_system_prompt(load_memory(self.mem_path))}]
+        self.health_loaded = False
+
+    def load_health(self, days: int = 14, quiet: bool = False):
+        """健康ログを記憶ではなく、この会話だけに読み込む"""
+        sys.path.insert(0, str(HERE / "health"))
+        try:
+            from health import context_text
+            text = context_text(days)
+        except Exception as e:
+            print(f"[健康ログ読み込み失敗] {e}")
+            return
+        self.history.append({"role": "system", "content": text})
+        self.health_loaded = True
+        print(text if not quiet else "（健康ログを読み込みました）")
 
     def refresh_prompt(self):
         self.history[0]["content"] = build_system_prompt(load_memory(self.mem_path))
@@ -339,6 +354,8 @@ class Session:
                     print(("* " if m == self.model else "  ") + m)
         elif cmd == "/sync":
             self.sync_apps(force=True)
+        elif cmd == "/health":
+            self.load_health(int(arg) if arg.isdigit() else 14)
         elif cmd == "/new":
             self.save_summary()
             self.reset()
@@ -376,6 +393,15 @@ class Session:
                 except (ConnectionError, urllib.error.HTTPError) as e:
                     print(f"[エラー] {e}")
                 continue
+
+            if not self.health_loaded:
+                sys.path.insert(0, str(HERE / "health"))
+                try:
+                    from health import is_health_topic
+                    if is_health_topic(line):
+                        self.load_health(quiet=True)
+                except ImportError:
+                    pass
 
             self.history.append({"role": "user", "content": line})
             print("AI> ", end="", flush=True)

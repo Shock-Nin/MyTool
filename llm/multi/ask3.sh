@@ -4,6 +4,7 @@
 #   ./ask3.sh "質問文"
 #   ./ask3.sh -f question.md
 #   ./ask3.sh -o ~/Desktop/answer.md "質問文"
+#   ./ask3.sh -H "最近の体重の傾向は？"     # 健康ログ（直近14日）を質問の前に付ける。-H 30 で30日
 #   MODELS="ollama:qwen2.5:7b,lmstudio:openai/gpt-oss-20b" ./ask3.sh "質問文"
 #
 # 既定では Ollama と LM Studio で動いているモデルを自動検出し、先頭から NUM_MODELS 体
@@ -32,6 +33,7 @@ command -v jq   >/dev/null 2>&1 || die "jq が必要です。brew install jq を
 # ---------- 引数 ----------
 QUESTION=""
 OUT_COPY=""
+HEALTH_DAYS=""
 while [ $# -gt 0 ]; do
   case "$1" in
     -f|--file)
@@ -43,8 +45,13 @@ while [ $# -gt 0 ]; do
       OUT_COPY="$2"; shift 2 ;;
     -n|--num)
       NUM_MODELS="$2"; shift 2 ;;
+    -H|--health)
+      case "$2" in
+        ''|*[!0-9]*) HEALTH_DAYS=14; shift ;;
+        *) HEALTH_DAYS="$2"; shift 2 ;;
+      esac ;;
     -h|--help)
-      sed -n '2,18p' "$0"; exit 0 ;;
+      sed -n '2,16p' "$0"; exit 0 ;;
     *)
       if [ -z "$QUESTION" ]; then QUESTION="$1"; else QUESTION="$QUESTION $1"; fi
       shift ;;
@@ -54,6 +61,13 @@ done
 case "$QUESTION" in
   "" ) die "質問を渡してください。例: ./ask3.sh \"質問文\"" ;;
 esac
+
+if [ -n "$HEALTH_DAYS" ]; then
+  HEALTH_TEXT="$(python3 "$BASE_DIR/../health/health.py" "$HEALTH_DAYS")" || die "健康ログを読めません"
+  QUESTION="$HEALTH_TEXT
+
+$QUESTION"
+fi
 
 # ---------- 稼働中モデルの検出 ----------
 list_ollama() {
