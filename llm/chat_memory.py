@@ -404,6 +404,17 @@ def check_profile_sources(backend, model):
         print(f"[プロフィール] 資料のチェックをスキップしました: {e}")
 
 
+def check_apps_sync():
+    """記憶がアプリ側（LM Studio用テキスト・Ollamaモデル）より新しければ同期する"""
+    try:
+        from export_to_apps import needs_sync, sync
+        if needs_sync():
+            print("[同期] 記憶の更新を LM Studio / Ollama に反映します")
+            sync()
+    except Exception as e:   # 失敗してもチャットは起動する
+        print(f"[同期] アプリ側への同期をスキップしました: {e}")
+
+
 def main():
     p = argparse.ArgumentParser(description="記憶付きローカルLLMチャット")
     p.add_argument("--backend", choices=BACKENDS, help="省略時は前回と同じ")
@@ -411,6 +422,7 @@ def main():
     p.add_argument("--memory", type=Path, default=MEMORY_FILE, help="記憶ファイル（通常は指定不要）")
     a = p.parse_args()
     check_profile_sources(a.backend, a.model)
+    check_apps_sync()
     try:
         Session(a.backend or load_settings()["backend"], a.model, a.memory).run()
     except ConnectionError as e:

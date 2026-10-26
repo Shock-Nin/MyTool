@@ -21,6 +21,7 @@ import argparse
 import hashlib
 import shutil
 import subprocess
+import re
 import sys
 import time
 from datetime import datetime
@@ -40,6 +41,10 @@ TARGET_EXT = {".pdf", ".xlsx", ".xlsm"}
 MAX_CHARS = 12000      # LLMに渡す最大文字数（1ファイルあたり）
 MAX_LINES = 12         # 1ファイルから作るプロフィールの最大行数
 WATCH_INTERVAL = 5     # --watch の確認間隔（秒）
+EXCLUDE_HEADINGS = ("【現職】",)                       # 作らない見出し
+EXCLUDE_PATTERN = re.compile(r"[＋+、・]?現職(\[[^\]]*\])?")   # 他の行に混ざった現職の記述も消す
+ELAPSED_PATTERN = re.compile(r"\d+年目")                          # 時間とともに変わる「〇年目」は消す
+REF_PATTERN = re.compile(r"\[No[^\]]*\]")                       # 資料内の参照番号 [No1] などは消す
 
 PROMPT = """以下はユーザー本人のプロフィール資料（{name}）から取り出したテキストです。
 チャットAIに「ユーザーについての前提知識」として渡すため、本人に関する重要な事実だけを抜き出してください。
@@ -48,6 +53,9 @@ PROMPT = """以下はユーザー本人のプロフィール資料（{name}）�
 - 日本語で最大{max_lines}行。1行に1つの話題
 - 各行は「【見出し】内容」の形式（例: 【経歴】IT業界12年目。それ以前は飲食業で調理13年）
 - 資料に書かれていないことは書かない。推測しない
+- 現在の勤務先・所属・現職に関することは書かない（【現職】の行は作らず、他の行にも含めない）
+- 現在も続いている経験の経過年数（「12年目」「IT歴12年」など時間とともに変わる数字）は書かず、開始年（例: 2015年〜）で表す。終わった経歴の期間はそのまま書いてよい
+- 資料内の参照番号（[No1] や [No4〜18] など）は書かない
 - 同じ内容の英語版などは重複させない
 - 行以外の前置き・説明・まとめは出力しない
 
@@ -113,6 +121,9 @@ def to_profile_lines(answer: str) -> list[str]:
     lines = []
     for line in strip_think(answer).splitlines():
         line = line.strip().lstrip("-・*•0123456789.） )").strip()
+        if line.startswith(EXCLUDE_HEADINGS):
+            continue
+        line = REF_PATTERN.sub("", ELAPSED_PATTERN.sub("", EXCLUDE_PATTERN.sub("", line)))
         if len(line) > 3 and line not in lines:
             lines.append(line)
     tagged = [l for l in lines if l.startswith("【")]   # 形式どおりの行があれば、それだけ使う
