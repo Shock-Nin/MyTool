@@ -40,4 +40,4 @@ python3 -m pip install Pillow
 python3 -m pip install mysql
 python3 -m pip install mysql-connector
 python3 -m pip install py2app
-pip3 install pypdf
+python3 -m pip install pypdf
