@@ -19,7 +19,8 @@
       "mcp__jetbrains-file__WriteFile",
       "mcp__jetbrains-file__EditFile",
       "Bash(/Library/Developer/CommandLineTools/usr/bin/python3:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(git restore:*)"
     ]
   }
 }

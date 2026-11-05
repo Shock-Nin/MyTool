@@ -1,10 +1,43 @@
 {
-  "description": "英語日記の三者添削。日付付きの英文日記を受け取ったら、下の会話に送り、結果を統合して diary.json に記録する",
+  "description": "英語日記の三者添削。日付付きの英文日記を受け取ったら、その日付の会話に送り、結果を統合して diary.json に記録する",
   "created": "2026-10-26",
-  "chats": {
-    "ChatGPT": "https://chatgpt.com/c/6ade7d4d-8d2c-83ee-a5fa-c71df29dc3a3",
-    "Gemini": "https://gemini.google.com/app/ef1c3f9a06003c07",
-    "Copilot": "https://copilot.com/chat/conversation/87a21b6a-9f2f-43f0-92a5-73c081ee37b9"
+  "updated": "2026-11-06",
+  "chat_rule": "1日ごとに新しい会話を作る。その日の最初の日記はChatGPT・Gemini・Copilotそれぞれで新規チャットを開いて送り、会話タイトルを日記の日付（YYYY-MM-DD）に変更し、URLを chats_by_date に記録する。同じ日付の修正版は chats_by_date のその日の会話に送る",
+  "title_format": "YYYY-MM-DD",
+  "chats_by_date": {
+    "2026-11-01": {
+      "ChatGPT": "https://chatgpt.com/c/6ae6c872-bb48-83e8-a923-cff4e7b44159",
+      "Gemini": "https://gemini.google.com/app/b530d4e60159641b",
+      "Copilot": "https://copilot.com/chat/conversation/b4642956-7ed1-4aad-b28a-798252eab63c"
+    },
+    "2026-11-02": {
+      "ChatGPT": "https://chatgpt.com/c/6ae8634e-6844-83ee-91e0-d01ce4358ddf",
+      "Gemini": "https://gemini.google.com/app/cac559c8b0c87f5a",
+      "Copilot": "https://copilot.com/chat/conversation/9fe329d7-ae3a-4e2e-b7e3-54032f7d6086"
+    },
+    "2026-11-03": {
+      "ChatGPT": "https://chatgpt.com/c/6ae9ac3f-20f8-83ec-89b1-9f15c0877efb",
+      "Gemini": "https://gemini.google.com/app/ba98b03da441937e",
+      "Copilot": "https://copilot.com/chat/conversation/dff3da1f-a8de-4e45-bfb9-ab35db2c8f90"
+    },
+    "2026-11-04": {
+      "ChatGPT": "https://chatgpt.com/c/6aeb1a0a-ac58-83ee-a87b-3d85ce7979aa",
+      "Gemini": "https://gemini.google.com/app/da953d39ad798225",
+      "Copilot": "https://copilot.com/chat/conversation/addfae54-9a96-44ea-ac3f-9a046202e146"
+    },
+    "2026-11-05": {
+      "ChatGPT": "https://chatgpt.com/c/6aecf58e-c274-83ee-9067-f62a959b6dd6",
+      "Gemini": "https://gemini.google.com/app/9bf8942b931e0c23",
+      "Copilot": "https://copilot.com/chat/conversation/47f00676-9426-4202-bf31-184daeda4d92"
+    }
+  },
+  "legacy_chats": {
+    "note": "2026-10-26〜10-31 に使っていた共通の日記会話",
+    "urls": {
+      "ChatGPT": "https://chatgpt.com/c/6ade7d4d-8d2c-83ee-a5fa-c71df29dc3a3",
+      "Gemini": "https://gemini.google.com/app/ef1c3f9a06003c07",
+      "Copilot": "https://copilot.com/chat/conversation/87a21b6a-9f2f-43f0-92a5-73c081ee37b9"
+    }
   },
   "format": "①文法チェック（原文→修正文と理由）②修正後の英文全文③日本語訳④解説⑤評価：文法・語彙・自然さ各5段階＋総合CEFR目安⑥弱点と使えた表現",
   "entry_fields": [
@@ -17,9 +50,10 @@
     "scores",
     "cefr",
     "weak_points",
-    "good_expressions"
+    "good_expressions",
+    "score_history"
   ],
   "trigger": "日時の行＋本文がすべて英文のメッセージ",
-  "same_day_rule": "同じ日に複数回送られた場合は指摘を受けての修正。最後のものを正式な記録として上書きし、revision を1つ増やす",
+  "same_day_rule": "同じ日に複数回送られた場合は指摘を受けての修正。本文・添削は最後のものを正式な記録として上書きし、revision を1つ増やす。採点（scores・cefr）は上書きせず、score_history に修正回ごと（revision・記録時刻・内訳・三者評価・CEFR）に追記して履歴を残す",
   "scoring": "1日分を100点満点で評価（文法40・語彙30・自然さ30）。三者の5段階評価を参考にClaudeが算出。persona の【英語力】は直近の評価をもとに月1回、承認を得て更新"
 }

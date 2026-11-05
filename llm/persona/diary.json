@@ -1,68 +1,1337 @@
 {
-  "entries": [
+ "entries": [
+  {
+   "date": "2026-10-26",
+   "original": "I had an online job interview, but the client’s impression of me was not good.\nI thought that I wouldn’t pass it.\n\nAfter the interview, I visited a real estate agency, but when I tried to apply for an apartment, the agent said that I couldn’t apply because I didn’t have an emergency contact.\n\nAfter that, I visited another agency that I currently use and decided to apply for a different apartment.\n\nThen I went home, took a break, and went to have my teeth whitened.\n\nAfter the treatment, I went straight home.",
+   "corrected": "I had an online job interview, but the client's impression of me was not good. I thought that I wouldn't pass the interview.\n\nAfter the interview, I visited a real estate agency, but when I tried to apply for an apartment, the agent said that I couldn't apply because I didn't have an emergency contact.\n\nAfter that, I visited another agency that I currently use and decided to apply for a different apartment.\n\nThen I went home, took a break, and went to have my teeth whitened.\n\nAfter the treatment, I went straight home.",
+   "ja": "オンラインで仕事の面接を受けたが、先方の私への印象は良くなかった。面接には受からないだろうと思った。面接の後、不動産会社に行ったが、物件に申し込もうとしたところ、緊急連絡先がいないので申し込めないと言われた。その後、今使っている別の不動産会社に行き、別の物件に申し込むことにした。それから帰宅して休憩し、歯のホワイトニングを受けに行った。施術の後はまっすぐ帰宅した。",
+   "events": [
+    "オンライン面接（手応えが悪く、不合格を予想）",
+    "不動産会社で物件申し込み→緊急連絡先がなく申し込み不可",
+    "利用中の別の不動産会社で別物件に申し込むことに",
+    "帰宅・休憩",
+    "歯のホワイトニング施術",
+    "施術後まっすぐ帰宅"
+   ],
+   "errors": [
     {
-      "date": "2026-10-26",
-      "original": "I had an online job interview, but the client’s impression of me was not good.\nI thought that I wouldn’t pass it.\n\nAfter the interview, I visited a real estate agency, but when I tried to apply for an apartment, the agent said that I couldn’t apply because I didn’t have an emergency contact.\n\nAfter that, I visited another agency that I currently use and decided to apply for a different apartment.\n\nThen I went home, took a break, and went to have my teeth whitened.\n\nAfter the treatment, I went straight home.",
-      "corrected": "I had an online job interview, but the client's impression of me was not good. I thought that I wouldn't pass the interview.\n\nAfter the interview, I visited a real estate agency, but when I tried to apply for an apartment, the agent said that I couldn't apply because I didn't have an emergency contact.\n\nAfter that, I visited another agency that I currently use and decided to apply for a different apartment.\n\nThen I went home, took a break, and went to have my teeth whitened.\n\nAfter the treatment, I went straight home.",
-      "ja": "オンラインで仕事の面接を受けたが、先方の私への印象は良くなかった。面接には受からないだろうと思った。面接の後、不動産会社に行ったが、物件に申し込もうとしたところ、緊急連絡先がいないので申し込めないと言われた。その後、今使っている別の不動産会社に行き、別の物件に申し込むことにした。それから帰宅して休憩し、歯のホワイトニングを受けに行った。施術の後はまっすぐ帰宅した。",
-      "events": [
-        "オンライン面接（手応えが悪く、不合格を予想）",
-        "不動産会社で物件申し込み→緊急連絡先がなく申し込み不可",
-        "利用中の別の不動産会社で別物件に申し込むことに",
-        "帰宅・休憩",
-        "歯のホワイトニング施術",
-        "施術後まっすぐ帰宅"
-      ],
-      "errors": [
-        {
-          "original": "I wouldn’t pass it",
-          "fix": "I wouldn't pass the interview / I wouldn't get the job",
-          "reason": "itが何を指すか少し曖昧。文法的な誤りではない（三者共通の任意指摘）"
-        }
-      ],
-      "scores": {
-        "ChatGPT": {
-          "overall_5": 4.3,
-          "cefr": "B1+"
-        },
-        "Gemini": {
-          "grammar": 5,
-          "vocabulary": 5,
-          "naturalness": 4.5,
-          "cefr": "B2"
-        },
-        "Copilot": {
-          "grammar": 5,
-          "vocabulary": 4,
-          "naturalness": 4.5,
-          "cefr": "B2"
-        },
-        "total_100": 92,
-        "grammar_40": 40,
-        "vocabulary_30": 26,
-        "naturalness_30": 26
-      },
-      "cefr": "B1+〜B2",
-      "weak_points": [
-        "代名詞で済ませて対象が曖昧になる（pass it）"
-      ],
-      "good_expressions": [
-        "the client's impression of me",
-        "I thought that I wouldn't ...",
-        "tried to apply for an apartment",
-        "couldn't apply because I didn't have an emergency contact（時制の一致）",
-        "apply for a different apartment",
-        "that I currently use",
-        "went home, took a break, and went（並列）",
-        "have my teeth whitened（使役）",
-        "I went straight home"
-      ],
-      "updated_at": "2026-10-26 10:49",
-      "revision": 3,
-      "score_history": [
-        72,
-        85
-      ]
+     "original": "I wouldn’t pass it",
+     "fix": "I wouldn't pass the interview / I wouldn't get the job",
+     "reason": "itが何を指すか少し曖昧。文法的な誤りではない（三者共通の任意指摘）"
     }
-  ]
+   ],
+   "scores": {
+    "ChatGPT": {
+     "overall_5": 4.3,
+     "cefr": "B1+"
+    },
+    "Gemini": {
+     "grammar": 5,
+     "vocabulary": 5,
+     "naturalness": 4.5,
+     "cefr": "B2"
+    },
+    "Copilot": {
+     "grammar": 5,
+     "vocabulary": 4,
+     "naturalness": 4.5,
+     "cefr": "B2"
+    },
+    "total_100": 92,
+    "grammar_40": 40,
+    "vocabulary_30": 26,
+    "naturalness_30": 26
+   },
+   "cefr": "B1+〜B2",
+   "weak_points": [
+    "代名詞で済ませて対象が曖昧になる（pass it）"
+   ],
+   "good_expressions": [
+    "the client's impression of me",
+    "I thought that I wouldn't ...",
+    "tried to apply for an apartment",
+    "couldn't apply because I didn't have an emergency contact（時制の一致）",
+    "apply for a different apartment",
+    "that I currently use",
+    "went home, took a break, and went（並列）",
+    "have my teeth whitened（使役）",
+    "I went straight home"
+   ],
+   "updated_at": "2026-10-26 10:49",
+   "revision": 3,
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": null,
+     "scores": {
+      "total_100": 72
+     },
+     "cefr": null
+    },
+    {
+     "revision": 2,
+     "recorded_at": null,
+     "scores": {
+      "total_100": 85
+     },
+     "cefr": null
+    },
+    {
+     "revision": 3,
+     "recorded_at": "2026-10-26 10:49",
+     "scores": {
+      "ChatGPT": {
+       "overall_5": 4.3,
+       "cefr": "B1+"
+      },
+      "Gemini": {
+       "grammar": 5,
+       "vocabulary": 5,
+       "naturalness": 4.5,
+       "cefr": "B2"
+      },
+      "Copilot": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4.5,
+       "cefr": "B2"
+      },
+      "total_100": 92,
+      "grammar_40": 40,
+      "vocabulary_30": 26,
+      "naturalness_30": 26
+     },
+     "cefr": "B1+〜B2"
+    }
+   ]
+  },
+  {
+   "date": "2026-10-27",
+   "original": "After work, I took the train to one stop past my shop.\n\nIt was nothing to do today.",
+   "corrected": "After work, I took the train to the station one stop past my usual stop.\n\nThere was nothing to do today.",
+   "ja": "仕事の後、電車に乗っていつもの駅の1駅先まで行った。今日は特にすることがなかった。",
+   "events": [
+    "仕事の後、電車でいつもの駅（店の最寄り）の1駅先まで行った",
+    "今日は特にすることがなかった"
+   ],
+   "errors": [
+    {
+     "original": "It was nothing to do today.",
+     "fix": "There was nothing to do today. / I had nothing to do today.",
+     "reason": "「〜がない」は存在構文 There was を使う。It was は状態の説明（It was boring など）。三者共通の指摘"
+    },
+    {
+     "original": "one stop past my shop",
+     "fix": "one stop past my usual stop / the station nearest my shop",
+     "reason": "shop は「店」なので駅を指すなら stop/station。店の最寄り駅の意味なら the station nearest my shop（ChatGPT・Gemini指摘、Copilotは店の意味として許容）"
+    },
+    {
+     "original": "took the train to one stop past",
+     "fix": "took the train to the station one stop past ... / got off one stop past ...",
+     "reason": "通じるが、the station を補うか got off を使うと着いた場所が明確（任意指摘）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "overall_5": 3.0,
+     "cefr": "A2+"
+    },
+    "Gemini": {
+     "grammar": 3.5,
+     "vocabulary": 4,
+     "naturalness": 3.5,
+     "cefr": "A2+"
+    },
+    "Copilot": {
+     "grammar": 4,
+     "vocabulary": 3,
+     "naturalness": 4,
+     "cefr": "B1"
+    },
+    "total_100": 71,
+    "grammar_40": 28,
+    "vocabulary_30": 22,
+    "naturalness_30": 21
+   },
+   "cefr": "A2+〜B1（2文のみのため参考値）",
+   "weak_points": [
+    "There was（存在構文）と It was の混同",
+    "駅を指すのに shop を使った（stop / station との使い分け）"
+   ],
+   "good_expressions": [
+    "After work",
+    "I took the train",
+    "one stop past ...（1駅先）"
+   ],
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-10-27 20:57",
+     "scores": {
+      "ChatGPT": {
+       "overall_5": 3.0,
+       "cefr": "A2+"
+      },
+      "Gemini": {
+       "grammar": 3.5,
+       "vocabulary": 4,
+       "naturalness": 3.5,
+       "cefr": "A2+"
+      },
+      "Copilot": {
+       "grammar": 4,
+       "vocabulary": 3,
+       "naturalness": 4,
+       "cefr": "B1"
+      },
+      "total_100": 71,
+      "grammar_40": 28,
+      "vocabulary_30": 22,
+      "naturalness_30": 21
+     },
+     "cefr": "A2+〜B1（2文のみのため参考値）"
+    }
+   ],
+   "revision": 1,
+   "updated_at": "2026-10-27 20:57"
+  },
+  {
+   "date": "2026-10-28",
+   "original": "I had a day off and did the laundry.\n\nIn the late morning, I had a rice bowl with eel and egg for lunch, and went for a walk around Waseda.\n\nOn my way home, I heard that I passed a guarantor company’s screening from a real estate agency and bought some food and stamps.\n\nWhen I got home, I drank alcohol and organized this month’s receipts.",
+   "corrected": "I had a day off and did the laundry.\n\nIn the late morning, I had a rice bowl with eel and egg for an early lunch and went for a walk around Waseda.\n\nOn my way home, I heard from the real estate agency that I had passed the guarantor company's screening, and I bought some food and stamps.\n\nWhen I got home, I drank alcohol and organized this month's receipts.",
+   "ja": "今日は休みで、洗濯をした。午前中の遅めの時間に、早めの昼食としてうな玉丼を食べ、早稲田周辺を散歩した。帰宅途中、不動産会社から保証会社の審査に通ったと連絡があり、食料品と切手を買った。帰宅後、お酒を飲み、今月の領収書を整理した。",
+   "events": [
+    "休日。洗濯をした",
+    "午前中にうな玉丼を早めの昼食に食べ、早稲田周辺を散歩",
+    "帰宅途中、不動産会社から保証会社の審査に通過したと連絡があった",
+    "食料品と切手を購入",
+    "帰宅後に飲酒、今月の領収書を整理"
+   ],
+   "errors": [
+    {
+     "original": "I heard that I passed a guarantor company’s screening from a real estate agency",
+     "fix": "I heard from the real estate agency that I had passed the guarantor company's screening",
+     "reason": "誰から聞いたかは heard from A that B の語順で動詞の直後に置く（文末の from は screening にかかって読める）。審査通過は連絡より前なので had passed が明確。passed でも日常英語では可（三者共通）"
+    },
+    {
+     "original": "and bought some food and stamps",
+     "fix": ", and I bought some food and stamps",
+     "reason": "前の that 節が長いので、主語 I を補うと「連絡を受けた」と「買った」の区別がはっきりする（ChatGPT・Copilot・Geminiとも修正文で反映）"
+    },
+    {
+     "original": "for lunch, and went",
+     "fix": "for an early lunch and went",
+     "reason": "同じ主語の並列なのでカンマ不要（Copilot・ChatGPT）。午前中なので early lunch が具体的（ChatGPT、任意）"
+    },
+    {
+     "original": "drank alcohol",
+     "fix": "had a drink（任意）",
+     "reason": "原文も正しい。had a drink は1杯の含みがあるので量を限定しないなら原文のままでよい（ChatGPT）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "overall_5": 4.0,
+     "cefr": "B1+"
+    },
+    "Gemini": {
+     "grammar": 4.5,
+     "vocabulary": 5,
+     "naturalness": 4.5,
+     "cefr": "B1+"
+    },
+    "Copilot": {
+     "grammar": 5,
+     "vocabulary": 4,
+     "naturalness": 4.5,
+     "cefr": "B1+〜B2"
+    },
+    "total_100": 87,
+    "grammar_40": 35,
+    "vocabulary_30": 27,
+    "naturalness_30": 25
+   },
+   "cefr": "B1+",
+   "weak_points": [
+    "情報源の語順（heard that ... from A → heard from A that ...）",
+    "前後関係を示す過去完了（had passed）",
+    "日本語の直訳表現（初稿：a day off / before-noon / while back home。修正版で解消）"
+   ],
+   "good_expressions": [
+    "I had a day off",
+    "did the laundry",
+    "In the late morning",
+    "went for a walk around Waseda",
+    "On my way home",
+    "passed a guarantor company's screening",
+    "organized this month's receipts"
+   ],
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": null,
+     "scores": {
+      "total_100": 72
+     },
+     "cefr": null
+    },
+    {
+     "revision": 2,
+     "recorded_at": "2026-10-28 08:10",
+     "scores": {
+      "ChatGPT": {
+       "overall_5": 4.0,
+       "cefr": "B1+"
+      },
+      "Gemini": {
+       "grammar": 4.5,
+       "vocabulary": 5,
+       "naturalness": 4.5,
+       "cefr": "B1+"
+      },
+      "Copilot": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4.5,
+       "cefr": "B1+〜B2"
+      },
+      "total_100": 87,
+      "grammar_40": 35,
+      "vocabulary_30": 27,
+      "naturalness_30": 25
+     },
+     "cefr": "B1+"
+    }
+   ],
+   "updated_at": "2026-10-28 08:10",
+   "revision": 2
+  },
+  {
+   "date": "2026-10-29",
+   "original": "After work, I went to relax at my usual spa via Suidobashi.",
+   "corrected": "After work, I went to my usual spa via Suidobashi to relax.",
+   "ja": "仕事の後、水道橋経由でいつものスパへリラックスしに行った。",
+   "events": [
+    "仕事の後、水道橋経由でいつものスパへリラックスしに行った"
+   ],
+   "errors": [
+    {
+     "original": "I went to relax at my usual spa via Suidobashi",
+     "fix": "I went to my usual spa via Suidobashi to relax（任意）/ I went via Suidobashi to relax at my usual spa",
+     "reason": "文法の誤りはなし（三者共通）。via は移動の動詞・行き先の近くに置くと経路がはっきりする（Copilot・ChatGPT。Geminiは原文のままで可）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "overall_5": 5.0,
+     "cefr": "B1"
+    },
+    "Gemini": {
+     "grammar": 5,
+     "vocabulary": 5,
+     "naturalness": 5,
+     "cefr": "B1"
+    },
+    "Copilot": {
+     "grammar": 5,
+     "vocabulary": 4,
+     "naturalness": 4.5,
+     "cefr": "B1+〜B2"
+    },
+    "total_100": 95,
+    "grammar_40": 40,
+    "vocabulary_30": 28,
+    "naturalness_30": 27
+   },
+   "cefr": "B1（1文のみのため参考値）",
+   "weak_points": [
+    "経由地（via）の位置：移動の動詞・行き先の近くに置くと明確",
+    "1文のみで表現の幅が測りにくい"
+   ],
+   "good_expressions": [
+    "After work",
+    "went to relax（目的の不定詞）",
+    "my usual spa（いつもの〜）",
+    "via Suidobashi（〜経由で）"
+   ],
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-10-29 12:32",
+     "scores": {
+      "ChatGPT": {
+       "overall_5": 5.0,
+       "cefr": "B1"
+      },
+      "Gemini": {
+       "grammar": 5,
+       "vocabulary": 5,
+       "naturalness": 5,
+       "cefr": "B1"
+      },
+      "Copilot": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4.5,
+       "cefr": "B1+〜B2"
+      },
+      "total_100": 95,
+      "grammar_40": 40,
+      "vocabulary_30": 28,
+      "naturalness_30": 27
+     },
+     "cefr": "B1（1文のみのため参考値）"
+    }
+   ],
+   "revision": 1,
+   "updated_at": "2026-10-29 12:32"
+  },
+  {
+   "date": "2026-10-30",
+   "original": "My real estate agency told me that I had passed the owner’s screening.\n\nI took the train straight home and found a package that had been left in front of my door.\n\nThen, I sent my business report to my contract company.",
+   "corrected": "My real estate agency told me that I had passed the landlord's screening.\n\nI took the train straight home and found a package that had been left in front of my door.\n\nThen, I sent my business report to the company I'm contracted with.",
+   "ja": "不動産会社から、大家さんの入居審査に通ったと連絡があった。電車でまっすぐ帰宅し、ドアの前に置かれていた荷物を見つけた。その後、契約している会社に業務報告書を送った。",
+   "events": [
+    "不動産会社から大家（オーナー）審査に通過したと連絡があった",
+    "電車でまっすぐ帰宅",
+    "ドアの前に荷物が置かれていた（置き配）",
+    "契約している会社に業務報告書を送った"
+   ],
+   "errors": [
+    {
+     "original": "the owner’s screening",
+     "fix": "the landlord's screening（任意）",
+     "reason": "誤りではない。賃貸の大家なら landlord が一般的（ChatGPT・Copilot）。Geminiは owner’s screening のままで的確と評価"
+    },
+    {
+     "original": "to my contract company",
+     "fix": "to the company I'm contracted with / to my contracting agency / to the company I work with / my client company",
+     "reason": "contract company（名詞＋名詞）は英語では不自然で意味が曖昧（三者共通、今朝の指摘と同じ）。関係に応じて選ぶ：契約先＝the company I'm contracted with（ChatGPT）、仲介・派遣元＝my contracting agency（Gemini）、取引先・顧客＝the company I work with / my client company（Copilot）"
+    },
+    {
+     "original": "business report",
+     "fix": "business report（そのままで可）/ work report",
+     "reason": "誤りではない（Gemini・Copilot）。日常の業務報告なら work report も可（ChatGPT、任意）"
+    },
+    {
+     "original": "My real estate agency told me",
+     "fix": "そのままで可 / My real estate agent told me",
+     "reason": "会社からの連絡なら agency で正しい。担当者個人なら agent（ChatGPT）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "overall_5": 4.3,
+     "cefr": "B1+（文法はB2相当）"
+    },
+    "Gemini": {
+     "grammar": 5,
+     "vocabulary": 4.5,
+     "naturalness": 4.5,
+     "cefr": "B2"
+    },
+    "Copilot": {
+     "grammar": 5,
+     "vocabulary": 4,
+     "naturalness": 4.5,
+     "cefr": "B2"
+    },
+    "total_100": 93,
+    "grammar_40": 40,
+    "vocabulary_30": 26,
+    "naturalness_30": 27
+   },
+   "cefr": "B2（3文のため参考値。ChatGPTはB1+）",
+   "weak_points": [
+    "契約先を表す名詞（contract company → the company I'm contracted with / contracting agency）。今朝と同じ指摘が残っている",
+    "賃貸の文脈では owner より landlord が一般的"
+   ],
+   "good_expressions": [
+    "told me that I had passed（間接話法＋過去完了）",
+    "passed the owner’s screening（審査に通る）",
+    "took the train straight home",
+    "a package that had been left in front of my door（過去完了受動態）",
+    "had passed / had been left の使い分け"
+   ],
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": null,
+     "scores": {
+      "total_100": 92
+     },
+     "cefr": null
+    },
+    {
+     "revision": 2,
+     "recorded_at": null,
+     "scores": {
+      "total_100": 93
+     },
+     "cefr": null
+    },
+    {
+     "revision": 3,
+     "recorded_at": "2026-10-30 11:57",
+     "scores": {
+      "ChatGPT": {
+       "overall_5": 4.3,
+       "cefr": "B1+（文法はB2相当）"
+      },
+      "Gemini": {
+       "grammar": 5,
+       "vocabulary": 4.5,
+       "naturalness": 4.5,
+       "cefr": "B2"
+      },
+      "Copilot": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4.5,
+       "cefr": "B2"
+      },
+      "total_100": 93,
+      "grammar_40": 40,
+      "vocabulary_30": 26,
+      "naturalness_30": 27
+     },
+     "cefr": "B2（3文のため参考値。ChatGPTはB1+）"
+    }
+   ],
+   "revision": 3,
+   "updated_at": "2026-10-30 11:57"
+  },
+  {
+   "date": "2026-10-31",
+   "original": "I went to Yokosuka to relax for my weekend trip spa.\n\nWhile I was there, I bought some food at the spa.\n\nAfter the spa, I took the train home, got off via Jimbocho, and had dinner at a Takoyaki bar.\n\nMy iPhone battery was almost dead, so the battery lost very fast.",
+   "corrected": "I went to Yokosuka for a weekend spa trip to relax.\n\nWhile I was there, I bought some food at the spa.\n\nAfter the spa, I took the train home, stopped off in Jimbocho, and had dinner at a takoyaki bar.\n\nMy iPhone battery drained very quickly and was almost dead.",
+   "ja": "リラックスするため、週末のスパ旅行で横須賀へ行った。滞在中、スパで食べ物を買った。スパの後、電車で帰る途中に神保町で途中下車し、たこ焼きバーで夕食を食べた。iPhoneのバッテリーの減りがとても速く、ほとんど切れかけていた。",
+   "events": [
+    "週末のスパ旅行で横須賀へ（リラックス目的）",
+    "スパで食べ物を買った",
+    "帰りに神保町で途中下車し、たこ焼きバーで夕食",
+    "iPhoneのバッテリーの減りが速く、ほぼ切れかけた"
+   ],
+   "errors": [
+    {
+     "original": "for my weekend trip spa",
+     "fix": "for a weekend spa trip to relax / to relax at a spa during my weekend trip",
+     "reason": "weekend trip spa は名詞の並びが不自然（三者共通）。「週末のスパ旅行」は a weekend spa trip"
+    },
+    {
+     "original": "got off via Jimbocho",
+     "fix": "stopped off in Jimbocho / got off at Jimbocho (Station)",
+     "reason": "via は通過・経由のみ。降りて食事したなら stop off in（途中下車・立ち寄り）か get off at（〜で降りる）（三者共通）"
+    },
+    {
+     "original": "the battery lost very fast",
+     "fix": "the battery drained very quickly / ran down fast",
+     "reason": "バッテリーが減るに lose は使わない。drain / run down が定番（三者共通）"
+    },
+    {
+     "original": "was almost dead, so ... very fast",
+     "fix": "My iPhone battery drained very quickly and was almost dead.",
+     "reason": "因果が逆に読める：速く減った結果ほぼ切れた、が自然（ChatGPT）。Gemini・Copilotは so のまま it drained で可とした。バッテリー劣化の意味なら My iPhone battery is almost worn out, so it drains very fast"
+    },
+    {
+     "original": "a Takoyaki bar",
+     "fix": "a takoyaki bar",
+     "reason": "普通名詞なので小文字で可（ChatGPT・Copilot、任意）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "overall_5": 3.3,
+     "cefr": "B1"
+    },
+    "Gemini": {
+     "grammar": 4,
+     "vocabulary": 3.5,
+     "naturalness": 3.5,
+     "cefr": "B1"
+    },
+    "Copilot": {
+     "grammar": 4,
+     "vocabulary": 4,
+     "naturalness": 3.5,
+     "cefr": "B1+"
+    },
+    "total_100": 74,
+    "grammar_40": 31,
+    "vocabulary_30": 22,
+    "naturalness_30": 21
+   },
+   "cefr": "B1（Copilotは B1+）",
+   "weak_points": [
+    "名詞の並べ方（weekend trip spa → weekend spa trip）",
+    "経由と下車の区別（via ↔ stop off in / get off at）",
+    "バッテリーの動詞（lose ✕ → drain / run down）",
+    "so の因果の向き"
+   ],
+   "good_expressions": [
+    "While I was there（滞在中の出来事をつなぐ）",
+    "My iPhone battery was almost dead（充電が切れそう）",
+    "took the train home",
+    "had dinner at a takoyaki bar",
+    "出来事を時系列で整理できている"
+   ],
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-10-31 18:30",
+     "scores": {
+      "ChatGPT": {
+       "overall_5": 3.3,
+       "cefr": "B1"
+      },
+      "Gemini": {
+       "grammar": 4,
+       "vocabulary": 3.5,
+       "naturalness": 3.5,
+       "cefr": "B1"
+      },
+      "Copilot": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 3.5,
+       "cefr": "B1+"
+      },
+      "total_100": 74,
+      "grammar_40": 31,
+      "vocabulary_30": 22,
+      "naturalness_30": 21
+     },
+     "cefr": "B1（Copilotは B1+）"
+    }
+   ],
+   "revision": 1,
+   "updated_at": "2026-10-31 18:30"
+  },
+  {
+   "date": "2026-11-01",
+   "original": "I read aloud my diary entries from last week, wiped the floor in my room, visited my real estate agency to close my current apartment’s lease, and went to Tachikawa to donate blood.\n\nAfter arriving in Tachikawa and before donating blood, I bought some rolled omelets at the shopping mall in the station and ate them in a public park.\n\nAfter donating blood, I went to Kanda, Toranomon, and Akasaka to pray at several shrines.\nWhile being there, I had some Amazake and bought some lucky items.\n\nAfter praying at shrines, I looked for laundry machines, bought some food, and went home.",
+   "corrected": "I read aloud my diary entries from last week, wiped the floor in my room, visited my real estate agency to terminate the lease on my current apartment, and went to Tachikawa to donate blood.\n\nAfter arriving in Tachikawa, but before donating blood, I bought some rolled omelets at the shopping mall inside the station and ate them in a public park.\n\nAfter donating blood, I went to Kanda, Toranomon, and Akasaka to pray at several shrines. While I was there, I had some amazake and bought some lucky charms.\n\nAfter visiting the shrines, I looked for washing machines, bought some food, and went home.",
+   "ja": "先週の日記を音読し、部屋の床を拭き、不動産会社で今の部屋の賃貸契約を解約してから、献血のために立川へ行った。立川に着いてから献血の前に、駅構内のショッピングモールで卵焼きを買い、公園で食べた。献血の後は神田・虎ノ門・赤坂へ行き、いくつかの神社でお参りした。そこで甘酒を飲み、お守り（縁起物）を買った。神社巡りの後は洗濯機を探し、食べ物を買って帰宅した。",
+   "events": [
+    "先週の英語日記を音読",
+    "部屋の床を拭き掃除",
+    "不動産会社で今住んでいる部屋の賃貸契約を解約",
+    "立川で献血。献血前に駅構内のモールで卵焼きを買い、公園で食べた",
+    "献血後、神田・虎ノ門・赤坂の神社を参拝。甘酒を飲み、お守り（縁起物）を購入",
+    "洗濯機を探し、食べ物を買って帰宅"
+   ],
+   "errors": [
+    {
+     "original": "close my current apartment’s lease",
+     "fix": "terminate the lease on my current apartment / terminate my current lease",
+     "reason": "lease に close は使わない。解約は terminate / end / cancel a lease（三者共通）。新居の契約なら sign / finalize the lease。Copilotは新居の契約と読み違えたが、current とあるので解約の意味で採用"
+    },
+    {
+     "original": "While being there",
+     "fix": "While I was there / While there",
+     "reason": "be動詞を -ing にする While being there は不自然（三者共通）"
+    },
+    {
+     "original": "Amazake",
+     "fix": "amazake",
+     "reason": "普通名詞なので小文字（三者共通）。had は飲食どちらにも使えるので可（Copilotは drank を推奨）"
+    },
+    {
+     "original": "lucky items",
+     "fix": "lucky charms / good-luck charms",
+     "reason": "お守り・縁起物は lucky charms が定番（三者共通）"
+    },
+    {
+     "original": "laundry machines",
+     "fix": "washing machines / a laundromat",
+     "reason": "laundry machines はあまり使わない（三者共通）。家電の洗濯機なら washing machines、コインランドリーなら a laundromat"
+    },
+    {
+     "original": "After praying at shrines",
+     "fix": "After praying at the shrines / After visiting the shrines",
+     "reason": "前文の神社を指すので the（ChatGPT）。Copilotは visiting で言い換え"
+    },
+    {
+     "original": "the shopping mall in the station",
+     "fix": "the shopping mall inside the station",
+     "reason": "駅構内なら inside が自然（ChatGPT・Copilot）。Geminiはそのままで可"
+    },
+    {
+     "original": "and before donating blood",
+     "fix": "but before donating blood（任意）",
+     "reason": "and でも正しい。but にすると時間の区切りが明確（ChatGPT）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "grammar": 4.5,
+     "vocabulary": 4.5,
+     "naturalness": 4,
+     "total_100": 89,
+     "cefr": "B1+（B2に近い要素あり）"
+    },
+    "Gemini": {
+     "grammar": 4,
+     "vocabulary": 4,
+     "naturalness": 4,
+     "total_100": 92,
+     "cefr": "B2"
+    },
+    "Copilot": {
+     "grammar": 4.5,
+     "vocabulary": 4.5,
+     "naturalness": 4,
+     "overall_5": 4.3,
+     "cefr": "B1+上位〜B2初級"
+    },
+    "total_100": 89,
+    "grammar_40": 37,
+    "vocabulary_30": 26,
+    "naturalness_30": 26
+   },
+   "cefr": "B1+上位（一部B2。GeminiはB2）",
+   "weak_points": [
+    "契約のコロケーション（close a lease → terminate / sign / finalize a lease）",
+    "While being there → While I was there（be動詞の -ing を避ける）",
+    "生活語彙の選択（laundry machines → washing machines / laundromat、lucky items → lucky charms）",
+    "既出の名詞に the（the shrines）"
+   ],
+   "good_expressions": [
+    "初回の指摘を反映（wiped the floor・rolled omelets・donating blood・in a public park・several shrines）",
+    "After arriving in Tachikawa and before donating blood（2つの時点を正確に）",
+    "After praying at shrines, I looked for ..., bought ..., and went home（動詞の並列）",
+    "to pray at several shrines（目的の不定詞）"
+   ],
+   "updated_at": "2026-11-01 11:36",
+   "revision": 2,
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-11-01 05:11",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 4.5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "total_100": 85,
+       "cefr": "B1+（一部B2）"
+      },
+      "Gemini": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "total_100": 88,
+       "cefr": "B1+〜B2"
+      },
+      "Copilot": {
+       "grammar": 4.5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "overall_5": 4.2,
+       "cefr": "B1+上位〜B2初級"
+      },
+      "total_100": 85,
+      "grammar_40": 36,
+      "vocabulary_30": 25,
+      "naturalness_30": 24
+     },
+     "cefr": "B1+（B2に接近）"
+    },
+    {
+     "revision": 2,
+     "recorded_at": "2026-11-01 11:36",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 4.5,
+       "vocabulary": 4.5,
+       "naturalness": 4,
+       "total_100": 89,
+       "cefr": "B1+（B2に近い要素あり）"
+      },
+      "Gemini": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "total_100": 92,
+       "cefr": "B2"
+      },
+      "Copilot": {
+       "grammar": 4.5,
+       "vocabulary": 4.5,
+       "naturalness": 4,
+       "overall_5": 4.3,
+       "cefr": "B1+上位〜B2初級"
+      },
+      "total_100": 89,
+      "grammar_40": 37,
+      "vocabulary_30": 26,
+      "naturalness_30": 26
+     },
+     "cefr": "B1+上位（一部B2。GeminiはB2）"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-02",
+   "original": "I left my office early today because I had a job interview.\n\nThe interview went very well and made a good impression, so I can’t wait for the results.\n\nThen, I received the results of yesterday’s blood donation which showed that my cholesterol level was slightly above the upper limit and my protein level had returned to normal.",
+   "corrected": "I left the office early today because I had a job interview.\n\nThe interview went very well, and I think I made a good impression on the client, so I can't wait to hear the results.\n\nThen, I received the results of yesterday's blood donation, which showed that my cholesterol level was slightly above the upper limit of the normal range and that my protein level had returned to normal.",
+   "ja": "今日は面接があったので、会社を早退した。面接はとてもうまくいき、クライアントに良い印象を与えられたと思うので、結果を聞くのが待ち遠しい。その後、昨日の献血の検査結果を受け取った。コレステロール値は基準範囲の上限をわずかに超えていたが、タンパク質の値は正常に戻っていた。",
+   "events": [
+    "面接のため会社を早退",
+    "面接はとてもうまくいき、クライアントに好印象を与えた手応えあり。結果待ち",
+    "前日（11/1）の献血の検査結果を受け取った：コレステロール値は基準値の上限をわずかに超えた、タンパク質の値は正常に戻った"
+   ],
+   "errors": [
+    {
+     "original": "The interview went very well and made a good impression",
+     "fix": "The interview went very well, and I think I made a good impression on the client / ... and made (left) a good impression on the client",
+     "reason": "誰に好印象を与えたかを on the client で明示（三者共通）。文法的には誤りではない。好印象を与えたのが自分なら主語を I に（ChatGPT）。Geminiは left a good impression on を提案"
+    },
+    {
+     "original": "blood donation which showed",
+     "fix": "blood donation, which showed",
+     "reason": "結果を補足説明する非制限用法なので which の前にコンマ（三者共通）"
+    },
+    {
+     "original": "was slightly above the upper limit and my protein level",
+     "fix": "was slightly above the upper limit (of the normal range) and that my protein level",
+     "reason": "実際に基準値を超えていたなら正確（三者共通）。of the normal range で何の上限か明確に（ChatGPT）、and that で並列を明確に（Copilot）。範囲内の上限付近なら near the upper limit（ChatGPT・Gemini）"
+    },
+    {
+     "original": "can’t wait for the results",
+     "fix": "can't wait to hear the results（そのままでも可）",
+     "reason": "原文で自然。to hear で結果の連絡を待つ気持ちがより具体的（ChatGPT）"
+    },
+    {
+     "original": "my protein level",
+     "fix": "my total protein level",
+     "reason": "検査項目の総タンパク（TP）なら total protein（ChatGPT、任意）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "grammar": 4.5,
+     "vocabulary": 4.5,
+     "naturalness": 4,
+     "total_100": 87,
+     "cefr": "B1+〜B2"
+    },
+    "Gemini": {
+     "grammar": 4.5,
+     "vocabulary": 4.2,
+     "naturalness": 4.3,
+     "cefr": "B1+〜B2"
+    },
+    "Copilot": {
+     "grammar": 4.5,
+     "vocabulary": 4.5,
+     "naturalness": 4.5,
+     "cefr": "B1+（B2に近い）"
+    },
+    "total_100": 88,
+    "grammar_40": 36,
+    "vocabulary_30": 26,
+    "naturalness_30": 26
+   },
+   "cefr": "B1+〜B2（三者とも）",
+   "weak_points": [
+    "印象を与えた相手の省略（make a good impression on 〜）",
+    "並列した動詞の意味上の主語（面接が印象を与えた？自分が与えた？）",
+    "非制限用法 which の前のコンマ",
+    "基準値の表現の使い分け（near / at / slightly above the upper limit）"
+   ],
+   "good_expressions": [
+    "初回の指摘を反映（The interview went very well・yesterday's blood donation・which showed that・had returned to normal）",
+    "The interview went very well（面接がうまくいった、の定番）",
+    "slightly above the upper limit（自分で表現を組み立て直せた）",
+    "had returned to normal（過去完了を正しく使えた）"
+   ],
+   "updated_at": "2026-11-02 20:07",
+   "revision": 2,
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-11-02 19:23",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 3.5,
+       "vocabulary": 4,
+       "naturalness": 3.5,
+       "total_100": 73,
+       "cefr": "B1"
+      },
+      "Gemini": {
+       "grammar": 3.5,
+       "vocabulary": 4,
+       "naturalness": 3.5,
+       "cefr": "B1"
+      },
+      "Copilot": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1+（一部B2）"
+      },
+      "total_100": 75,
+      "grammar_40": 29,
+      "vocabulary_30": 24,
+      "naturalness_30": 22
+     },
+     "cefr": "B1（CopilotはB1+）"
+    },
+    {
+     "revision": 2,
+     "recorded_at": "2026-11-02 20:07",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 4.5,
+       "vocabulary": 4.5,
+       "naturalness": 4,
+       "total_100": 87,
+       "cefr": "B1+〜B2"
+      },
+      "Gemini": {
+       "grammar": 4.5,
+       "vocabulary": 4.2,
+       "naturalness": 4.3,
+       "cefr": "B1+〜B2"
+      },
+      "Copilot": {
+       "grammar": 4.5,
+       "vocabulary": 4.5,
+       "naturalness": 4.5,
+       "cefr": "B1+（B2に近い）"
+      },
+      "total_100": 88,
+      "grammar_40": 36,
+      "vocabulary_30": 26,
+      "naturalness_30": 26
+     },
+     "cefr": "B1+〜B2（三者とも）"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-03",
+   "original": "I bought some foreign currency, but I made a mistake with the order that I sent to the wrong account.\nThen I read aloud my diary entries from last month and prepared for move to a new apartment at the end of this month.\n\nLate in the morning, I went for a walk around Waseda and Shinjuku to clean my new place and research supermarkets in the area.\n\nAfter that, I visited a spa for the first time place and bought some food on my way home.",
+   "corrected": "I bought some foreign currency, but I made a mistake by placing the order through the wrong account.\nThen I read aloud my diary entries from last month and prepared to move to a new apartment at the end of this month.\n\nLate in the morning, I went for a walk around Waseda and Shinjuku to clean my new place and check out supermarkets in the area.\n\nAfter that, I visited a spa for the first time and bought some food on my way home.",
+   "ja": "外貨を購入したが、間違った口座で注文を出してしまうミスをした。その後、先月の日記を音読し、今月末に新しい部屋へ引っ越す準備をした。午前遅くに早稲田と新宿の周辺を歩き、新居の掃除をして、周辺のスーパーを見て回った。その後、初めてスパに行き、帰りに食べ物を買った。",
+   "events": [
+    "外貨を購入したが、注文を間違った口座で出してしまうミスがあった",
+    "先月分の英語日記を音読",
+    "今月末の引っ越しに向けて準備",
+    "午前遅く、早稲田・新宿周辺を歩き、新居の掃除と周辺スーパーの下見",
+    "初めてスパ（温浴施設）を利用",
+    "帰りに食べ物を購入"
+   ],
+   "errors": [
+    {
+     "original": "prepared for move",
+     "fix": "prepared to move / prepared for my (the) move",
+     "reason": "move を名詞で使うなら冠詞・所有格が必要（for the move / for my move）、動詞なら prepare to move（三者共通）"
+    },
+    {
+     "original": "a spa for the first time place",
+     "fix": "a spa for the first time",
+     "reason": "place が余分。for the first time で完結（三者共通）。初めて行ったスパを強調するなら a spa I had never been to before（ChatGPT）"
+    },
+    {
+     "original": "made a mistake with the order that I sent to the wrong account",
+     "fix": "made a mistake by placing the order through the wrong account（誤送金なら sent the money to the wrong account）",
+     "reason": "made a mistake は正しく伝わるようになった。注文を出すは place an order、間違った口座で注文したなら through the wrong account（ChatGPT）。Geminiは by sending it to the wrong account、Copilotは誤送金と解釈"
+    },
+    {
+     "original": "research supermarkets",
+     "fix": "check out / look for supermarkets",
+     "reason": "research は硬い・調査的。歩いて見て回るなら check out / look for（ChatGPT・Copilot）。Geminiは可とした"
+    },
+    {
+     "original": "Late in the morning / clean my new place",
+     "fix": "そのままで可",
+     "reason": "ChatGPT・Copilotは自然と評価。Geminiは In the late morning・clean up の方が一般的とした（好みの差）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "grammar": 4,
+     "vocabulary": 4.5,
+     "naturalness": 4,
+     "total_100": 85,
+     "cefr": "B1+（一部B2に近い）"
+    },
+    "Gemini": {
+     "grammar": 4.1,
+     "vocabulary": 4.0,
+     "naturalness": 4.1,
+     "total_100": 83,
+     "cefr": "B1+"
+    },
+    "Copilot": {
+     "grammar": 4.6,
+     "vocabulary": 4.2,
+     "naturalness": 4.2,
+     "total_5": 4.3,
+     "cefr": "B1+（上位）"
+    },
+    "total_100": 84,
+    "grammar_40": 34,
+    "vocabulary_30": 25,
+    "naturalness_30": 25
+   },
+   "cefr": "B1+（三者とも）",
+   "weak_points": [
+    "prepare to + 動詞 / prepare for + 名詞（冠詞）の使い分け",
+    "推敲時の消し忘れ（for the first time place）",
+    "金融取引の動詞（place an order / transfer money）",
+    "research など硬い語の選択"
+   ],
+   "good_expressions": [
+    "初回の指摘を反映（made a mistake・at the end of this month・new apartment・in the area・for the first time）",
+    "Late in the morning",
+    "my new place（口語的で自然）",
+    "read aloud my diary entries from last month",
+    "on my way home"
+   ],
+   "updated_at": "2026-11-03 10:00",
+   "revision": 2,
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-11-03 09:46",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 3.5,
+       "total_100": 83,
+       "cefr": "B1+"
+      },
+      "Gemini": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "total_100": 80,
+       "cefr": "B1"
+      },
+      "Copilot": {
+       "grammar": 4.5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "total_5": 4.2,
+       "cefr": "B1+（一部B2）"
+      },
+      "total_100": 80,
+      "grammar_40": 33,
+      "vocabulary_30": 24,
+      "naturalness_30": 23
+     },
+     "cefr": "B1+（ChatGPT・Copilot。GeminiはB1）"
+    },
+    {
+     "revision": 2,
+     "recorded_at": "2026-11-03 10:00",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 4,
+       "vocabulary": 4.5,
+       "naturalness": 4,
+       "total_100": 85,
+       "cefr": "B1+（一部B2に近い）"
+      },
+      "Gemini": {
+       "grammar": 4.1,
+       "vocabulary": 4.0,
+       "naturalness": 4.1,
+       "total_100": 83,
+       "cefr": "B1+"
+      },
+      "Copilot": {
+       "grammar": 4.6,
+       "vocabulary": 4.2,
+       "naturalness": 4.2,
+       "total_5": 4.3,
+       "cefr": "B1+（上位）"
+      },
+      "total_100": 84,
+      "grammar_40": 34,
+      "vocabulary_30": 25,
+      "naturalness_30": 25
+     },
+     "cefr": "B1+（三者とも）"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-04",
+   "original": "After work, I took the train home and \nStopped at a convenience store to get a couple of copies of my residence certificate.\n\nWhen I got home, I found a package that had been left in front of my door.\nThen I hadn’t received the results of Monday’s interview.",
+   "corrected": "After work, I took the train home and stopped at a convenience store to get a couple of copies of my residence certificate.\n\nWhen I got home, I found a package that had been left in front of my door.\n\nHowever, I still haven't received the results of Monday's interview.",
+   "ja": "仕事の後、電車で帰宅し、途中でコンビニに寄って住民票の写しを2通取った。家に着くと、ドアの前に荷物が置かれていた。でも、月曜日の面接の結果はまだ届いていない。",
+   "events": [
+    "仕事帰りにコンビニで住民票の写しを2通取得",
+    "帰宅すると置き配の荷物が届いていた",
+    "月曜（11/2）の面接結果はまだ届いていない"
+   ],
+   "errors": [
+    {
+     "original": "and Stopped",
+     "fix": "and stopped",
+     "reason": "文の途中なので小文字（三者共通）"
+    },
+    {
+     "original": "citizen registration documents（初回）",
+     "fix": "copies of my residence certificate",
+     "reason": "住民票の写しは residence certificate / certificate of residence が定番。修正版で解消（三者共通）"
+    },
+    {
+     "original": "Then the results of Monday's interview that hadn't been received.（初回）",
+     "fix": "I still hadn't received the results ...",
+     "reason": "主節の動詞がない名詞句だった。修正版で文として成立（三者共通）"
+    },
+    {
+     "original": "Then I hadn't received the results of Monday's interview.",
+     "fix": "However, I still haven't received ... / However, I still hadn't received ... / Then, I realized that I hadn't received ... yet.",
+     "reason": "Then は出来事の順序で、状態の説明には合わない。荷物との対比なら However/But（Gemini）、still/yet で「まだ」を明確に。今も届いていないなら現在完了 haven't（ChatGPT）、帰宅時点なら hadn't。気付いたことを書くなら I realized that（Copilot）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "grammar": 4.5,
+     "vocabulary": 4.5,
+     "naturalness": 4,
+     "cefr": "B1+（B2に近い）"
+    },
+    "Gemini": {
+     "grammar": 4,
+     "vocabulary": 5,
+     "naturalness": 4,
+     "cefr": "B1+"
+    },
+    "Copilot": {
+     "grammar": 4.5,
+     "vocabulary": 4,
+     "naturalness": 4,
+     "cefr": "B1+（上位）〜B2初級"
+    },
+    "total_100": 86,
+    "grammar_40": 35,
+    "vocabulary_30": 27,
+    "naturalness_30": 24
+   },
+   "cefr": "B1+（三者とも。ChatGPT・CopilotはB2に近い）",
+   "weak_points": [
+    "関係詞節で説明を足すうちに主節の動詞が抜ける（初回）",
+    "Then（順序）と However/still（対比・継続）の使い分け",
+    "完了形の基準時点（現在まで続く状態は現在完了）",
+    "文中の不要な大文字",
+    "気付いた・思ったなど心の動きの省略（Copilot）"
+   ],
+   "good_expressions": [
+    "初回の指摘を反映（copies of my residence certificate・主節のある最終文）",
+    "a package that had been left in front of my door（過去完了の受動態、三者が高評価）",
+    "stopped at a convenience store to get ...（目的の不定詞）",
+    "a couple of",
+    "When I got home, I found ..."
+   ],
+   "updated_at": "2026-11-04 11:56",
+   "revision": 2,
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-11-04 20:45",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 3.5,
+       "vocabulary": 3.5,
+       "naturalness": 3.5,
+       "cefr": "B1"
+      },
+      "Gemini": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 3,
+       "cefr": "B1"
+      },
+      "Copilot": {
+       "grammar": 4,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1+（一部B2）"
+      },
+      "total_100": 75,
+      "grammar_40": 31,
+      "vocabulary_30": 23,
+      "naturalness_30": 21
+     },
+     "cefr": "B1（CopilotはB1+）"
+    },
+    {
+     "revision": 2,
+     "recorded_at": "2026-11-04 11:56",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 4.5,
+       "vocabulary": 4.5,
+       "naturalness": 4,
+       "cefr": "B1+（B2に近い）"
+      },
+      "Gemini": {
+       "grammar": 4,
+       "vocabulary": 5,
+       "naturalness": 4,
+       "cefr": "B1+"
+      },
+      "Copilot": {
+       "grammar": 4.5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1+（上位）〜B2初級"
+      },
+      "total_100": 86,
+      "grammar_40": 35,
+      "vocabulary_30": 27,
+      "naturalness_30": 24
+     },
+     "cefr": "B1+（三者とも）"
+    }
+   ]
+  },
+  {
+   "date": "2026-11-05",
+   "original": "I received the results of my job interview, but I didn’t pass.\n\nAfter work, I went straight home and bought a few things for my usual monthly shopping.",
+   "corrected": "I received the results of my job interview, but I didn't pass.\n\nAfter work, I went straight home and bought a few things as part of my usual monthly shopping.",
+   "ja": "面接の結果を受け取ったが、不合格だった。仕事の後はまっすぐ帰宅し、いつもの月1回の買い物として、いくつか買った。",
+   "events": [
+    "月曜（11/2）の面接の結果を受け取り、不採用だった",
+    "仕事の後はまっすぐ帰宅",
+    "いつもの月1回の買い物で、いくつか購入"
+   ],
+   "errors": [
+    {
+     "original": "didn't pass it（初回）",
+     "fix": "didn't pass",
+     "reason": "修正版で解消。Geminiは修正不要と評価。ChatGPTは didn't pass the interview と目的語を明示する案、Copilotは wasn't selected / didn't get the job を提案"
+    },
+    {
+     "original": "the job interview（初回）",
+     "fix": "my job interview",
+     "reason": "修正版で解消（三者が評価）"
+    },
+    {
+     "original": "for my usual monthly shopping",
+     "fix": "as part of my usual monthly shopping（ChatGPT）/ during my usual monthly shopping trip（Copilot）",
+     "reason": "「いつもの月1回の買い物の一環として」なら as part of、定期的な買い出しなら shopping trip が自然"
+    },
+    {
+     "original": "went straight home and bought",
+     "fix": "帰宅後なら ... and bought a few things online / 途中なら bought a few things on the way home",
+     "reason": "went straight home は寄り道せず直帰の意味なので、and bought だと買った場所・時点が曖昧（Gemini）。ネットで買ったなら online を足す（ChatGPT）"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "grammar": 5,
+     "vocabulary": 4,
+     "naturalness": 4,
+     "cefr": "B1〜B1+"
+    },
+    "Gemini": {
+     "grammar": 4.5,
+     "vocabulary": 5,
+     "naturalness": 4,
+     "cefr": "B1+"
+    },
+    "Copilot": {
+     "grammar": 5,
+     "vocabulary": 4,
+     "naturalness": 4,
+     "cefr": "B1+"
+    },
+    "total_100": 89,
+    "grammar_40": 39,
+    "vocabulary_30": 26,
+    "naturalness_30": 24
+   },
+   "cefr": "B1+（ChatGPTはB1〜B1+）",
+   "weak_points": [
+    "went straight home と買い物の動線（直帰と途中での買い物）",
+    "前置詞の選択（for / as part of / during）",
+    "面接結果・買い物関連の定型表現のレパートリー"
+   ],
+   "good_expressions": [
+    "初回の指摘を反映（my job interview・didn't pass）",
+    "After work, I went straight home（自然な日記表現）",
+    "a few things",
+    "my usual monthly shopping"
+   ],
+   "useful_phrases": [
+    "I didn't get the job.",
+    "I wasn't selected.",
+    "as part of my usual monthly shopping",
+    "my monthly shopping trip",
+    "on the way home"
+   ],
+   "updated_at": "2026-11-05 21:39",
+   "revision": 2,
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-11-05 21:33",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1〜B1+"
+      },
+      "Gemini": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1"
+      },
+      "Copilot": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1"
+      },
+      "total_100": 88,
+      "grammar_40": 40,
+      "vocabulary_30": 24,
+      "naturalness_30": 24
+     },
+     "cefr": "B1"
+    },
+    {
+     "revision": 2,
+     "recorded_at": "2026-11-05 21:39",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1〜B1+"
+      },
+      "Gemini": {
+       "grammar": 4.5,
+       "vocabulary": 5,
+       "naturalness": 4,
+       "cefr": "B1+"
+      },
+      "Copilot": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 4,
+       "cefr": "B1+"
+      },
+      "total_100": 89,
+      "grammar_40": 39,
+      "vocabulary_30": 26,
+      "naturalness_30": 24
+     },
+     "cefr": "B1+（ChatGPTはB1〜B1+）"
+    }
+   ]
+  }
+ ]
 }
