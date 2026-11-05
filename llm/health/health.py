@@ -18,18 +18,18 @@ from pathlib import Path
 from statistics import mean
 
 CSV_PATH = Path(__file__).resolve().parent / "health_log.csv"
-HEADER = "date,steps,weight_kg,body_fat_pct,lean_mass_kg,bp_sys,bp_dia,pulse"
+HEADER = "date,steps,weight,body_fat_pct,fat_mass,bp_sys,bp_dia,pulse"
 
 COLUMNS = [  # (CSV列名, 表示名, 単位, 小数桁)
     ("steps", "歩数", "歩", 0),
-    ("weight_kg", "体重", "kg", 1),
-    ("body_fat_pct", "体脂肪率", "%", 1),
-    ("lean_mass_kg", "除脂肪体重", "kg", 1),
+    ("weight", "体重", "kg", 2),
+    ("body_fat_pct", "体脂肪率", "%", 2),
+    ("fat_mass", "体脂肪量", "kg", 2),
     ("bp_sys", "最高血圧", "mmHg", 0),
     ("bp_dia", "最低血圧", "mmHg", 0),
     ("pulse", "脈拍", "bpm", 0),
 ]
-KEYWORDS = ["体重", "体脂肪", "筋肉", "除脂肪", "歩数", "血圧", "脈拍", "心拍", "健康ログ", "体組成"]
+KEYWORDS = ["体重", "体脂肪", "筋肉", "体脂肪量", "歩数", "血圧", "脈拍", "心拍", "健康ログ", "体組成"]
 
 
 def _num(s):
@@ -97,7 +97,7 @@ def _clean(c: str) -> str:
 
 def add_row(values: list[str], path: Path = CSV_PATH) -> str:
     """1日分を追記。同じ日付の行は置き換える（ファイルは毎回読み直してから保存）
-    values: 8個の値（日付,歩数,体重,体脂肪率,除脂肪体重,最高,最低,脈拍）、または ; か , 区切りの1行"""
+    values: 8個の値（日付,歩数,体重,体脂肪率,体脂肪量,最高,最低,脈拍。体脂肪量の欄に届いた値は使わず計算で上書き）、または ; か , 区切りの1行"""
     if len(values) == 1:
         line = values[0].strip()
         sep = ";" if ";" in line else ("|" if "|" in line else ",")   # ; 区切りなら歩数の「10,432」も壊れない
@@ -114,7 +114,12 @@ def add_row(values: list[str], path: Path = CSV_PATH) -> str:
         raise SystemExit(f"[エラー] 日付の形式が違います: {date}（yyyy-MM-dd）")
     cells[1:] = [_clean(c) for c in cells[1:]]
     if cells[3] and float(cells[3]) < 1:          # 体脂肪率が 0.183 の形なら % に直す
-        cells[3] = f"{float(cells[3]) * 100:.1f}"
+        cells[3] = str(float(cells[3]) * 100)
+    for i in (2, 3):                              # 体重・体脂肪率は小数点2桁で記録
+        if cells[i]:
+            cells[i] = f"{float(cells[i]):.2f}"
+    # 体脂肪量＝体重×体脂肪率（ショートカットの5番目の値は使わず、毎回計算）
+    cells[4] = f"{float(cells[2]) * float(cells[3]) / 100:.2f}" if cells[2] and cells[3] else ""
     lines = path.read_text(encoding="utf-8-sig").splitlines() if path.exists() else []
     body = [l for l in lines[1:] if l.strip() and not l.startswith(date + ",")]
     body.append(",".join(cells))
