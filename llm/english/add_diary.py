@@ -8,8 +8,8 @@
 - 入力は JSON（標準入力 or --file）。必須項目は date と original
 
 使い方:
-    python3 ~/MyTool/llm/persona/add_diary.py --file entry.json
-    echo '{"date":"2026/10/26","original":"..."}' | python3 ~/MyTool/llm/persona/add_diary.py
+    python3 ~/MyTool/llm/english/add_diary.py --file entry.json
+    echo '{"date":"2026/10/26","original":"..."}' | python3 ~/MyTool/llm/english/add_diary.py
 """
 import argparse
 import json

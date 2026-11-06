@@ -1332,6 +1332,91 @@
      "cefr": "B1+（ChatGPTはB1〜B1+）"
     }
    ]
+  },
+  {
+   "date": "2026-11-06",
+   "original": "After work, I went straight home.\nThere was nothing to do today.",
+   "corrected": "After work, I went straight home.\nThere was nothing to do today.",
+   "ja": "仕事の後はまっすぐ家に帰った。今日は特にすることがなかった。",
+   "events": [
+    "仕事の後はまっすぐ帰宅",
+    "特に予定・用事のない一日だった"
+   ],
+   "errors": [
+    {
+     "original": "There was nothing to do today.",
+     "fix": "修正不要（ChatGPT・Gemini）／ There wasn't much to do today.（Copilotの最小修正）",
+     "reason": "文法は三者とも正しいと評価。ただし nothing to do は『暇で退屈だった』印象になることがある（ChatGPT・Copilot）。『特に何もない一日』なら Nothing special happened today. / It was a quiet day.、『予定がなかった』なら I didn't have anything planned for today. / nothing special to do が近い"
+    }
+   ],
+   "scores": {
+    "ChatGPT": {
+     "grammar": 5,
+     "vocabulary": 4,
+     "naturalness": 5,
+     "cefr": "B1（短文のため参考）"
+    },
+    "Gemini": {
+     "grammar": 5,
+     "vocabulary": 5,
+     "naturalness": 5,
+     "cefr": "A2〜B1"
+    },
+    "Copilot": {
+     "grammar": 5,
+     "vocabulary": 3,
+     "naturalness": 4,
+     "cefr": "B1"
+    },
+    "total_100": 90,
+    "grammar_40": 40,
+    "vocabulary_30": 23,
+    "naturalness_30": 27
+   },
+   "cefr": "B1（GeminiはA2〜B1。短文のため参考評価）",
+   "weak_points": [
+    "文章が短く、語彙・表現力を見せる材料が少ない（三者共通）",
+    "nothing to do は退屈・暇のニュアンスが出やすい（ChatGPT・Copilot）",
+    "理由や感想の1文がない（ChatGPT・Copilot）"
+   ],
+   "good_expressions": [
+    "After work, I went straight home.（直帰の自然な定番表現、三者が評価）",
+    "There was nothing to do（nothing + to不定詞を正確に使用）",
+    "go home に to を付けない正しい用法"
+   ],
+   "updated_at": "2026-11-06 21:52",
+   "revision": 1,
+   "score_history": [
+    {
+     "revision": 1,
+     "recorded_at": "2026-11-06 21:52",
+     "scores": {
+      "ChatGPT": {
+       "grammar": 5,
+       "vocabulary": 4,
+       "naturalness": 5,
+       "cefr": "B1（短文のため参考）"
+      },
+      "Gemini": {
+       "grammar": 5,
+       "vocabulary": 5,
+       "naturalness": 5,
+       "cefr": "A2〜B1"
+      },
+      "Copilot": {
+       "grammar": 5,
+       "vocabulary": 3,
+       "naturalness": 4,
+       "cefr": "B1"
+      },
+      "total_100": 90,
+      "grammar_40": 40,
+      "vocabulary_30": 23,
+      "naturalness_30": 27
+     },
+     "cefr": "B1（GeminiはA2〜B1。短文のため参考評価）"
+    }
+   ]
   }
  ]
 }

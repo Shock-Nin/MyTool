@@ -48,7 +48,7 @@ Macが同じWi-Fiにいない・眠っていて届かない日は失敗通知が
 - ターミナル: python3 ~/MyTool/llm/health/health.py [日数]
 - ChatGPT・Gemini・Copilot: Claudeに「健康ログを付けて三者に聞いて」→ ClaudeがこのファイルをMacから読み、質問に添えて送る
 - Claude: 「健康ログを見て」でOK（Macにつながっているとき）
-- Claude: 「ヘルスケア」とだけ送ると、chart_widget.py で体重・体脂肪率・体脂肪量のグラフ（直近1年）をチャットに表示
+- Claude: 「ヘルスケア」とだけ送ると、health_chart.py で体重（上段）と体脂肪率・体脂肪量（下段）のグラフ（直近1年）をチャットに表示
 
 ## 過去分の取り込み（ヘルスケアの書き出しから）
 1. iPhoneのヘルスケアApp → 右上のプロフィール写真 →「すべてのヘルスケアデータを書き出す」→ zip をAirDropでMacへ
