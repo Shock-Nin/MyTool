@@ -2,10 +2,12 @@
 """
 記憶付きローカルLLMチャット（Ollama / LM Studio 共通）
 
-このフォルダの中だけで完結します（フォルダごと移動してもそのまま動きます）。
+LLMまわりはこのフォルダ、プロフィール・日記・ヘルスケアの原本は OneDrive の MyAI に置く。
+  （MyAI の場所は環境変数 MYAI_DIR で変えられる。既定は ~/Library/CloudStorage/OneDrive-個人用/ドキュメント/MyAI）
   data/llm_memory.json        記憶（プロフィール・/remember・会話の要約）
-  profile/profile.json        プロフィールの原本 → profile/add_profile.py で記憶に反映
-  profile/*.pdf, *.xlsx       置く・更新するとプロフィールを自動で作り直す（profile/update_profile.py）
+  MyAI/profile/profile.json   プロフィールの原本 → profile/add_profile.py で記憶に反映
+  MyAI/profile/*.pdf, *.xlsx  置く・更新するとプロフィールを自動で作り直す（profile/update_profile.py）
+  MyAI/health/                健康ログ（/health で会話に読み込む）
   data/settings.json          前回のバックエンド・モデル等（自動保存）
   export/lmstudio_system_prompt.txt  LM Studio用（自動更新）
   export/Modelfile            Ollama用（自動更新）
@@ -24,6 +26,7 @@
 import argparse
 import copy
 import json
+import os
 import re
 import sys
 import urllib.error
@@ -38,7 +41,10 @@ DATA_DIR = HERE / "data"
 EXPORT_DIR = HERE / "export"
 MEMORY_FILE = DATA_DIR / "llm_memory.json"
 SETTINGS_FILE = DATA_DIR / "settings.json"
-PROFILE_FILE = HERE / "profile" / "profile.json"
+MYAI_DIR = Path(os.environ.get("MYAI_DIR")
+                or Path.home() / "Library" / "CloudStorage" / "OneDrive-個人用" / "ドキュメント" / "MyAI")
+PROFILE_FILE = MYAI_DIR / "profile" / "profile.json"
+HEALTH_DIR = MYAI_DIR / "health"
 DEFAULT_MEMORY = MEMORY_FILE  # 旧版との互換用
 
 BACKENDS = {
@@ -248,7 +254,7 @@ class Session:
 
     def load_health(self, days: int = 14, quiet: bool = False):
         """健康ログを記憶ではなく、この会話だけに読み込む"""
-        sys.path.insert(0, str(HERE / "health"))
+        sys.path.insert(0, str(HEALTH_DIR))
         try:
             from health import context_text
             text = context_text(days)
@@ -395,7 +401,7 @@ class Session:
                 continue
 
             if not self.health_loaded:
-                sys.path.insert(0, str(HERE / "health"))
+                sys.path.insert(0, str(HEALTH_DIR))
                 try:
                     from health import is_health_topic
                     if is_health_topic(line):
@@ -421,7 +427,7 @@ class Session:
 
 
 def check_profile_sources(backend, model):
-    """profile フォルダの PDF / Excel が追加・更新されていれば、プロフィールを作り直す"""
+    """MyAI/profile の PDF / Excel が追加・更新されていれば、プロフィールを作り直す"""
     try:
         sys.path.insert(0, str(HERE / "profile"))
         from update_profile import check_and_update  # type: ignore

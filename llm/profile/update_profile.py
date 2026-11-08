@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-profile フォルダの PDF / Excel からプロフィールを作り、記憶に反映する
+MyAI/profile フォルダの PDF / Excel からプロフィールを作り、記憶に反映する
 
-- profile/ に置いた .pdf .xlsx .xlsm を読み、ローカルLLMで要点にまとめて profile.json に書き込む
+- MyAI/profile/ に置いた .pdf .xlsx .xlsm を読み、ローカルLLMで要点にまとめて profile.json に書き込む
 - 追加・更新・削除されたファイルだけを処理（中身のハッシュで判定するので、無駄に作り直さない）
 - profile.json には最新の資料から作った行だけを残す
   （古い行・手で書いた行は profile_backup.json に日時付きで追記して保管。毎回ファイルは増えない）
@@ -28,13 +28,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-PROFILE_DIR = Path(__file__).resolve().parent
-sys.path.insert(0, str(PROFILE_DIR.parent))   # llm フォルダの chat_memory.py を読み込む
-sys.path.insert(0, str(PROFILE_DIR))
+SCRIPT_DIR = Path(__file__).resolve().parent
+sys.path.insert(0, str(SCRIPT_DIR.parent))   # llm フォルダの chat_memory.py を読み込む
+sys.path.insert(0, str(SCRIPT_DIR))
 
 from chat_memory import (BACKENDS, DATA_DIR, PROFILE_FILE, http_json, load_settings,  # noqa: E402
                          read_json, resolve_model, strip_think, update_json)
 
+PROFILE_DIR = PROFILE_FILE.parent                 # 資料と原本の置き場所（OneDrive の MyAI/profile）
 SOURCES_FILE = DATA_DIR / "profile_sources.json"   # 取り込み済みファイルのハッシュ
 BACKUP_FILE = PROFILE_DIR / "profile_backup.json"  # 外した古いプロフィールを蓄積する1ファイル
 TARGET_EXT = {".pdf", ".xlsx", ".xlsm"}
@@ -235,7 +236,7 @@ def check_and_update(backend: Optional[str] = None, model: Optional[str] = None,
 
 
 def main():
-    p = argparse.ArgumentParser(description="profile フォルダの PDF / Excel からプロフィールを更新")
+    p = argparse.ArgumentParser(description="MyAI/profile フォルダの PDF / Excel からプロフィールを更新")
     p.add_argument("--watch", action="store_true", help="見張り続けて、変化したらすぐ更新")
     p.add_argument("--force", action="store_true", help="全ファイルを作り直す")
     p.add_argument("--backend", choices=BACKENDS, help="要約に使うバックエンド（省略時は前回と同じ）")

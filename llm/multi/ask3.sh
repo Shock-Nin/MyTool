@@ -11,7 +11,7 @@
 # (既定3体) に同じ質問を同時に投げる。結果は runs/<日時>/ に保存し、
 # combined.md に全回答を1枚でまとめる。
 #
-# 環境変数: OLLAMA_URL LMSTUDIO_URL NUM_MODELS TIMEOUT RUNS_DIR
+# 環境変数: OLLAMA_URL LMSTUDIO_URL NUM_MODELS TIMEOUT RUNS_DIR MYAI_DIR（健康ログの置き場所）
 #
 # macOS 標準の bash 3.2 でも動くように書いてある (mapfile/連想配列は使わない)。
 
@@ -20,6 +20,7 @@ set -o pipefail
 OLLAMA_URL="${OLLAMA_URL:-http://127.0.0.1:11434}"
 LMSTUDIO_URL="${LMSTUDIO_URL:-http://127.0.0.1:1234}"
 TIMEOUT="${TIMEOUT:-600}"
+MYAI_DIR="${MYAI_DIR:-$HOME/Library/CloudStorage/OneDrive-個人用/ドキュメント/MyAI}"
 NUM_MODELS="${NUM_MODELS:-3}"
 
 BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -63,7 +64,7 @@ case "$QUESTION" in
 esac
 
 if [ -n "$HEALTH_DAYS" ]; then
-  HEALTH_TEXT="$(python3 "$BASE_DIR/../health/health.py" "$HEALTH_DAYS")" || die "健康ログを読めません"
+  HEALTH_TEXT="$(python3 "$MYAI_DIR/health/health.py" "$HEALTH_DAYS")" || die "健康ログを読めません"
   QUESTION="$HEALTH_TEXT
 
 $QUESTION"

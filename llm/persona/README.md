@@ -1,6 +1,6 @@
 # persona（チャット由来の記憶）
 
-資料由来の profile/ とは別管理。Claudeのチャットで「persona 更新」「性格は？」と言うと更新される。
+資料由来のプロフィール（OneDrive の MyAI/profile/）とは別管理。Claudeのチャットで「persona 更新」「性格は？」と言うと更新される。
 
 ## ファイル
 - persona.json … 原本（質問・進め方、日々の行動、方針・目標、性格、健康など）
@@ -10,4 +10,4 @@
 ## 呼び出し方
 - python3 ~/MyTool/llm/persona/add_persona.py（--no-sync でアプリ側への同期をしない）
 
-英語日記は english/、健康ログは health/ に分けている。
+英語日記・健康ログ・プロフィールの原本は OneDrive の ドキュメント/MyAI（diary/・health/・profile/）にある。

@@ -177,3 +177,7 @@ pyrightconfig.json
 .DS_Store
 mytool.exe
 nul
+
+# SSH 鍵はコミットしない
+id_ed25519*
+*.pem
