@@ -42,6 +42,8 @@ PRM_PATH = path.PRM_PATH
 RM_PATH = path.RM_PATH
 MATCH_PATH = path.MATCH_PATH
 MENU_CSV = path.MENU_CSV
+PW_CSV = path.PW_CSV
+PW_PATH = path.PW_PATH
 ICON_FILE = path.ICON_FILE
 
 # items

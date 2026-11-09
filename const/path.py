@@ -78,6 +78,10 @@ MATCH_PATH = 'item/match/'
 
 # メニュー系CSV
 MENU_CSV = {'Web': None, 'Fold': None, 'PwBank': None, 'PwWeb': None, 'Sql': None}
+# パスワード系CSV（Googleドライブではなくローカルに置く）
+PW_CSV = ['PwBank', 'PwWeb', 'Sql']
+PW_PATH = {'Mac': CURRENT_PATH['Mac'] + 'PW/',
+           'Win': CURRENT_PATH['Win'] + 'Documents/PW/'}
 
 # アイコン
 ICON_FILE = '/item/img/logo.ico'

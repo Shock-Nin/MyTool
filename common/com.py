@@ -128,15 +128,16 @@ def send_mail(subject, body, to, account=cst.BLOG_MAIL, password=cst.BLOG_MAIL_P
 
 # メニュー系CSV読み込み
 def get_menu():
-    path = cst.GDRIVE_PATH[cst.PC] + 'menu/'
     err_msg = ''
-    try:
-        for file in cst.MENU_CSV:
+    for file in cst.MENU_CSV:
+        # パスワード系はローカル、それ以外はGoogleドライブ
+        path = (cst.PW_PATH[cst.PC] if file in cst.PW_CSV else cst.GDRIVE_PATH[cst.PC] + 'menu/')
+        try:
             cst.MENU_CSV[file] = pd.read_csv(path + file + '.csv', encoding='cp932')
 
-    except Exception as e:
-        log('読み込みエラー: ' + path + file + ' |' + str(e))
-        err_msg += '\n　' + path + file
+        except Exception as e:
+            log('読み込みエラー: ' + path + file + ' |' + str(e))
+            err_msg += '\n　' + path + file
 
     if 0 < len(err_msg):
         dialog('読み込みエラー\n' + err_msg, '読み込みエラー', 'E')
