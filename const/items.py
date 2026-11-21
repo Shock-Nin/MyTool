@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import os
+from dotenv import load_dotenv
+
+# .envファイルから環境変数を読み込む
+load_dotenv()
+
 # 英単語再生、監視待機回数(3秒単位)
 ENG1MIN_MONITOR = 20
 
@@ -50,9 +56,9 @@ RATE_REAL = 'https://www.click365.jp/market.html'
 BLOG_URL = 'https://shock-nin.info/'
 # メール
 BLOG_MAIL = 'shocknin7@gmail.com'
-BLOG_MAIL_PW = 'Shock19800226'
+BLOG_MAIL_PW = os.getenv('BLOG_MAIL_PW', '')
 ERROR_MAIL = 'shocknin7@gmail.com'
-ERROR_MAIL_PW = 'kejm gyuz yczk dfcx'
+ERROR_MAIL_PW = os.getenv('ERROR_MAIL_PW', '')
 
 # モデル 時間足
 MODEL_PERIODS = ['D1', 'H1']
@@ -63,7 +69,7 @@ FIG_FONT_SIZE = 12
 
 # アノマリー Twitter
 TWITTER_ID = '@ShockNin7'
-TWITTER_PW = 'Shock19800226'
+TWITTER_PW = os.getenv('TWITTER_PW', '')
 TWITTER_TAG = '#アノマリー #統計 #確率 #為替 #AI #学習'
 TWEET_TIME = [20, 8]
 # アノマリー 期間

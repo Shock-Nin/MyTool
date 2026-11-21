@@ -380,8 +380,8 @@ class Base:
         finally:
             try:
                 window.close()
-            except:
-                pass
+            except (AttributeError, RuntimeError) as e:
+                com.log(f'ウィンドウクローズエラー: {str(e)}', 'W')
 
         com.dialog(', '.join([currency for currency in cst.MODEL_CURRENCIES]) + '\n作成完了しました。', 'データ作成完了' )
 

@@ -10,7 +10,7 @@ import subprocess
 import pyautogui as pgui
 import FreeSimpleGUI as sg
 
-from business. windows import ea_edits as inheritance
+from business.windows import ea_edits as inheritance
 
 PRM_PATH = cst.GDRIVE_PATH[cst.PC] + cst.PRM_PATH
 EA_EXE = cst.MT4_DEV[cst.PC] + '/terminal.exe /portable'
@@ -24,76 +24,103 @@ class EaAutoTest:
         self.pos_xy = cst.MATCH_IMG_MT4.copy()
         self.start_year = 0
 
-    def do(self):
-
+    def _select_ea_and_currencies(self):
+        """EAと通貨ペアの選択"""
         prm_lists = inheritance.prm_list()
         prm_lists = [[prm_lists[0][1][i].replace('.set', '') for i in range(0, len(prm_lists[0][1]))],
                      [prm_lists[1][1][i].replace('.set', '') for i in range(0, len(prm_lists[1][1]))]]
         checks = com.dialog_cols('不要なものは外してください。', prm_lists, ['l' for _ in range(0, len(prm_lists))],
                                  'EA・通貨選択', obj='check')
-        if 0 == len(checks):
-            return
+        return checks
 
-        # パラメータ読み込み
+    def _load_and_parse_parameters(self, checks):
+        """パラメータファイルの読み込みと解析"""
         check_logics = []
         read_files = []
         prms = {}
         err_msg = ''
+
         if 0 < len(checks[-1]):
+            # パラメータファイルを読み込む
             for i in range(1, len(checks)):
                 for k in range(0, len(checks[i])):
-
                     ea_name = checks[i][k].split('_')[0]
                     if len(checks) - 1 == i:
                         try:
-                            read_files.append(open(PRM_PATH + cst.EA_PATHS[ea_name][0] + '/' +
-                                                   checks[i][k] + '.set', 'r').read())
-
+                            file_path = PRM_PATH + cst.EA_PATHS[ea_name][0] + '/' + checks[i][k] + '.set'
+                            with open(file_path, 'r') as f:
+                                read_files.append(f.read())
                         except Exception as e:
                             err_msg += '\n　' + checks[i][k] + '.set' + '\n　　' + str(e)
-                            com.log(str(e))
+                            com.log(str(e), 'E')
 
-            # 読み込んだ対象ファイルの整形
+            # 読み込んだファイルを解析
             for file in read_files:
-
-                datas = file.split('\n')
-                ea_name = ''
-                risk = ''
-                logic = 0
-                logics = []
-
-                for data in datas:
-
-                    if 0 <= data.find(',') or 0 <= data.find('_____'):
-                        continue
-                    vals = data.split('=')
-
-                    try:
-                        if 'Comments' == vals[0]:
-                            ea_name = vals[1]
-                        if 'Risk' == vals[0]:
-                            risk = vals[1]
-                        if 0 <= vals[0].find('Lot'):
-                            logic += 1
-                            logics.append(('0' if logic < 10 else '') + str(logic))
-                    except:
-                        pass
-
-                logics.append('Full')
-                logics.append('Best')
+                ea_name, risk, logics = self._parse_parameter_file(file)
                 prms[ea_name] = [risk, logics]
 
-            check_logics = com.dialog_cols(ea_name.split('_')[0] + '\n不要なものは外してください。',
-                                           [prms[ea_name][1]], ['l' for _ in range(0, len(prms[ea_name]))],
-                                           ea_name.split('_')[0] + 'ロジック選択', obj='check')
-            if 0 == len(check_logics):
-                return
+            # ロジック選択
+            if prms:
+                ea_name = list(prms.keys())[-1]
+                check_logics = com.dialog_cols(ea_name.split('_')[0] + '\n不要なものは外してください。',
+                                               [prms[ea_name][1]], ['l' for _ in range(0, len(prms[ea_name]))],
+                                               ea_name.split('_')[0] + 'ロジック選択', obj='check')
 
+        return check_logics, prms, err_msg
+
+    def _parse_parameter_file(self, file_content):
+        """パラメータファイルの内容を解析"""
+        datas = file_content.split('\n')
+        ea_name = ''
+        risk = ''
+        logic = 0
+        logics = []
+
+        for data in datas:
+            if 0 <= data.find(',') or 0 <= data.find('_____'):
+                continue
+            vals = data.split('=')
+
+            try:
+                if 'Comments' == vals[0]:
+                    ea_name = vals[1]
+                if 'Risk' == vals[0]:
+                    risk = vals[1]
+                if 0 <= vals[0].find('Lot'):
+                    logic += 1
+                    logics.append(('0' if logic < 10 else '') + str(logic))
+            except (IndexError, ValueError):
+                pass
+
+        logics.append('Full')
+        logics.append('Best')
+        return ea_name, risk, logics
+
+    def _select_start_year(self):
+        """開始年の選択"""
         inputs = com.input_box('開始年を選択してください。', '開始年設定',
                                [['開始年', 2007, int(com.str_time()[:4])]], obj='spin')
         if inputs[0] <= 0:
+            return None
+        return str(inputs[1][0])
+
+    def do(self):
+        """メイン処理"""
+        # EAと通貨ペアの選択
+        checks = self._select_ea_and_currencies()
+        if 0 == len(checks):
             return
-        self.start_year = str(inputs[1][0])
+
+        # パラメータの読み込みと解析
+        check_logics, prms, err_msg = self._load_and_parse_parameters(checks)
+        if 0 == len(check_logics) and 0 < len(checks[-1]):
+            return
+
+        # 開始年の選択
+        start_year = self._select_start_year()
+        if start_year is None:
+            return
+        self.start_year = start_year
 
         total_time = 0
 

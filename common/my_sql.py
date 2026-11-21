@@ -64,13 +64,25 @@ class MySql:
         return cols
 
     def insert(self, columns, values, table):
-
-        sql = 'INSERT INTO ' + table + ' (' + ",".join([col for col in columns]) + ') '
-        sql += 'VALUES ' + ",".join(['(' + ",".join(['\'' + str(val) + '\'' for val in rows]) + ')' for rows in values])
+        """
+        パラメータ化クエリを使用したINSERT
+        columns: 列名のリスト
+        values: 値のリスト（複数行の場合はリストのリスト）
+        table: テーブル名
+        """
+        # 列名は識別子なのでパラメータ化できない（文字列結合）
+        column_str = ",".join([col for col in columns])
+        # プレースホルダーを作成
+        placeholders = ",".join(['%s'] * len(columns))
+        sql = f'INSERT INTO {table} ({column_str}) VALUES ({placeholders})'
 
         try:
             cursor = self.cnx.cursor()
-            cursor.execute(sql)
+            # 複数行の場合は executemany を使用
+            if isinstance(values[0], (list, tuple)):
+                cursor.executemany(sql, values)
+            else:
+                cursor.execute(sql, values)
         except Exception as e:
             com.log('SQLエラー: ' + sql.replace('\n', ' ') + ', ' + str(e), 'E')
             return False
@@ -79,12 +91,21 @@ class MySql:
         return True
 
     def update(self, columns, values, table, where):
+        """
+        パラメータ化クエリを使用したUPDATE
+        columns: 列名のリスト
+        values: 値のリスト
+        table: テーブル名
+        where: WHERE句の条件（文字列）
+        注意: WHERE句は文字列結合のため、呼び出し側で安全な値を渡すこと
+        """
+        # SET句をパラメータ化
+        set_clause = ",".join([f'{col} = %s' for col in columns])
+        sql = f'UPDATE {table} SET {set_clause} WHERE {where}'
 
-        sql = 'UPDATE ' + table + ' SET '
-        sql += ",".join([columns[i] + ' = \'' + values[i] + '\'' for i in range(0, len(values))]) + ' WHERE ' + where
         try:
             cursor = self.cnx.cursor()
-            cursor.execute(sql)
+            cursor.execute(sql, values)
         except Exception as e:
             com.log('SQLエラー: ' + sql.replace('\n', ' ') + ', ' + str(e), 'E')
             return False
@@ -93,8 +114,13 @@ class MySql:
         return True
 
     def delete(self, table, where=''):
-
-        sql = 'DELETE FROM ' + table + ('' if 0 == len(where) else ' WHERE ' + where)
+        """
+        DELETE文の実行
+        table: テーブル名
+        where: WHERE句の条件（文字列、オプション）
+        注意: WHERE句は文字列結合のため、呼び出し側で安全な値を渡すこと
+        """
+        sql = f'DELETE FROM {table}' + ('' if 0 == len(where) else f' WHERE {where}')
         try:
             cursor = self.cnx.cursor()
             cursor.execute(sql)
@@ -106,7 +132,11 @@ class MySql:
         return True
 
     def free(self, sql):
-
+        """
+        任意のSQLを実行
+        sql: SQL文（文字列）
+        警告: SQLインジェクションのリスクがあるため、外部入力を含むSQLは実行しないこと
+        """
         com.log('SQL(Free): ' + sql.replace('\n', ' '))
         try:
             cursor = self.cnx.cursor()

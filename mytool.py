@@ -8,7 +8,7 @@ Macアプリ化コマンド
   python mytool_app.py py2app
 
 Gitキーチェーン
-　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
+　GitHub PATは環境変数 GITHUB_TOKEN で管理してください
 """
 from const import cst
 from common import com
@@ -86,9 +86,9 @@ WORK_IP = (cst.IP if CHANGE_MENU < 0 else cst.IP_LIST[CHANGE_MENU])
 BTN = BTNS[WORK_IP]
 HEIGHT = 2 + (2 if cst.DEV_IP == WORK_IP else 0) + (1 if cst.MAC_IP != WORK_IP else 0)
 DP_XY_WIDTH = {
-    cst.DEV_IP: [0, 170 + (int(len(BTN) + HEIGHT) * 70), 16, 1],
-    cst.WEB_IP: [0, (int(len(BTN) + HEIGHT) * 70), 16, 1],
-    cst.MAC_IP: [150, 100 + (int(len(BTN) + HEIGHT) * 50), 13, 1]}
+    cst.DEV_IP: [cst.WINDOW_X_POS, cst.WINDOW_Y_OFFSET_DEV + (int(len(BTN) + HEIGHT) * cst.BUTTON_HEIGHT_DEFAULT), cst.WINDOW_WIDTH_DEFAULT, cst.WINDOW_COLUMNS],
+    cst.WEB_IP: [cst.WINDOW_X_POS, cst.WINDOW_Y_OFFSET_WEB + (int(len(BTN) + HEIGHT) * cst.BUTTON_HEIGHT_DEFAULT), cst.WINDOW_WIDTH_DEFAULT, cst.WINDOW_COLUMNS],
+    cst.MAC_IP: [cst.WINDOW_X_POS_MAC, cst.WINDOW_Y_OFFSET_MAC + (int(len(BTN) + HEIGHT) * cst.BUTTON_HEIGHT_MAC), cst.WINDOW_WIDTH_MAC, cst.WINDOW_COLUMNS]}
 DP = DP_XY_WIDTH[WORK_IP]
 XY_SIZE = (DP[2], 1)
 
@@ -203,7 +203,9 @@ def main():
                               values[event]
                               if 'EA' == event else
                               values[event])
-                except: continue
+                except (IndexError, KeyError) as e:
+                    com.log(f'メニュー選択エラー: {event} - {values.get(event, "N/A")} ({str(e)})', 'W')
+                    continue
 
                 window['act'].update(event[0] + ': ' + values[event])
                 window[event].update('　' + event[0].upper() + event[1:])
@@ -247,7 +249,9 @@ def main():
                 if '  ' + event == window['act'].get():
                     try:
                         is_run = 5 < int(com.conv_time_str(com.time_start() - event_time).replace(':', ''))
-                    except: pass
+                    except (ValueError, TypeError, AttributeError) as e:
+                        com.log(f'二度押しチェックエラー: {str(e)}', 'W')
+                        pass
 
                 window['act'].update('  ' + event)
 

@@ -133,8 +133,8 @@ class ConvertMt5:
         finally:
             try:
                 window.close()
-            except:
-                pass
+            except (AttributeError, RuntimeError) as e:
+                com.log(f'ウィンドウクローズエラー: {str(e)}', 'W')
 
         run_time = com.time_end(start_time)
         self.total_time += run_time
@@ -297,8 +297,8 @@ class ConvertMt5:
         finally:
             try:
                 window.close()
-            except:
-                pass
+            except (AttributeError, RuntimeError) as e:
+                com.log(f'ウィンドウクローズエラー: {str(e)}', 'W')
 
         run_time = com.time_end(start_time)
         self.total_time += run_time

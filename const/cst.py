@@ -11,6 +11,18 @@ KEEP_LOG = 20
 MAIN_BGCOLOR = '#FFCCFF' if 'Win' == path.PC else '#AAFFAA'
 MAIN_ACT_COLOR = ['#FFFF77', '#000000']
 
+# GUI ウィンドウ設定
+WINDOW_X_POS = 0  # ウィンドウのX位置
+WINDOW_Y_OFFSET_DEV = 170  # DEV環境のY位置オフセット
+WINDOW_Y_OFFSET_WEB = 0  # WEB環境のY位置オフセット
+WINDOW_Y_OFFSET_MAC = 100  # MAC環境のY位置オフセット
+BUTTON_HEIGHT_DEFAULT = 70  # ボタンの高さ（Win）
+BUTTON_HEIGHT_MAC = 50  # ボタンの高さ（Mac）
+WINDOW_WIDTH_DEFAULT = 16  # ウィンドウの幅（Win）
+WINDOW_WIDTH_MAC = 13  # ウィンドウの幅（Mac）
+WINDOW_COLUMNS = 1  # ウィンドウの列数
+WINDOW_X_POS_MAC = 150  # MAC環境のX位置
+
 # Path
 PC = path.PC
 PC_NAME = path.PC_NAME

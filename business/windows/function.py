@@ -143,7 +143,8 @@ class Function:
                                              cst.MATCH_IMG_MT4['最適化OFF'], (255, 0, 255))
                     try:
                         com.click_pos(read_x + 5, read_y + 5)
-                    except:
+                    except (TypeError, ValueError, RuntimeError) as e:
+                        com.log(f'クリック位置エラー: {str(e)}', 'W')
                         com.dialog('メニュー位置をスタート横に変更してください。', title='メニュー位置エラー', lv='w')
                         return False
                     com.sleep(3)
@@ -274,9 +275,9 @@ class Function:
                             os.remove(target)
                             msg.append(target)
                             com.log('MT4ログ削除: ' + target)
-                        except:
-                            msg.append('エラー: ' + target)
-                            com.log('MT4ログ削除エラー: ' + target)
+                        except (OSError, FileNotFoundError, PermissionError) as e:
+                            msg.append(f'エラー: {target} ({str(e)})')
+                            com.log(f'MT4ログ削除エラー: {target} - {str(e)}', 'E')
 
             com.log(fnc + '完了(' + str(len(msg)) + ')')
             com.dialog(fnc + '完了しました(' + str(len(msg)) + ')\n' +
