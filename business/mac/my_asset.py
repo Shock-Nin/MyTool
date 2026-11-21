@@ -51,17 +51,29 @@ class MyAsset:
             payment_type = {}
 
             for payment in payments:
-                val_parts = payment['平均(件数)'].replace(')', '').split('(')
-                space = ('      ' if 1 == len(val_parts) else '') + (''.join('  ' for _ in range(8 - len(str(payment['平均'])))) if len(str(payment['平均'])) < 7 else '')
+                # 実際の列名を確認（最初の行のみ）
+                if not payment_type:
+                    com.log(f'payment_avg テーブルの列名: {list(payment.keys())}')
+
+                # 列名を取得（4番目の列）
+                cols = list(payment.keys())
+                col3_value = payment[cols[3]] if len(cols) > 3 else ''
+
+                val_parts = str(col3_value).replace(')', '').split('(')
+                col2_value = payment[cols[2]] if len(cols) > 2 else 0
+                space = ('      ' if 1 == len(val_parts) else '') + (''.join('  ' for _ in range(8 - len(str(col2_value)))) if len(str(col2_value)) < 7 else '')
                 val = ('  [' + str(round(float(val_parts[0]), 1)).replace('.0', '') +
                       (']' if 1 == len(val_parts) else '(' + str(round(float(val_parts[1]), 1)).replace('.0', '') + ')]')
                        + ('    ' if float(val_parts[0]) < 12 else ''))
-                val = space + format(int(str(payment['平均'])), ',') + val
+                val = space + format(int(str(col2_value)), ',') + val
 
-                if payment['種別'] in payment_type:
-                    payment_type[payment['種別']][payment['年月']] = val
+                col1_value = payment[cols[1]] if len(cols) > 1 else ''
+                col0_value = payment[cols[0]] if len(cols) > 0 else ''
+
+                if col1_value in payment_type:
+                    payment_type[col1_value][col0_value] = val
                 else:
-                    payment_type[payment['種別']] = {payment['年月']: val}
+                    payment_type[col1_value] = {col0_value: val}
 
             str_payment = '　種別　　  　  　 ' + '　　　  　　'.join(key for key in payment_type['外食'])
 
