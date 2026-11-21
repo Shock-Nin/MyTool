@@ -81,13 +81,12 @@ class MyAsset:
                 payment_type[rows][col] + ''.join(' ' for _ in range(22 - len(str(payment_type[rows][col]))))
                 for col in payment_type[rows]) for rows in reversed(payment_type))
 
-            summary = self.cnx.select('*', TARGET_TABLES[0], '', '', as_dict=True)
-            summary_cols = list(summary[0].keys()) if summary else []
-            summary_header = '　　 '.join(['　　 ' + col for col in summary_cols])
+            summary = self.cnx.select('*', TARGET_TABLES[0], '', '')
+            summary[0] = '　　 '.join(['　　 ' + summary[0][i] for i in range(len(summary[0]))])
 
             # 最新日のデータ取得
-            before_rows = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1', as_dict=True)
-            before = before_rows[0] if before_rows else None
+            before = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1')
+            before = [before[0], before[1][0]]
 
             str_summary = ''
             half = math.ceil(len(summary[1]) / 2)
