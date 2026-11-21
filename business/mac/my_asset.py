@@ -37,32 +37,31 @@ class MyAsset:
             # DB接続
             self.cnx = my_sql.MySql('data_my')
 
-            invests = self.cnx.select('*', TARGET_TABLES[1], '0 < 積立金額', '')
-            if invests[1][0][7].month != datetime.datetime.now().month:
-                if 1 == com.question('積立金額の最終更新が[' + str(invests[1][0][7]) + ']です。\n更新しますか？', '積立更新'):
-                    for i in range(len(invests[1])):
+            invests = self.cnx.select('*', TARGET_TABLES[1], '0 < 積立金額', '', as_dict=True)
+            if invests[0]['更新日'].month != datetime.datetime.now().month:
+                if 1 == com.question('積立金額の最終更新が[' + str(invests[0]['更新日']) + ']です。\n更新しますか？', '積立更新'):
+                    for invest in invests:
                         columns = ['積立金額', '更新日']
-                        values = [int(invests[1][i][k]) for k in range(len(invests[0])) if invests[0][k] in ['金額', '積立金額']]
-                        values = [str(values[0] + values[1]), str(datetime.datetime.now()).split(' ')[0]]
-                        self.cnx.update(columns, values, TARGET_TABLES[1], '\'' + str(invests[1][i][0]) + '\' = ソート番号')
+                        total = int(invest['金額']) + int(invest['積立金額'])
+                        values = [str(total), str(datetime.datetime.now()).split(' ')[0]]
+                        self.cnx.update(columns, values, TARGET_TABLES[1], f"'{invest['ソート番号']}' = ソート番号")
                         self.cnx.commit()
 
-            payments = self.cnx.select('*', TARGET_TABLES[3], '', 'ORDER BY 年月 DESC, 種別 ASC LIMIT 15')
+            payments = self.cnx.select('*', TARGET_TABLES[3], '', 'ORDER BY 年月 DESC, 種別 ASC LIMIT 15', as_dict=True)
             payment_type = {}
 
-            for i in range(len(payments[1])):
-                payment = payments[1][i]
-                val = payment[3].replace(')', '').split('(')
-                space = ('      ' if 1 == len(val) else '') + (''.join('  ' for _ in range(8 - len(str(payment[2])))) if len(str(payment[2])) < 7 else '')
-                val = ('  [' + str(round(float(val[0]), 1)).replace('.0', '') +
-                      (']' if 1 == len(val) else '(' + str(round(float(val[1]), 1)).replace('.0', '') + ')]')
-                       + ('    ' if float(val[0]) < 12 else ''))
-                val = space + format(int(str(payment[2])), ',') + val
+            for payment in payments:
+                val_parts = payment['平均(件数)'].replace(')', '').split('(')
+                space = ('      ' if 1 == len(val_parts) else '') + (''.join('  ' for _ in range(8 - len(str(payment['平均'])))) if len(str(payment['平均'])) < 7 else '')
+                val = ('  [' + str(round(float(val_parts[0]), 1)).replace('.0', '') +
+                      (']' if 1 == len(val_parts) else '(' + str(round(float(val_parts[1]), 1)).replace('.0', '') + ')]')
+                       + ('    ' if float(val_parts[0]) < 12 else ''))
+                val = space + format(int(str(payment['平均'])), ',') + val
 
-                try:
-                    payment_type[payment[1]][payment[0]] = val
-                except:
-                    payment_type[payment[1]] = {payment[0]: val}
+                if payment['種別'] in payment_type:
+                    payment_type[payment['種別']][payment['年月']] = val
+                else:
+                    payment_type[payment['種別']] = {payment['年月']: val}
 
             str_payment = '　種別　　  　  　 ' + '　　　  　　'.join(key for key in payment_type['外食'])
 
@@ -70,12 +69,13 @@ class MyAsset:
                 payment_type[rows][col] + ''.join(' ' for _ in range(22 - len(str(payment_type[rows][col]))))
                 for col in payment_type[rows]) for rows in reversed(payment_type))
 
-            summary = self.cnx.select('*', TARGET_TABLES[0], '', '')
-            summary[0] = '　　 '.join(['　　 ' + summary[0][i] for i in range(len(summary[0]))])
+            summary = self.cnx.select('*', TARGET_TABLES[0], '', '', as_dict=True)
+            summary_cols = list(summary[0].keys()) if summary else []
+            summary_header = '　　 '.join(['　　 ' + col for col in summary_cols])
 
             # 最新日のデータ取得
-            before = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1')
-            before = [before[0], before[1][0]]
+            before_rows = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1', as_dict=True)
+            before = before_rows[0] if before_rows else None
 
             str_summary = ''
             half = math.ceil(len(summary[1]) / 2)
@@ -94,7 +94,8 @@ class MyAsset:
                       if 0 < k < len(summary[1][i + half]) - 1 else '') + (format(int(str(summary[1][i + half][k]).replace('.0', '  ')), ',')
                       if 0 < k < len(summary[1][i + half]) - 1 else str(summary[1][i + half][k])) + ('\t' if 0 == k else '')
                      for k in range(len(summary[1][i + half]))]).replace('0%', '　    0%').replace('10　    0%', '    100%')
-                except: pass
+                except (IndexError, KeyError, ValueError) as e:
+                    com.log(f'サマリー処理エラー: {str(e)}', 'W')
                 str_summary += '\n'
 
             str_summary = '   ：　'.join(''.join(summary[0][i] for i in range(len(summary[0]))) for _ in range(2)) + '\n' + str_summary \

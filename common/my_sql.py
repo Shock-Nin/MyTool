@@ -33,34 +33,64 @@ class MySql:
 
         self.cnx = cnx
 
-    def select(self, columns, table, where='', others=''):
+    def select(self, columns, table, where='', others='', as_dict=False):
+        """
+        SELECTクエリを実行
 
-        # 列名取得
-        sql = 'DESC ' + table
-        try:
-            cursor = self.cnx.cursor()
-            cursor.execute(sql)
-            show_cols = cursor.fetchall()
-        except Exception as e:
-            com.log('SQLエラー: ' + sql.replace('\n', ' ') + ', ' + str(e), 'E')
-            return '', ''
+        Parameters:
+        -----------
+        columns: str
+            取得する列名（カンマ区切り、または '*'）
+        table: str
+            テーブル名
+        where: str
+            WHERE句の条件
+        others: str
+            その他のSQL句（ORDER BY, LIMIT等）
+        as_dict: bool
+            True の場合、結果を辞書のリストで返す（列名でアクセス可能）
+            False の場合、従来の形式 [列名リスト, データリスト] で返す
 
+        Returns:
+        --------
+        as_dict=True: list of dict
+            [{列名: 値, ...}, ...]
+        as_dict=False: list
+            [[列名1, 列名2, ...], [[値1, 値2, ...], ...]]
+        """
         # SELECTデータ取得
         sql = 'SELECT ' + columns + ' FROM ' + table
         sql += (' WHERE ' + where if 0 < len(where) else '') + (' ' + others if 0 < len(others) else '')
+
         try:
-            cursor = self.cnx.cursor()
+            # 辞書形式で取得する場合
+            cursor = self.cnx.cursor(dictionary=as_dict)
             cursor.execute(sql)
             result = cursor.fetchall()
         except Exception as e:
             com.log('SQLエラー: ' + sql.replace('\n', ' ') + ', ' + str(e), 'E')
+            return [] if as_dict else ['', '']
+
+        com.log('SQL: ' + sql.replace('\n', ' '))
+
+        # 辞書形式の場合はそのまま返す
+        if as_dict:
+            return result
+
+        # 従来の形式（互換性維持）
+        # 列名取得
+        sql_desc = 'DESC ' + table
+        try:
+            cursor_desc = self.cnx.cursor()
+            cursor_desc.execute(sql_desc)
+            show_cols = cursor_desc.fetchall()
+        except Exception as e:
+            com.log('SQLエラー: ' + sql_desc.replace('\n', ' ') + ', ' + str(e), 'E')
             return '', ''
 
         cols = [[col[0] for col in show_cols]]
         res = [[row for row in rows] for rows in result]
-
         cols.append(res)
-        com.log('SQL: ' + sql.replace('\n', ' '))
         return cols
 
     def insert(self, columns, values, table):
@@ -131,20 +161,27 @@ class MySql:
         com.log('SQL: ' + sql.replace('\n', ' '))
         return True
 
-    def free(self, sql):
+    def free(self, sql, as_dict=False):
         """
         任意のSQLを実行
-        sql: SQL文（文字列）
+
+        Parameters:
+        -----------
+        sql: str
+            SQL文（文字列）
+        as_dict: bool
+            True の場合、SELECT結果を辞書のリストで返す（列名でアクセス可能）
+
         警告: SQLインジェクションのリスクがあるため、外部入力を含むSQLは実行しないこと
         """
         com.log('SQL(Free): ' + sql.replace('\n', ' '))
         try:
-            cursor = self.cnx.cursor()
+            cursor = self.cnx.cursor(dictionary=as_dict)
             cursor.execute(sql)
             result = cursor.fetchall()
         except Exception as e:
             com.log('SQLエラー: ' + sql.replace('\n', ' ') + ', ' + str(e), 'E')
-            return ''
+            return [] if as_dict else ''
 
         return result
 
@@ -152,7 +189,8 @@ class MySql:
         try:
             self.cnx.close()
             com.log('MySQL: 切断')
-        except: pass
+        except (AttributeError, Exception) as e:
+            com.log(f'MySQL切断エラー: {str(e)}', 'W')
 
     def commit(self):
         try:

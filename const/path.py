@@ -20,8 +20,8 @@ else:
 WEB_IP = '133.18.165.86'
 # 環境変数で上書き可能（例: export DEV_IP=192.168.1.100）
 import os
-DEV_IP = os.getenv('DEV_IP', IP if 'Win' == PC else None)
-MAC_IP = os.getenv('MAC_IP', None if IP in [DEV_IP, WEB_IP] else IP)
+DEV_IP = os.getenv('DEV_IP', IP if 'Win' == PC else '')
+MAC_IP = os.getenv('MAC_IP', '' if IP in [DEV_IP, WEB_IP] else IP)
 
 IPS = {DEV_IP: 'DEV', WEB_IP: 'Web', MAC_IP: 'Mac'}
 IP_LIST = [DEV_IP, WEB_IP, MAC_IP]
