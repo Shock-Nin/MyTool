@@ -5,6 +5,8 @@
 - Ollama   : 記憶入りのカスタムモデル（既定名 my-assistant）を作成・更新
              settings.json の ollama_remotes にある端末（Windows VM・VPS）にも
              Tailscale 経由で同じモデルを作る（つながらない端末は飛ばして次回に再挑戦）
+             同期のあと・自動実行のたびに、VM・VPS の記憶が Mac と違えば警告する
+             （ターミナル表示と Mac の通知。check_remotes）
 - Bionic   : export/lmstudio_system_prompt.txt を更新（Bionic の my-profile スキルが読む。
              --copy でクリップボードにも入る）。LM Studio アプリは 2026-11-22 に削除したため、
              プリセットの書き換えは settings.json の lmstudio_preset が null のあいだは行わない
@@ -108,6 +110,59 @@ def _ensure_local_ollama() -> None:
         time.sleep(1)
         if _reachable(LOCAL_OLLAMA):
             return
+
+
+def _remote_system(host: str, name: str) -> Optional[str]:
+    """ほかの端末の Ollama モデルに入っている記憶（SYSTEM）。モデルが無ければ None"""
+    req = urllib.request.Request(host.rstrip("/") + "/api/show",
+                                 data=json.dumps({"model": name}).encode("utf-8"),
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.loads(r.read().decode("utf-8")).get("system") or ""
+    except Exception:
+        return None
+
+
+def _norm(text: str) -> str:
+    return " ".join(text.split())
+
+
+def _notify(message: str) -> None:
+    if sys.platform != "darwin":
+        return
+    msg = message.replace("\\", "\\\\").replace('"', '\\"')
+    subprocess.run(["osascript", "-e",
+                    f'display notification "{msg}" with title "ローカルLLMの記憶" sound name "Basso"'],
+                   capture_output=True)
+
+
+def check_remotes() -> list:
+    """VM・VPS の記憶が Mac と違えば警告する（違う端末の一覧を返す）"""
+    settings = load_settings()
+    base, name = settings.get("ollama_base"), settings.get("ollama_name", "my-assistant")
+    if not base or not _remotes():
+        return []
+    prompt = build_system_prompt(load_memory(MEMORY_FILE))
+    text = _modelfile_text(base, prompt)
+    problems = []
+    for label, host in _remotes().items():
+        if not _reachable(host):
+            if not _remote_synced(host, text):
+                problems.append(f"{label}: つながらず、最新の記憶がまだ反映されていません")
+            continue
+        remote = _remote_system(host, name)
+        if remote is None:
+            problems.append(f"{label}: Ollamaモデル「{name}」がありません")
+        elif _norm(remote) != _norm(prompt):
+            problems.append(f"{label}: 記憶が Mac と異なります")
+    if problems:
+        print("⚠️ [警告] VM・VPS の記憶が Mac と一致していません")
+        for line in problems:
+            print(f"        - {line}")
+        print("        → 端末を起動して Tailscale につないでから update_llm.command を実行してください")
+        _notify(" / ".join(problems))
+    return problems
 
 
 def _ollama_env(host: Optional[str]) -> Optional[dict]:
@@ -234,6 +289,8 @@ def sync(base: Optional[str] = None, name: Optional[str] = None, copy: bool = Fa
             print(f"[同期] {label} のOllamaモデルの作成に失敗: {(r.stderr or r.stdout).strip()[-300:]}")
             print(f"        {label} に元モデル {base} があるか確認してください")
 
+    check_remotes()
+
 
 def _ollama_create(name: str, host: Optional[str] = None):
     return subprocess.run(["ollama", "create", name, "-f", str(MODELFILE)],
@@ -249,6 +306,7 @@ def main():
     a = p.parse_args()
     if a.if_needed:
         if not needs_sync():
+            check_remotes()   # 反映済みでも、VM・VPS 側が変わっていないか確かめる
             return
         print(f"--- {datetime.now():%Y-%m-%d %H:%M:%S} 自動同期 ---")
     mem = load_memory(MEMORY_FILE)

@@ -437,12 +437,15 @@ def check_profile_sources(backend, model):
 
 
 def check_apps_sync():
-    """記憶がアプリ側（LM Studio用テキスト・Ollamaモデル）より新しければ同期する"""
+    """記憶がアプリ側（Bionic用テキスト・Ollamaモデル）より新しければ同期し、
+    VM・VPS の記憶が Mac と違えば警告する"""
     try:
-        from export_to_apps import needs_sync, sync
+        from export_to_apps import check_remotes, needs_sync, sync
         if needs_sync():
-            print("[同期] 記憶の更新を LM Studio / Ollama に反映します")
-            sync()
+            print("[同期] 記憶の更新を Bionic / Ollama（Mac・VM・VPS）に反映します")
+            sync()   # 最後に check_remotes() も行う
+        else:
+            check_remotes()
     except Exception as e:   # 失敗してもチャットは起動する
         print(f"[同期] アプリ側への同期をスキップしました: {e}")
 
