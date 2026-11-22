@@ -36,7 +36,7 @@ class AnomalyHst:
 
         try:
             for i in range(len(files)):
-                data = open(files[i], 'r').read().split('\n')
+                data = open(files[i]).read().split('\n')
                 file = files[i].split('\\')[-1]
 
                 window = com.progress('H1データ作成中', [file , len(files)], interrupt=True)
@@ -154,7 +154,7 @@ class AnomalyHst:
                     if key == table:
                         table = RENAME_CSV[key]
 
-                data = open(files[i], 'r').read().split('\n')
+                data = open(files[i]).read().split('\n')
 
                 file = files[i].split('\\')[-1]
 

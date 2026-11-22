@@ -30,7 +30,7 @@ class EditHistory:
 
         try:
             for i in range(0, len(files)):
-                data = open(files[i], 'r').read().split('\n')
+                data = open(files[i]).read().split('\n')
 
                 file_parts = files[i].split('/')
                 file_name = file_parts[len(file_parts) - 1]
@@ -99,7 +99,7 @@ class EditHistory:
 
         try:
             for i in range(0, len(files)):
-                data = open(files[i], 'r').read().split('\n')
+                data = open(files[i]).read().split('\n')
 
                 file_parts = files[i].split('/')
                 file_name = file_parts[len(file_parts) - 1]
@@ -190,7 +190,7 @@ class EditHistory:
                 tf_count += 1
 
                 for i in range(0, len(files)):
-                    data = open(files[i], 'r').read().split('\n')
+                    data = open(files[i]).read().split('\n')
 
                     file_parts = files[i].split('/')
                     file_name = file_parts[len(file_parts) - 1]
@@ -236,7 +236,7 @@ class EditHistory:
                         body_value = close_price - open_price
                         out += year + ',' + month + ',' + day + ',' + str(hour_value) + ','
                         out += str(close_price) + ',' + str(range_value) + ',' + str(body_value) + ','
-                        out += ",".join(['{:.6f}'.format(ma) for ma in ma_lists]) + '\n'
+                        out += ",".join([f'{ma:.6f}' for ma in ma_lists]) + '\n'
 
                     open(files[i].split('Trender/')[0] + 'Trender/Calc/' +
                          files[i].split('/')[len(files[i].split('/')) - 1], 'w').write(out)
@@ -276,7 +276,7 @@ class EditHistory:
                                {} for i in range(0, len(files))}
 
             for i in range(0, len(files)):
-                data = open(files[i], 'r').read().split('\n')
+                data = open(files[i]).read().split('\n')
 
                 start_num = -1
                 end_num = -1
@@ -340,7 +340,7 @@ class EditHistory:
                 window['H1'].update(path.replace('MTF/', ''))
 
                 for i in range(0, len(files)):
-                    data = open(files[i], 'r').read().split('\n')
+                    data = open(files[i]).read().split('\n')
 
                     file_parts = files[i].split('/')
                     file_name = file_parts[len(file_parts) - 1]

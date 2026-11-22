@@ -13,7 +13,7 @@ from statsmodels.tsa.seasonal import STL
 from statsmodels.tsa.stattools import adfuller
 import joblib
 
-import japanize_matplotlib
+import japanize_matplotlib  # noqa: F401  日本語フォントを有効にする（読み込むだけで効く）
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 

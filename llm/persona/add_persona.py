@@ -6,7 +6,7 @@ persona.json（チャット由来の記憶の原本）を記憶 data/llm_memory.
 - profile.json（資料由来）とは別管理。add_profile.py / update_profile.py を実行しても消えない
 - persona.json から消えた行は persona_backup.json に日時付きで追記して保管
 - 何度実行しても重複しない
-- 反映後、LM Studio用テキストと Ollamaモデルも自動で更新
+- 反映後、Bionic用テキストと Ollamaモデルも自動で更新
 
 使い方:
     python3 ~/MyTool/llm/persona/add_persona.py

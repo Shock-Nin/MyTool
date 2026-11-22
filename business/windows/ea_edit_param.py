@@ -59,7 +59,7 @@ def _edit_setfiles():
 
         for file in files:
             try:
-                read_file.append(open(PRM_PATH + folder_name + "/" + file, "r").read())
+                read_file.append(open(PRM_PATH + folder_name + "/" + file).read())
 
             except Exception as e:
                 err_msg += "\n　" + folder_name + file + "\n　　" + str(e)
@@ -150,7 +150,7 @@ def _edit_mqlfiles():
 
             # mq4ファイルを、UTF-16で読み込み
             ea_names.append(file.replace(".mq4", ""))
-            with open(MQ4_PATH + "/" + file, "r", encoding="utf16") as f:
+            with open(MQ4_PATH + "/" + file, encoding="utf16") as f:
                 datas = f.read().split("\n")
                 for i in range(0, len(datas)):
                     # 取得の対象範囲(最初のvoid〜forかelseまで)
@@ -244,7 +244,7 @@ def _edit_mqlfiles():
 def _edit_test_file():
     file = PRM_PATH + "test.set"
     try:
-        with open(file, "r") as infile:
+        with open(file) as infile:
             datas = infile.read().split("\n")
 
             with open(cst.DATA_PATH[cst.PC] + "TestSet.csv", "w") as outfile:
@@ -298,7 +298,7 @@ def _edit_htmfiles():
                 ) or ("GOLD" == cst.CURRENCIES_EA['list'][k] and file.find("XAU") < 0):
                     continue
                 try:
-                    trade_file.append(open(file, "r", encoding="utf16").read())
+                    trade_file.append(open(file, encoding="utf16").read())
 
                 except Exception as e:
                     err_msg += "\n　" + file + "\n　　" + str(e)

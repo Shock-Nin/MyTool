@@ -194,7 +194,7 @@ class AnomalyData:
 
                             elif target_times[i] == row[0]:
                                 op = (row[1] if -1 == old[table] else old[table])
-                                data += str(row[4]) + ',' + '{:.6f}'.format(row[2] - row[3]) + ',' \
+                                data += str(row[4]) + ',' + f'{row[2] - row[3]:.6f}' + ',' \
                                     + '{:.6f}'.format(op - row[4] if table.startswith('usd') else row[4] - op) + ','
 
                                 old[table] = row[4]
@@ -329,14 +329,14 @@ class AnomalyData:
                                     count_win += 1
                                     updn_win += get_updn
 
-                            str_updn += ',' + str(count) + ',' + '{:.2f}'.format(vola / count) + ','
-                            str_updn += '{:.2f}'.format(vola_max) + ',' + '{:.2f}'.format(vola_min) + ','
+                            str_updn += ',' + str(count) + ',' + f'{vola / count:.2f}' + ','
+                            str_updn += f'{vola_max:.2f}' + ',' + f'{vola_min:.2f}' + ','
 
-                            str_updn += '{:.2f}'.format(updn / count) + ',' + str(count_win) + ',' + str(count_lose) + ','
-                            str_updn += '{:.2f}'.format(count_win / count * 100) + ','
-                            str_updn += '{:.2f}'.format(count_lose / count * 100) + ','
-                            str_updn += '{:.2f}'.format(0 if 0 == count_win else updn_win / count_win) + ','
-                            str_updn += '{:.2f}'.format(0 if 0 == count_lose else updn_lose / count_lose)
+                            str_updn += f'{updn / count:.2f}' + ',' + str(count_win) + ',' + str(count_lose) + ','
+                            str_updn += f'{count_win / count * 100:.2f}' + ','
+                            str_updn += f'{count_lose / count * 100:.2f}' + ','
+                            str_updn += f'{0 if 0 == count_win else updn_win / count_win:.2f}' + ','
+                            str_updn += f'{0 if 0 == count_lose else updn_lose / count_lose:.2f}'
 
                             if cur.replace('USD', '') in USD_IDX:
                                 indexes[1] += count
@@ -349,14 +349,14 @@ class AnomalyData:
                                 indexes[8] += updn_win
                                 indexes[9] += updn_lose
 
-                        str_updn_idx = ',' + str(indexes[1]) + ',' + '{:.2f}'.format(indexes[2] / indexes[1]) + ','
-                        str_updn_idx += '{:.2f}'.format(indexes[3]) + ',' + '{:.2f}'.format(indexes[4]) + ','
+                        str_updn_idx = ',' + str(indexes[1]) + ',' + f'{indexes[2] / indexes[1]:.2f}' + ','
+                        str_updn_idx += f'{indexes[3]:.2f}' + ',' + f'{indexes[4]:.2f}' + ','
 
-                        str_updn_idx += '{:.2f}'.format(indexes[5] / indexes[1]) + ',' + str(indexes[6]) + ',' + str(indexes[7]) + ','
-                        str_updn_idx += '{:.2f}'.format(indexes[6] / indexes[1] * 100) + ','
-                        str_updn_idx += '{:.2f}'.format(indexes[7] / indexes[1] * 100) + ','
-                        str_updn_idx += '{:.2f}'.format(0 if 0 == indexes[6] else indexes[8] / indexes[6]) + ','
-                        str_updn_idx += '{:.2f}'.format(0 if 0 == indexes[7] else indexes[9] / indexes[7])
+                        str_updn_idx += f'{indexes[5] / indexes[1]:.2f}' + ',' + str(indexes[6]) + ',' + str(indexes[7]) + ','
+                        str_updn_idx += f'{indexes[6] / indexes[1] * 100:.2f}' + ','
+                        str_updn_idx += f'{indexes[7] / indexes[1] * 100:.2f}' + ','
+                        str_updn_idx += f'{0 if 0 == indexes[6] else indexes[8] / indexes[6]:.2f}' + ','
+                        str_updn_idx += f'{0 if 0 == indexes[7] else indexes[9] / indexes[7]:.2f}'
 
                         str_out += str_updn_idx + str_updn
                     str_out += '\n'
@@ -602,7 +602,7 @@ class AnomalyData:
                                 else:
                                     str_cur[str_time] += ',' + str(counts[c][str_span][start_hours][cnt])
                                     str_cur[str_time] += ',' + ('0' if 0 == counts[c][str_span][start_hours][cnt] else
-                                                                '{:.2f}'.format(counts[c][str_span][start_hours][cnt] / count * 100))
+                                                                f'{counts[c][str_span][start_hours][cnt] / count * 100:.2f}')
                                 cnt += 1
                         for h in range(len(close_hours)):
                             if 0 == count:
@@ -610,7 +610,7 @@ class AnomalyData:
                             else:
                                 str_cur[str_time] += ',' + str(counts[c][str_span][start_hours + 1][h])
                                 str_cur[str_time] += ',' + ('0' if 0 == counts[c][str_span][start_hours + 1][h] else
-                                                            '{:.2f}'.format(counts[c][str_span][start_hours + 1][h] / count * 100))
+                                                            f'{counts[c][str_span][start_hours + 1][h] / count * 100:.2f}')
 
                     str_curs.append(str_cur)
                 times = []
@@ -865,18 +865,18 @@ class AnomalyData:
 
                             for height in range(len(heights)):
 
-                                str_updns[cnt_updn] += ',' + str(opens[cnt_updn][heights[height]]) + ',' +'{:.2f}'.format(opens[cnt_updn][heights[height]] / counts[0] * 100)
+                                str_updns[cnt_updn] += ',' + str(opens[cnt_updn][heights[height]]) + ',' +f'{opens[cnt_updn][heights[height]] / counts[0] * 100:.2f}'
                                 if len(str_updns) - 2 == cnt_updn:
                                     str_updns[len(str_updns) - 1] += \
                                         ',' + str(opens[0][heights[height]] + opens[1][heights[height]]) + ',' \
-                                        + '{:.2f}'.format((opens[0][heights[height]] + opens[1][heights[height]]) / counts[0] * 100)
+                                        + f'{(opens[0][heights[height]] + opens[1][heights[height]]) / counts[0] * 100:.2f}'
 
                                 for achieve in range(len(achieves)):
                                     for win_lose in range(len(attainments)):
 
                                         str_updns[cnt_updn] += ',' + str(closes[cnt_updn][height][win_lose][achieve]) + ','
                                         str_updns[cnt_updn] += ('0' if 0 == opens[cnt_updn][heights[height]] else
-                                                     '{:.2f}'.format(closes[cnt_updn][height][win_lose][achieve] / opens[cnt_updn][heights[height]] * 100))
+                                                     f'{closes[cnt_updn][height][win_lose][achieve] / opens[cnt_updn][heights[height]] * 100:.2f}')
                                         if len(str_updns) - 2 == cnt_updn:
                                             str_updns[len(str_updns) - 1] += \
                                                 ',' + str(closes[0][height][win_lose][achieve] + closes[1][height][win_lose][achieve]) + ','
@@ -908,18 +908,18 @@ class AnomalyData:
                         for height in range(len(heights)):
 
                             str_updns_total[cnt_updn] += ',' + str(opens[cnt_updn][heights[height]]) + ',' \
-                                                         + '{:.2f}'.format(opens[cnt_updn][heights[height]] / totals[c][0] * 100)
+                                                         + f'{opens[cnt_updn][heights[height]] / totals[c][0] * 100:.2f}'
                             if len(str_updns_total) - 2 == cnt_updn:
                                 str_updns_total[len(str_updns_total) - 1] += \
                                     ',' + str(opens[0][heights[height]] + opens[1][heights[height]]) + ',' \
-                                    + '{:.2f}'.format((opens[0][heights[height]] + opens[1][heights[height]]) / totals[c][0] * 100)
+                                    + f'{(opens[0][heights[height]] + opens[1][heights[height]]) / totals[c][0] * 100:.2f}'
 
                             for achieve in range(len(achieves)):
                                 for win_lose in range(len(attainments)):
 
                                     str_updns_total[cnt_updn] += ',' + str(closes[cnt_updn][height][win_lose][achieve]) + ','
                                     str_updns_total[cnt_updn] += ('0' if 0 == opens[cnt_updn][heights[height]] else
-                                                            '{:.2f}'.format(closes[cnt_updn][height][win_lose][achieve] / opens[cnt_updn][heights[height]] * 100))
+                                                            f'{closes[cnt_updn][height][win_lose][achieve] / opens[cnt_updn][heights[height]] * 100:.2f}')
                                     if len(str_updns_total) - 2 == cnt_updn:
                                         str_updns_total[len(str_updns_total) - 1] += \
                                             ','+ str(closes[0][height][win_lose][achieve] + closes[1][height][win_lose][achieve]) + ','

@@ -15,7 +15,7 @@ Windowsタスクスケジューラ
 from common import com
 from const import cst
 
-from business.batch.anomaly import Anomaly
+from business.batch.anomaly import Anomaly  # noqa: F401  今は使っていない（exe 化したときに同梱されるよう残す）
 from business.batch.saya_daily import SayaDaily
 from business.batch.saya_timely import SayaTimely
 

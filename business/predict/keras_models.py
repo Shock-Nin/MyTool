@@ -19,7 +19,7 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import Dropout
 from tensorflow.keras.layers import LSTM, GRU, SimpleRNN
 
-import japanize_matplotlib
+import japanize_matplotlib  # noqa: F401  日本語フォントを有効にする（読み込むだけで効く）
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
@@ -119,7 +119,7 @@ def run(model_type, currency, df, forecast, interval, count, middle, dropout, ep
         msg = f'予測期間: {str(forecast)}, 予測間隔: {str(interval)}, 予測数: {str(count)}, ' \
               + f'中間層: {str(middle)}, ドロップ: {'-' if dropout < 0 else str(dropout)}' \
               + '\n' + ('' if 0 == epochs else f'学習時間: {com.conv_time_str(run_time)}, ') \
-              + f'RMSE: {str(round(np.sqrt(np.mean(((predictions - y_test) ** 2))), 7))}, ' \
+              + f'RMSE: {str(round(np.sqrt(np.mean((predictions - y_test) ** 2)), 7))}, ' \
               + f'r2: {str(round(r2_score(y_test, predictions), 7))}'
 
         # 呼び出しモデルがない場合は、Lossチャートを作成

@@ -13,14 +13,7 @@ import FreeSimpleGUI as sg
 
 
 import pmdarima as pm
-from pmdarima import datasets
-from pmdarima import utils
-from pmdarima import arima
-from pmdarima import model_selection
-from sklearn.metrics import mean_absolute_error
-from statistics import mean
 
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.ar_model import AutoReg
@@ -29,7 +22,7 @@ import joblib
 from math import sqrt
 from itertools import product
 
-import japanize_matplotlib
+import japanize_matplotlib  # noqa: F401  日本語フォントを有効にする（読み込むだけで効く）
 import matplotlib.pyplot as plt
 plt.style.use('fivethirtyeight')
 
@@ -39,7 +32,7 @@ warnings.simplefilter(action='ignore')
 SAVE_PATH = f'{cst.MODEL_PATH[cst.PC]}models/'
 
 def optimize_Arima(currency, df, pdq):
-    com.log(f'AUTO_ARIMAチューニング開始')
+    com.log('AUTO_ARIMAチューニング開始')
 
     # AUTO_ARIMAのPDQリスト作成
     orders = list(product(pdq, pdq, pdq))
@@ -56,7 +49,7 @@ def optimize_Arima(currency, df, pdq):
         # ARIMAのPDQ設定
         results = []
 
-        window = com.progress(f'AUTO_ARIMAチューニング中', [currency, len(orders)], interrupt=True)
+        window = com.progress('AUTO_ARIMAチューニング中', [currency, len(orders)], interrupt=True)
         event, values = window.read(timeout=0)
 
         for i in range(len(orders)):
@@ -113,7 +106,7 @@ def optimize_Arima(currency, df, pdq):
             f.write(f'実行時間: {com.conv_time_str(total_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]{msg}')
 
         com.dialog(f'AUTO_ARIMAチューニングが完了、保存しました。\n{com.conv_time_str(total_time)}',
-                   f'AUTO_ARIMAチューニング')
+                   'AUTO_ARIMAチューニング')
         subprocess.Popen([cst.TXT_APP_PATH[cst.PC], path], shell='Win' == cst.PC)
 
     finally:
@@ -125,7 +118,7 @@ def optimize_Arima(currency, df, pdq):
     return
 
 def optimize_Ar(currency, df, lag):
-    com.log(f'AutoRegチューニング開始')
+    com.log('AutoRegチューニング開始')
 
     # AutoRegのラグリスト作成
     orders = list(product(lag))
@@ -142,7 +135,7 @@ def optimize_Ar(currency, df, lag):
         # ARのラグ設定
         results = []
 
-        window = com.progress(f'AutoRegチューニング中', [currency, len(orders)], interrupt=True)
+        window = com.progress('AutoRegチューニング中', [currency, len(orders)], interrupt=True)
         event, values = window.read(timeout=0)
 
         for i in range(len(orders)):
@@ -194,7 +187,7 @@ def optimize_Ar(currency, df, lag):
         path = f'{save_path}_{currency}_AutoReg.txt'
         with open(path, 'w') as f:
             f.write(f'実行時間: {com.conv_time_str(total_time)} [{df.index[0][:4]} - {df.index[-1][:4]}]{msg}')
-        com.dialog(f'AutoRegチューニングが完了、保存しました。\n{com.conv_time_str(total_time)}', f'AutoRegチューニング')
+        com.dialog(f'AutoRegチューニングが完了、保存しました。\n{com.conv_time_str(total_time)}', 'AutoRegチューニング')
         subprocess.Popen([cst.TXT_APP_PATH[cst.PC], path], shell='Win' == cst.PC)
 
     finally:
@@ -205,7 +198,7 @@ def optimize_Ar(currency, df, lag):
 
 def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
 # def run(currency, df, forecast, simu_try, simu_height, str_pdq, lag, loaded_result=None, ar_only=False):
-    com.log(f'ARIMAモデル予測開始')
+    com.log('ARIMAモデル予測開始')
 
     # 保存パス
     save_path = f'{com.str_time()[:16].replace('-', '').replace(':', '').replace(' ', '_')}'

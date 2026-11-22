@@ -7,7 +7,6 @@ import os
 import cv2
 import glob
 import shutil
-import datetime
 import subprocess
 import pandas as pd
 import FreeSimpleGUI as sg

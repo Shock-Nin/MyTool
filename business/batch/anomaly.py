@@ -4,12 +4,9 @@
 バッチ
 アノマリーのトピック作成(ブラウザ)取得、DB登録
 """
-from common import com
 from const import cst
-from common import web_driver
 
 import datetime
-import urllib.parse
 
 INFO_TOPIC = 'キングゾンビーの%sつまみ食い！<br>'
 ANM_URL = cst.BLOG_URL + 'anomaly'

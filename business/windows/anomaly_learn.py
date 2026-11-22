@@ -1,27 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from common import com
-from common import my_sql
 from const import cst
 
-import json
 import glob
-import datetime
 import pandas as pd
 import FreeSimpleGUI as sg
 
 import numpy as np
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
 import optuna
-import tensorflow as tf
-import tensorflow.keras as keras
 
 from neuralprophet import NeuralProphet
 from sklearn.metrics import mean_absolute_error
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
 
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 

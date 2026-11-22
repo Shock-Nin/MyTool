@@ -13,7 +13,7 @@ import pyautogui as pgui
 from email.mime.text import MIMEText
 
 # スリープ直接呼び出し
-from time import sleep
+from time import sleep  # noqa: F401  com.sleep() として各モジュールから使う
 
 # display
 from common import display

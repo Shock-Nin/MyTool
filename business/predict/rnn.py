@@ -4,15 +4,11 @@ from common import com
 from const import cst
 
 import numpy as np
-import statistics
-import pandas as pd
 import FreeSimpleGUI as sg
 
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.layers import LSTM
-from tensorflow.keras.layers import Dropout
-from tensorflow.keras.layers import Activation
 from tensorflow.keras.layers import SimpleRNN
 from tensorflow.keras.layers import GRU
 

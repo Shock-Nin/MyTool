@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-記憶付きローカルLLMチャット（Ollama / LM Studio 共通）
+記憶付きローカルLLMチャット（Ollama。OpenAI互換API〔--backend lmstudio、localhost:1234〕にも対応）
 
 LLMまわりはこのフォルダ、プロフィール・日記・ヘルスケアの原本は OneDrive の MyAI に置く。
   （MyAI の場所は環境変数 MYAI_DIR で変えられる。既定は ~/Library/CloudStorage/OneDrive-個人用/ドキュメント/MyAI）
@@ -9,7 +9,7 @@ LLMまわりはこのフォルダ、プロフィール・日記・ヘルスケ�
   MyAI/profile/*.pdf, *.xlsx  置く・更新するとプロフィールを自動で作り直す（profile/update_profile.py）
   MyAI/health/                健康ログ（/health で会話に読み込む）
   data/settings.json          前回のバックエンド・モデル等（自動保存）
-  export/lmstudio_system_prompt.txt  LM Studio用（自動更新）
+  export/lmstudio_system_prompt.txt  Bionic の my-profile スキル用（自動更新。ファイル名は旧名のまま）
   export/Modelfile            Ollama用（自動更新）
 
 使い方:
@@ -19,9 +19,7 @@ LLMまわりはこのフォルダ、プロフィール・日記・ヘルスケ�
     python3 chat_memory.py --backend lmstudio    # 指定した設定は次回も使われる
     python3 chat_memory.py --model qwen3:8b      # LM Studio名(qwen/qwen3-8b)でもOK
 
-チャット終了時、記憶が変わっていれば  Ollamaモデルは自動で更新
-    LM Studio プリセット更新用
-    　　python3 export_to_apps.py --copy
+チャット終了時、記憶が変わっていれば Ollamaモデルと Bionic用テキストを自動で更新
 """
 import argparse
 import copy
@@ -71,7 +69,7 @@ HELP = """\
   /memory            記憶の一覧を表示
   /backend <名前>    ollama / lmstudio を切り替え
   /model [名前]      モデル一覧を表示、または切り替え
-  /sync              LM Studio用テキストとOllamaモデルを今すぐ更新
+  /sync              Bionic用テキストとOllamaモデルを今すぐ更新
   /health [日数]     健康ログ（ヘルスケアの前日確定値）を会話に読み込む（既定14日。健康の話題では自動）
   /new               今の会話を要約して保存し、新しい会話を始める
   /exit              要約して保存し終了（/exit! で保存せず終了）

@@ -246,7 +246,7 @@ class EnglishDict:
 
         try:
             datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
-                         ('Weblio' if insert else 'Master') + '.csv', 'r').read().split('\n')
+                         ('Weblio' if insert else 'Master') + '.csv').read().split('\n')
             if insert:
                 selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)]
             insert_datas = []
@@ -359,7 +359,7 @@ class EnglishDict:
                                 for col in change_col:
                                     while 0 <= col.find('<'):
                                         col = col.replace(col[col.find('<'): col.find('>') + 1], '').strip()
-                                    changes.append((col if 0 <= col.find('(') else ''))
+                                    changes.append(col if 0 <= col.find('(') else '')
                             else:
                                 change_col = change_col[change_col.find('<th'): change_col.rfind('</table>')]
                                 change_col = change_col.split('</tr>')
@@ -463,7 +463,7 @@ class EnglishDict:
 
         try:
             datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
-                         ('Einavi' if insert else 'Master') + '.csv', 'r').read().split('\n')
+                         ('Einavi' if insert else 'Master') + '.csv').read().split('\n')
             if insert:
                 selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)]
             insert_datas = []
@@ -746,7 +746,7 @@ class EnglishDict:
 
         try:
             datas = open(cst.TEMP_PATH[cst.PC] + 'English/' +
-                         ('Google' if insert else 'Master') + '.csv', 'r').read().split('\n')
+                         ('Google' if insert else 'Master') + '.csv').read().split('\n')
             if insert:
                 selects = ['追加_' + str(k) for k in range(1, cst.ENGLISH_MASTER_LEVEL + 1)]
             insert_datas = []
@@ -959,7 +959,7 @@ class EnglishDict:
 
         einavi_file_base = einavi_func['file']
         insert_file = open(base_file.replace(
-            einavi_file_base + '.', einavi_file_base + '_0.'), 'r', encoding='utf8').read()
+            einavi_file_base + '.', einavi_file_base + '_0.'), encoding='utf8').read()
         insert_file = json.loads(insert_file)
 
         rows = []
@@ -1786,7 +1786,7 @@ class EnglishDict:
         com.click_pos(int(x / 2 + 20), int(y / 2 + 100))
 
         try:
-            with open(cst.TEMP_PATH[cst.PC] + 'English/content.js', 'r') as in_file:
+            with open(cst.TEMP_PATH[cst.PC] + 'English/content.js') as in_file:
 
                 data = in_file.read()
                 data = data[data.find('\n') + 1:]
@@ -1896,7 +1896,7 @@ class EnglishDict:
         phrase_max = 0
 
         phrase_func = FUNCTIONS['phrase']
-        with open(cst.TEMP_PATH[cst.PC] + 'English/' + phrase_func['file'] + '.' + phrase_func['ext'], 'r') as in_file:
+        with open(cst.TEMP_PATH[cst.PC] + 'English/' + phrase_func['file'] + '.' + phrase_func['ext']) as in_file:
             in_file = in_file.read().split('\n')
             for row in in_file:
 
@@ -1917,7 +1917,7 @@ class EnglishDict:
         check_dict = {}
         best_dict = {}
         group_dict = {}
-        with open(cst.TEMP_PATH[cst.PC] + 'English/content.js', 'r') as in_file:
+        with open(cst.TEMP_PATH[cst.PC] + 'English/content.js') as in_file:
 
             data = in_file.read()
             data = data[data.find('\n') + 1:]

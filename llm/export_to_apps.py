@@ -8,8 +8,7 @@
              同期のあと・自動実行のたびに、VM・VPS の記憶が Mac と違えば警告する
              （ターミナル表示と Mac の通知。check_remotes）
 - Bionic   : export/lmstudio_system_prompt.txt を更新（Bionic の my-profile スキルが読む。
-             --copy でクリップボードにも入る）。LM Studio アプリは 2026-11-22 に削除したため、
-             プリセットの書き換えは settings.json の lmstudio_preset が null のあいだは行わない
+             --copy でクリップボードにも入る）。ファイル名はスキルが参照しているため旧名のまま
 
 chat_memory.py の起動時（記憶がアプリ側より新しいとき）・終了時と、add_profile.py / add_persona.py の
 実行後に自動で呼ばれるほか、install_auto_sync.command で登録した自動実行
@@ -18,7 +17,7 @@ chat_memory.py の起動時（記憶がアプリ側より新しいとき）・�
 使い方:
     python3 export_to_apps.py --base qwen3:8b    # 初回だけ元モデルを指定（次回から記憶される）
     python3 export_to_apps.py                    # 手動で同期
-    python3 export_to_apps.py --copy             # LM Studio用テキストをクリップボードへ
+    python3 export_to_apps.py --copy             # Bionic用テキストをクリップボードへ
     python3 export_to_apps.py --name work-ai     # Ollamaモデル名を変える（記憶される）
     python3 export_to_apps.py --if-needed        # 反映が必要なときだけ同期（自動実行用）
 """
@@ -32,7 +31,6 @@ import sys
 import time
 import urllib.request
 from datetime import datetime
-from pathlib import Path
 from typing import Optional
 
 from chat_memory import (EXPORT_DIR, MEMORY_FILE, build_system_prompt, load_memory,
@@ -42,9 +40,6 @@ LM_FILE = EXPORT_DIR / "lmstudio_system_prompt.txt"
 MODELFILE = EXPORT_DIR / "Modelfile"
 SYNC_STATE = EXPORT_DIR / ".ollama_synced"   # 最後に Ollama へ反映した Modelfile のハッシュ
 REMOTE_STATE = EXPORT_DIR / ".ollama_remote_synced.json"   # ほかの端末ごとの同じハッシュ
-LMSTUDIO_PRESET_DIR = Path(os.environ.get("LMSTUDIO_PRESET_DIR",
-                                          Path.home() / ".lmstudio" / "config-presets"))
-PROMPT_KEY = "llm.prediction.systemPrompt"
 
 
 def _write_if_changed(path, text) -> bool:
@@ -171,48 +166,10 @@ def _ollama_env(host: Optional[str]) -> Optional[dict]:
     return {**os.environ, "OLLAMA_HOST": host}
 
 
-def _preset_path() -> Optional[Path]:
-    name = load_settings().get("lmstudio_preset", "profile")
-    return LMSTUDIO_PRESET_DIR / f"{name}.preset.json" if name else None
-
-
-def _preset_prompt(path: Path) -> Optional[str]:
-    try:
-        fields = json.loads(path.read_text(encoding="utf-8")).get("operation", {}).get("fields", [])
-    except (OSError, json.JSONDecodeError):
-        return None
-    return next((f.get("value") for f in fields if f.get("key") == PROMPT_KEY), None)
-
-
-def update_lmstudio_preset(prompt: str) -> str:
-    """LM Studio のプリセットファイルのシステムプロンプトを書き換える（他の設定はそのまま）"""
-    path = _preset_path()
-    if path is None:
-        return "使わない設定"
-    if not path.exists():
-        return f"プリセットが見つかりません（{path}）"
-    data = json.loads(path.read_text(encoding="utf-8"))   # 書き込み直前に読み直す
-    fields = data.setdefault("operation", {}).setdefault("fields", [])
-    field = next((f for f in fields if f.get("key") == PROMPT_KEY), None)
-    if field and field.get("value") == prompt:
-        return "変更なし"
-    if field:
-        field["value"] = prompt
-    else:
-        fields.append({"key": PROMPT_KEY, "value": prompt})
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
-    tmp.replace(path)
-    return "更新しました"
-
-
 def needs_sync() -> bool:
-    """記憶の内容が LM Studio用テキスト・Ollamaモデルにまだ反映されていなければ True"""
+    """記憶の内容が Bionic用テキスト・Ollamaモデルにまだ反映されていなければ True"""
     prompt = build_system_prompt(load_memory(MEMORY_FILE))
     if not LM_FILE.exists() or LM_FILE.read_text(encoding="utf-8") != prompt:
-        return True
-    preset = _preset_path()
-    if preset and preset.exists() and _preset_prompt(preset) != prompt:
         return True
     base = load_settings().get("ollama_base")
     if not base:
@@ -234,7 +191,7 @@ def sync(base: Optional[str] = None, name: Optional[str] = None, copy: bool = Fa
     settings = load_settings()
     prompt = build_system_prompt(load_memory(MEMORY_FILE))
 
-    # LM Studio
+    # Bionic（my-profile スキルが読むテキスト）
     changed = _write_if_changed(LM_FILE, prompt)
     msg = "更新しました" if changed else "変更なし"
     if copy:
@@ -244,11 +201,6 @@ def sync(base: Optional[str] = None, name: Optional[str] = None, copy: bool = Fa
         else:
             msg += "（pbcopy が無いためコピーできません）"
     print(f"[同期] Bionic用テキスト（lmstudio_system_prompt.txt）: {msg}")
-    if _preset_path():
-        preset_msg = update_lmstudio_preset(prompt)
-        print(f"[同期] LM Studioプリセット「{settings.get('lmstudio_preset')}」: {preset_msg}")
-        if preset_msg == "更新しました":
-            print("        → LM Studio を開いている場合は、一度終了して開き直すと反映されます")
 
     # Ollama
     base, name = settings["ollama_base"], settings["ollama_name"]
@@ -298,10 +250,10 @@ def _ollama_create(name: str, host: Optional[str] = None):
 
 
 def main():
-    p = argparse.ArgumentParser(description="記憶を Ollama / LM Studio に書き出す")
+    p = argparse.ArgumentParser(description="記憶を Ollama / Bionic に書き出す")
     p.add_argument("--base", help="Ollamaの元モデル（例: qwen3:8b）。一度指定すれば記憶される")
     p.add_argument("--name", help="作成するOllamaモデル名（既定: my-assistant）")
-    p.add_argument("--copy", action="store_true", help="LM Studio用テキストをクリップボードへコピー")
+    p.add_argument("--copy", action="store_true", help="Bionic用テキストをクリップボードへコピー")
     p.add_argument("--if-needed", action="store_true", help="反映が必要なときだけ同期する（自動実行用）")
     a = p.parse_args()
     if a.if_needed:

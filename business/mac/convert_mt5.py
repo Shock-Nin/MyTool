@@ -68,17 +68,17 @@ class ConvertMt5:
         from common import display
         current_year = datetime.datetime.now().year
         years = [str(y) for y in range(current_year + START_YEAR, current_year + 1)]
-        
+
         result = display.input_box(
             'ティックデータからBase(1時間足OHLC)を作成しますか？',
             '開始確認',
             [['取得開始年', years, years[0]]],
             obj='combo'
         )
-        
+
         if result[0] <= 0:
             return
-        
+
         start_year = int(result[1][0])
         com.log('取得開始年: ' + str(start_year))
 
@@ -89,7 +89,7 @@ class ConvertMt5:
         if 0 == len(period_folders):
             com.dialog(CSV_PATH + ' にフォルダが存在しません。', title='フォルダ不在', lv='w')
             return
-        
+
         # 全CSVファイルを通貨ペアごとに収集
         currency_files = {}
         for folder in period_folders:
@@ -255,7 +255,7 @@ class ConvertMt5:
                     # Baseファイルを読み込み（標準open使用）
                     h1_data = []
                     d1_dict = {}  # 日付ごとの最終Close値
-                    with open(file, 'r', encoding='utf-8') as f:
+                    with open(file, encoding='utf-8') as f:
                         header = f.readline().strip().split(',')
                         dt_idx = header.index('DateTime')
                         close_idx = header.index('Close')

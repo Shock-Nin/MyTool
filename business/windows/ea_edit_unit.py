@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import glob
 import math
-import os
 
 from common import com
 from const import cst
@@ -63,7 +62,7 @@ def _slim_html():
                     outpath = cst.TEST_OUT_PATH[cst.PC] + targets[-2] + '/' + targets[-1].lower()
 
                     # テストHTMLを開く
-                    with open(tests[i][k], 'r', encoding='cp932') as infile:
+                    with open(tests[i][k], encoding='cp932') as infile:
                         infile = infile.read()
 
                         # 余計な区切り文字を除去
@@ -144,7 +143,7 @@ def _edit_unit_list():
 
                     try:
                         # HTMLのヘッダー部から取得
-                        datas = open(test, 'r', encoding=('utf16' if 'WheSitDoch' == ea else 'cp932')).read()
+                        datas = open(test, encoding=('utf16' if 'WheSitDoch' == ea else 'cp932')).read()
 
                         # 名前
                         ea_name = datas[datas.find('Comments'): datas.find('TradeMargin')]
@@ -293,7 +292,7 @@ def _edit_unit_list():
                         base_tag = '<td class="' + ea_class + '" align="right">'
 
                         # 総数, 勝率
-                        html_row += base_tag + str((win + lose)) + '</td>'
+                        html_row += base_tag + str(win + lose) + '</td>'
                         alert = (' warning' if winrate < 50 else ' good' if 60 < winrate else '')
                         html_row += '<td class="' + ea_class + alert + '" align="right">' + str(format(winrate, '.1f')) + '%</td>'
 

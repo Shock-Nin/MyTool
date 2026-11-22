@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import pandas as pd
 """
 バッチ
 くりっく365の日足レート(CSV)取得、DB登録

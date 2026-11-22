@@ -60,7 +60,7 @@ def _edit_stat_status():
 
             try:
                 # HTMLのヘッダー部から取得
-                datas = open(targets, 'r').read()
+                datas = open(targets).read()
 
                 # 初期資金
                 balance_start = datas[datas.find('Initial deposit'):]
@@ -182,7 +182,7 @@ def _edit_stat_status():
 
                 # 総数, 勝率
                 winrate = win / (win + lose) * 100
-                total_row += base_tag + str((win + lose)) + '</td>'
+                total_row += base_tag + str(win + lose) + '</td>'
                 alert = (' warning' if winrate < 50 else ' good' if 60 < winrate else '')
                 total_row += '<td class="' + ea_class + alert + '" align="right">' + str(format(winrate, '.1f')) + '%</td>'
 

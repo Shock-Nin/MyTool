@@ -61,7 +61,7 @@ class SayaTimely:
 
                 if 0 <= txt.find('　'):
                     html = html[html.find('/JPY </a>') + 10:]
-            
+
         except Exception as e:
             com.log('365リアルWeb取得エラー発生: ' + str(e), 'E')
             return

@@ -6,7 +6,7 @@ MyAI/profile フォルダの PDF / Excel からプロフィールを作り、記
 - 追加・更新・削除されたファイルだけを処理（中身のハッシュで判定するので、無駄に作り直さない）
 - profile.json には最新の資料から作った行だけを残す
   （古い行・手で書いた行は profile_backup.json に日時付きで追記して保管。毎回ファイルは増えない）
-- 反映後、記憶（data/llm_memory.json）・LM Studio用テキスト・Ollamaモデルも自動で更新
+- 反映後、記憶（data/llm_memory.json）・Bionic用テキスト・Ollamaモデルも自動で更新
 - chat_memory.py の起動時にも自動でチェックされる
 
 必要なライブラリ（初回のみ）:

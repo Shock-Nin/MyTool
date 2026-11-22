@@ -48,7 +48,7 @@ class EaAutoTest:
                     if len(checks) - 1 == i:
                         try:
                             file_path = PRM_PATH + cst.EA_PATHS[ea_name]['base'] + '/' + checks[i][k] + '.set'
-                            with open(file_path, 'r') as f:
+                            with open(file_path) as f:
                                 read_files.append(f.read())
                         except Exception as e:
                             err_msg += '\n　' + checks[i][k] + '.set' + '\n　　' + str(e)

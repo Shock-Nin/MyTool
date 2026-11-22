@@ -5,7 +5,7 @@ profile.json（プロフィールの原本）を記憶 data/llm_memory.json に�
 - MyAI/profile/profile.json を書き換えて実行すれば、記憶の中のプロフィールも差し替わる
   （/remember で追加した記憶や会話の要約はそのまま残る）
 - 何度実行しても重複しない
-- 反映後、LM Studio用テキストと Ollamaモデルも自動で更新
+- 反映後、Bionic用テキストと Ollamaモデルも自動で更新
 
 profile.json の書き方（どちらでもOK）:
     ["プロフィール1", "プロフィール2"]

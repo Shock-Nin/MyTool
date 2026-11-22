@@ -28,7 +28,7 @@ class MySql:
             com.log('MySQL: 接続 [' + host + '(' + dbname + ')]')
 
             cursor = cnx.cursor()
-            cursor.execute('USE {}'.format(dbname))
+            cursor.execute(f'USE {dbname}')
 
         except Exception as e:
             com.log('MySQL: 接続エラー [' + host + '(' + dbname + ')] ' + str(e), 'E')
@@ -201,7 +201,7 @@ class MySql:
             self.cnx.commit()
             com.log('SQL: コミット')
             return True
-        except Exception as e:
+        except Exception:
             com.log('MySQL: コミット失敗', 'W')
             self.rollback()
         return False

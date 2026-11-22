@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-import subprocess
 
 from common import com
 from const import cst
@@ -9,7 +8,6 @@ import os
 import pyautogui as pgui
 import FreeSimpleGUI as sg
 
-from common import web_driver
 
 WIN_X_MINUS = 50
 BGCOLOR_ON = '#AAFFFF'

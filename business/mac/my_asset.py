@@ -158,7 +158,7 @@ class MyAsset:
 
         # WebDriverのクリーンアップ用リスト
         web_drivers = []
-        
+
         try:
             # ViewCard取得
             vcard = [inputs[0], before_view[1]]
@@ -250,7 +250,7 @@ class MyAsset:
         # 金額取得(未確定・1月前)
         try:
             results.append(web_driver.find_element(wd, 'LblSumUseValue').text.replace(',', ''))
-        except Exception as e:
+        except Exception:
             results.append(0)
         for i in range(1, 2):
             try:

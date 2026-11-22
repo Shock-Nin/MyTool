@@ -213,7 +213,7 @@ class EaMergeTest:
             return False
 
         # マージデータの保存
-        if not self._save_report(('all' if is_all and not is_other else target[0].split('_')[0])):
+        if not self._save_report('all' if is_all and not is_other else target[0].split('_')[0]):
             return False
 
         return True
@@ -333,7 +333,7 @@ class EaMergeTest:
 
                     # HTML本体の、pngをgifに書き換え
                     try:
-                        with open(path + '\\' + file + '.htm', 'r') as read_file:
+                        with open(path + '\\' + file + '.htm') as read_file:
                             read_file = read_file.read().replace('.png', '.gif')
                             with open(path + '\\' + file + '.htm', 'w') as write_file:
                                 write_file.write(read_file)
