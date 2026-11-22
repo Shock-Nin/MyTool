@@ -9,7 +9,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, WebDriverException, InvalidSelectorException
 from webdriver_manager.chrome import ChromeDriverManager
 
 
@@ -43,27 +43,35 @@ def driver(headless=False):
 def find_element(wd, element):
     """
     複数の方法で要素を検索
-    ID, NAME, XPATH, LINK_TEXT, CSS_SELECTORの順に試行
+    XPATHの場合は直接XPATH、それ以外はID, NAME, XPATH, LINK_TEXT, CSS_SELECTORの順に試行
     """
+    # XPathの場合は直接XPathで検索
+    if element.startswith('/') or element.startswith('('):
+        try:
+            return wd.find_element(By.XPATH, element)
+        except NoSuchElementException:
+            com.log(f'要素が見つかりませんでした: {element}', 'W')
+            return None
+
     try:
         return wd.find_element(By.ID, element)
-    except NoSuchElementException:
+    except (NoSuchElementException, InvalidSelectorException):
         pass
     try:
         return wd.find_element(By.NAME, element)
-    except NoSuchElementException:
+    except (NoSuchElementException, InvalidSelectorException):
         pass
     try:
         return wd.find_element(By.XPATH, element)
-    except NoSuchElementException:
+    except (NoSuchElementException, InvalidSelectorException):
         pass
     try:
         return wd.find_element(By.LINK_TEXT, element)
-    except NoSuchElementException:
+    except (NoSuchElementException, InvalidSelectorException):
         pass
     try:
         return wd.find_element(By.CSS_SELECTOR, element)
-    except NoSuchElementException:
+    except (NoSuchElementException, InvalidSelectorException):
         pass
 
     com.log(f'要素が見つかりませんでした: {element}', 'W')

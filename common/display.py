@@ -109,39 +109,6 @@ def input_box(msg, title, forms, obj='', cancel=False):
             ])] for form_item in forms], background_color='#77CCFF'
         )]
 
-    for form_item in forms:
-        if 'spin' == obj:
-            label = form_item[0]
-            start_val = form_item[1]
-            end_val = form_item[2]
-            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(label, font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
-                 sg.Spin(values=[k for k in range(start_val, end_val + 1)],
-                         font=('', 16), size=(12, 1), readonly=True)] for form_item in forms])]]
-        elif 'input' == obj:
-            label = form_item[0]
-            default_text = form_item[1]
-            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(label, font=('', 16), size=((0, 0) if 0 == len(label) else (len(label) * 2, 1)),
-                         text_color='#000000', background_color='#77CCFF'),
-                 sg.InputText(default_text=default_text, font=('', 16), size=(len(label) * 2, 1))] for form_item in forms])]]
-        elif 'combo' == obj:
-            label = form_item[0]
-            combo_values = form_item[1]
-            default_value = form_item[2]
-            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(label, key='act', font=('', 16), size=((0, 0) if 0 == len(label) else (len(label) * 2, 1)),
-                         text_color='#000000', background_color='#77CCFF'),
-                 sg.Combo(combo_values, font=('', 16), size=((len(combo_values[0]) if 0 == len(label) else len(label)) * 2, 1),
-                          default_value=default_value, readonly=True)] for form_item in forms])]]
-        else:
-            layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [(sg.Text(field_value, font=('', 16), size=(len(form_item[0]) * 2, 1), text_color='#000000', background_color='#77CCFF')
-                  if k == 0 else sg.Input(field_value, font=('', 16), size=(len(form_item[0]) * 2, 1)))
-                for k, field_value in enumerate(form_item)] for form_item in forms])]]
-
-    layout = [sg.Column(layout, background_color='#77CCFF')]
-
     window = sg.Window(title, keep_on_top=True, modal=True, background_color='#77CCFF',
                        icon=(os.getcwd() + cst.ICON_FILE), return_keyboard_events=True, element_justification='c',
                        layout=[layout, [sg.Text(msg, background_color='#77CCFF', text_color='#000000', font=('', 16), pad=((20, 20), (20, 10)))], btn])

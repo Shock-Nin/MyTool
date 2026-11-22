@@ -114,7 +114,7 @@ class MyAsset:
                     com.log(f'サマリー処理エラー: {str(e)}', 'W')
                 str_summary += '\n'
 
-            str_summary = '   ：　'.join(''.join(summary_cols[i] for i in range(len(summary_cols))) for _ in range(2)) + '\n' + str_summary \
+            str_summary = summary_header + '   ：　' + summary_header + '\n' + str_summary \
                           + '\n楽天カード支払　' + format(before_row[6], ',') + ' | '+ format(before_row[7], ',') \
 
             # 本日のデータ取得済みなら中断
