@@ -1,19 +1,24 @@
 #!/usr/bin/env python3
 """
-記憶を Ollama / LM Studio のアプリ画面でも使えるように書き出す
+記憶を Ollama・Bionic でも使えるように書き出す
 
 - Ollama   : 記憶入りのカスタムモデル（既定名 my-assistant）を作成・更新
-- LM Studio: プリセット（既定 profile）のシステムプロンプトを直接書き換え、
-             export/lmstudio_system_prompt.txt も更新（--copy でクリップボードにも入る）
+             settings.json の ollama_remotes にある端末（Windows VM・VPS）にも
+             Tailscale 経由で同じモデルを作る（つながらない端末は飛ばして次回に再挑戦）
+- Bionic   : export/lmstudio_system_prompt.txt を更新（Bionic の my-profile スキルが読む。
+             --copy でクリップボードにも入る）。LM Studio アプリは 2026-11-22 に削除したため、
+             プリセットの書き換えは settings.json の lmstudio_preset が null のあいだは行わない
 
 chat_memory.py の起動時（記憶がアプリ側より新しいとき）・終了時と、add_profile.py / add_persona.py の
-実行後に自動で呼ばれるので、普段は手で実行する必要はありません。
+実行後に自動で呼ばれるほか、install_auto_sync.command で登録した自動実行
+（記憶が変わったとき・ログイン時、--if-needed 付き）でも動くので、普段は手で実行する必要はありません。
 
 使い方:
     python3 export_to_apps.py --base qwen3:8b    # 初回だけ元モデルを指定（次回から記憶される）
     python3 export_to_apps.py                    # 手動で同期
     python3 export_to_apps.py --copy             # LM Studio用テキストをクリップボードへ
     python3 export_to_apps.py --name work-ai     # Ollamaモデル名を変える（記憶される）
+    python3 export_to_apps.py --if-needed        # 反映が必要なときだけ同期（自動実行用）
 """
 import argparse
 import hashlib
@@ -22,6 +27,9 @@ import os
 import shutil
 import subprocess
 import sys
+import time
+import urllib.request
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -31,6 +39,7 @@ from chat_memory import (EXPORT_DIR, MEMORY_FILE, build_system_prompt, load_memo
 LM_FILE = EXPORT_DIR / "lmstudio_system_prompt.txt"
 MODELFILE = EXPORT_DIR / "Modelfile"
 SYNC_STATE = EXPORT_DIR / ".ollama_synced"   # 最後に Ollama へ反映した Modelfile のハッシュ
+REMOTE_STATE = EXPORT_DIR / ".ollama_remote_synced.json"   # ほかの端末ごとの同じハッシュ
 LMSTUDIO_PRESET_DIR = Path(os.environ.get("LMSTUDIO_PRESET_DIR",
                                           Path.home() / ".lmstudio" / "config-presets"))
 PROMPT_KEY = "llm.prediction.systemPrompt"
@@ -57,8 +66,59 @@ def _ollama_synced(text: str) -> bool:
     return SYNC_STATE.exists() and SYNC_STATE.read_text(encoding="utf-8").strip() == _hash(text)
 
 
-def _preset_path() -> Path:
-    return LMSTUDIO_PRESET_DIR / f"{load_settings().get('lmstudio_preset', 'profile')}.preset.json"
+def _remotes() -> dict:
+    """{"表示名": "http://<TailscaleのIP>:11434"} … settings.json の ollama_remotes"""
+    return load_settings().get("ollama_remotes") or {}
+
+
+def _remote_state() -> dict:
+    try:
+        return json.loads(REMOTE_STATE.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _remote_synced(host: str, text: str) -> bool:
+    return _remote_state().get(host) == _hash(text)
+
+
+def _save_remote_state(host: str, text: str) -> None:
+    state = _remote_state()   # 書き込み直前に読み直す
+    state[host] = _hash(text)
+    REMOTE_STATE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _reachable(host: str) -> bool:
+    try:
+        with urllib.request.urlopen(host.rstrip("/") + "/api/version", timeout=3):
+            return True
+    except Exception:
+        return False
+
+
+LOCAL_OLLAMA = "http://localhost:11434"
+
+
+def _ensure_local_ollama() -> None:
+    """Mac の Ollama が止まっていれば画面を出さずに起動し、応答するまで最大30秒待つ"""
+    if _reachable(LOCAL_OLLAMA) or sys.platform != "darwin":
+        return
+    subprocess.run(["open", "-g", "-j", "-a", "Ollama"], capture_output=True)
+    for _ in range(30):
+        time.sleep(1)
+        if _reachable(LOCAL_OLLAMA):
+            return
+
+
+def _ollama_env(host: Optional[str]) -> Optional[dict]:
+    if not host:
+        return None   # この端末：環境変数はそのまま
+    return {**os.environ, "OLLAMA_HOST": host}
+
+
+def _preset_path() -> Optional[Path]:
+    name = load_settings().get("lmstudio_preset", "profile")
+    return LMSTUDIO_PRESET_DIR / f"{name}.preset.json" if name else None
 
 
 def _preset_prompt(path: Path) -> Optional[str]:
@@ -72,6 +132,8 @@ def _preset_prompt(path: Path) -> Optional[str]:
 def update_lmstudio_preset(prompt: str) -> str:
     """LM Studio のプリセットファイルのシステムプロンプトを書き換える（他の設定はそのまま）"""
     path = _preset_path()
+    if path is None:
+        return "使わない設定"
     if not path.exists():
         return f"プリセットが見つかりません（{path}）"
     data = json.loads(path.read_text(encoding="utf-8"))   # 書き込み直前に読み直す
@@ -94,14 +156,18 @@ def needs_sync() -> bool:
     prompt = build_system_prompt(load_memory(MEMORY_FILE))
     if not LM_FILE.exists() or LM_FILE.read_text(encoding="utf-8") != prompt:
         return True
-    if _preset_path().exists() and _preset_prompt(_preset_path()) != prompt:
+    preset = _preset_path()
+    if preset and preset.exists() and _preset_prompt(preset) != prompt:
         return True
     base = load_settings().get("ollama_base")
-    return bool(base) and not _ollama_synced(_modelfile_text(base, prompt))
+    if not base:
+        return False
+    text = _modelfile_text(base, prompt)
+    return not _ollama_synced(text) or any(not _remote_synced(h, text) for h in _remotes().values())
 
 
-def _ollama_has(name: str) -> bool:
-    r = subprocess.run(["ollama", "list"], capture_output=True, text=True)
+def _ollama_has(name: str, host: Optional[str] = None) -> bool:
+    r = subprocess.run(["ollama", "list"], capture_output=True, text=True, env=_ollama_env(host))
     return r.returncode == 0 and any(
         line.split()[0] in (name, f"{name}:latest") for line in r.stdout.splitlines()[1:] if line.strip())
 
@@ -122,11 +188,12 @@ def sync(base: Optional[str] = None, name: Optional[str] = None, copy: bool = Fa
             msg += "・クリップボードにコピーしました"
         else:
             msg += "（pbcopy が無いためコピーできません）"
-    print(f"[同期] LM Studio用テキスト: {msg}")
-    preset_msg = update_lmstudio_preset(prompt)
-    print(f"[同期] LM Studioプリセット「{settings.get('lmstudio_preset', 'profile')}」: {preset_msg}")
-    if preset_msg == "更新しました":
-        print("        → LM Studio を開いている場合は、一度終了して開き直すと反映されます")
+    print(f"[同期] Bionic用テキスト（lmstudio_system_prompt.txt）: {msg}")
+    if _preset_path():
+        preset_msg = update_lmstudio_preset(prompt)
+        print(f"[同期] LM Studioプリセット「{settings.get('lmstudio_preset')}」: {preset_msg}")
+        if preset_msg == "更新しました":
+            print("        → LM Studio を開いている場合は、一度終了して開き直すと反映されます")
 
     # Ollama
     base, name = settings["ollama_base"], settings["ollama_name"]
@@ -138,17 +205,39 @@ def sync(base: Optional[str] = None, name: Optional[str] = None, copy: bool = Fa
     if not shutil.which("ollama"):
         print(f"[同期] Ollama: コマンドが見つかりません。手動で `ollama create {name} -f \"{MODELFILE}\"`")
         return
-    if not changed and _ollama_synced(text) and _ollama_has(name):
+    # 反映済みなら、Ollama が止まっていてもわざわざ起動しない
+    if not changed and _ollama_synced(text) and (not _reachable(LOCAL_OLLAMA) or _ollama_has(name)):
         print(f"[同期] Ollamaモデル「{name}」: 変更なし")
-        return
-    r = subprocess.run(["ollama", "create", name, "-f", str(MODELFILE)],
-                       capture_output=True, text=True)
-    if r.returncode == 0:
-        SYNC_STATE.write_text(_hash(text), encoding="utf-8")
-        print(f"[同期] Ollamaモデル「{name}」を更新しました（元: {base}）")
     else:
-        print(f"[同期] Ollamaモデルの作成に失敗: {(r.stderr or r.stdout).strip()[-300:]}")
-        print("        元モデル名が正しいか `ollama list` で確認してください")
+        _ensure_local_ollama()
+        r = _ollama_create(name)
+        if r.returncode == 0:
+            SYNC_STATE.write_text(_hash(text), encoding="utf-8")
+            print(f"[同期] Ollamaモデル「{name}」を更新しました（元: {base}）")
+        else:
+            print(f"[同期] Ollamaモデルの作成に失敗: {(r.stderr or r.stdout).strip()[-300:]}")
+            print("        元モデル名が正しいか `ollama list` で確認してください")
+
+    # ほかの端末（Windows VM・VPS）の Ollama にも同じモデルを作る（Tailscale 経由・SSH 不要）
+    for label, host in _remotes().items():
+        if not _reachable(host):
+            print(f"[同期] {label}（{host}）: つながらないため飛ばしました（次回の同期で再挑戦）")
+            continue
+        if _remote_synced(host, text) and _ollama_has(name, host):
+            print(f"[同期] {label} のOllamaモデル「{name}」: 変更なし")
+            continue
+        r = _ollama_create(name, host)
+        if r.returncode == 0:
+            _save_remote_state(host, text)
+            print(f"[同期] {label} のOllamaモデル「{name}」を更新しました")
+        else:
+            print(f"[同期] {label} のOllamaモデルの作成に失敗: {(r.stderr or r.stdout).strip()[-300:]}")
+            print(f"        {label} に元モデル {base} があるか確認してください")
+
+
+def _ollama_create(name: str, host: Optional[str] = None):
+    return subprocess.run(["ollama", "create", name, "-f", str(MODELFILE)],
+                          capture_output=True, text=True, env=_ollama_env(host))
 
 
 def main():
@@ -156,7 +245,12 @@ def main():
     p.add_argument("--base", help="Ollamaの元モデル（例: qwen3:8b）。一度指定すれば記憶される")
     p.add_argument("--name", help="作成するOllamaモデル名（既定: my-assistant）")
     p.add_argument("--copy", action="store_true", help="LM Studio用テキストをクリップボードへコピー")
+    p.add_argument("--if-needed", action="store_true", help="反映が必要なときだけ同期する（自動実行用）")
     a = p.parse_args()
+    if a.if_needed:
+        if not needs_sync():
+            return
+        print(f"--- {datetime.now():%Y-%m-%d %H:%M:%S} 自動同期 ---")
     mem = load_memory(MEMORY_FILE)
     if not mem["facts"] and not mem["summaries"]:
         sys.exit(f"[エラー] 記憶が空です: {MEMORY_FILE}\n先に profile/add_profile.py を実行してください。")

@@ -4,5 +4,10 @@
     "ollama": "qwen3:8b"
   },
   "ollama_base": "qwen3:8b",
-  "ollama_name": "my-assistant"
+  "ollama_name": "my-assistant",
+  "ollama_remotes": {
+    "Windows VM": "http://100.86.106.59:11434",
+    "VPS": "http://100.112.51.18:11434"
+  },
+  "lmstudio_preset": null
 }
