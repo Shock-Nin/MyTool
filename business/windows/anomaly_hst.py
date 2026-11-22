@@ -54,15 +54,16 @@ class AnomalyHst:
 
                 for k in range(1, len(data)):
                     rows = data[k].split(',')
+                    date_val, time_val, open_val, high_val, low_val, close_val = rows[0], rows[1], rows[2], rows[3], rows[4], rows[5]
 
-                    op = (rows[2] if 0 == count else op)
-                    hi = max(float(rows[3]), hi)
-                    lo = min(float(rows[4]), lo)
+                    op = (open_val if 0 == count else op)
+                    hi = max(float(high_val), hi)
+                    lo = min(float(low_val), lo)
                     count += 1
 
-                    if k == len(data) - 2 or str(data[k + 1].split(',')[1].split(':')[0]) != str(rows[1].split(':')[0]):
-                        out += str(rows[0]) + ',' + str(rows[1].split(':')[0]) + ','
-                        out += str(op) + ',' + str(hi) + ',' + str(lo) + ',' + rows[5] + '\n'
+                    if k == len(data) - 2 or str(data[k + 1].split(',')[1].split(':')[0]) != str(time_val.split(':')[0]):
+                        out += str(date_val) + ',' + str(time_val.split(':')[0]) + ','
+                        out += str(op) + ',' + str(hi) + ',' + str(lo) + ',' + close_val + '\n'
 
                         if k == len(data) - 2:
                             break
@@ -169,13 +170,14 @@ class AnomalyHst:
                 inserts = []
                 for k in range(len(data) - 1):
                     rows = data[k].split(',')
+                    date_val, hour_val, open_val, high_val, low_val, close_val = rows[0], rows[1], rows[2], rows[3], rows[4], rows[5]
 
-                    if int(rows[0][:4]) < int(inputs[1][0]):
+                    if int(date_val[:4]) < int(inputs[1][0]):
                         continue
 
-                    inserts.append([rows[0][:4] + '-' + rows[0][4:6] + '-' + rows[0][6:] + ' '
-                                    + ('0' if int(rows[1]) < 10 else '') + rows[1] + ':00:00',
-                                    rows[2], rows[3], rows[4], rows[5]])
+                    inserts.append([date_val[:4] + '-' + date_val[4:6] + '-' + date_val[6:] + ' '
+                                    + ('0' if int(hour_val) < 10 else '') + hour_val + ':00:00',
+                                    open_val, high_val, low_val, close_val])
 
                     if k % 10000 == 0:
                         con.insert(['Time', 'Open', 'High', 'Low', 'Close'], inserts, table)

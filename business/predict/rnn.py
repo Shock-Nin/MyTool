@@ -108,14 +108,17 @@ def _plot_result(ax, cnt, model, n, date, x, y, l_x, l_y):
 
     # 初期の入力値
     res = []
-    res = np.append(res, l_x[0][0][0])
-    res = np.append(res, l_y[0].reshape(-1))
+    initial_value = l_x[0][0][0]
+    res = np.append(res, initial_value)
+    initial_sequence = l_y[0].reshape(-1)
+    res = np.append(res, initial_sequence)
 
     for i in range(0, n):
         _y = model.predict(res[- NUM_LSTM:].reshape(1, NUM_LSTM, 1))
 
         # 予測されたデータを次の予測のためのインプットデータとして利用
-        res = np.append(res, _y[0][NUM_LSTM - 1][0])
+        predicted_value = _y[0][NUM_LSTM - 1][0]
+        res = np.append(res, predicted_value)
 
     res = np.delete(res, -1)
 

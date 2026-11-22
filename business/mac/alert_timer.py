@@ -50,9 +50,10 @@ class AlertTimer:
                     com.sleep(1)
 
                     event, values = window.read(timeout=0)
-                    window[str(limit_min) + '_'].update(
-                        int(str(datetime.datetime.now() - time_start).split(':')[0]) * 60 +
-                        int(str(datetime.datetime.now() - time_start).split(':')[1]))
+                    elapsed_time = str(datetime.datetime.now() - time_start).split(':')
+                    elapsed_hours = int(elapsed_time[0])
+                    elapsed_minutes = int(elapsed_time[1])
+                    window[str(limit_min) + '_'].update(elapsed_hours * 60 + elapsed_minutes)
 
                     # 画面のイベント監視
                     is_event = self._is_event(event)
@@ -62,8 +63,10 @@ class AlertTimer:
         finally:
             window.close()
             if is_event is None:
-                com.log(self.myjob + ': 中断(' + str(int(str(end_time - datetime.datetime.now()).split(':')[0]) * 60 +
-                        int(str(end_time - datetime.datetime.now()).split(':')[1])) + ')')
+                remaining_time = str(end_time - datetime.datetime.now()).split(':')
+                remaining_hours = int(remaining_time[0])
+                remaining_minutes = int(remaining_time[1])
+                com.log(self.myjob + ': 中断(' + str(remaining_hours * 60 + remaining_minutes) + ')')
             else:
                 com.log(self.myjob + ': 終了')
                 window = self._comp(msg + '\n' + str(limit_min) + '分、終了しました。')

@@ -25,16 +25,18 @@ class SayaDaily:
         try:
             # SQL実行
             cnx = my_sql.MySql('fx_saya365')
-            last_date = cnx.free('SELECT MAX(DATE) FROM ' + TARGET_TABLES[0])[0]
+            last_date_result = cnx.free('SELECT MAX(DATE) FROM ' + TARGET_TABLES[0])
+            last_date_row = last_date_result[0]
 
             # 前日をセット
             today = datetime.datetime.now()
             today -= datetime.timedelta(days=1)
 
             # 最終更新 +1 日をセット
-            last_date = str(last_date[0].year) + \
-                        ('0' if last_date[0].month< 10 else '') + str(last_date[0].month) + \
-                        ('0' if last_date[0].day < 10 else '') + str(last_date[0].day)
+            last_date_obj = last_date_row[0]
+            last_date = str(last_date_obj.year) + \
+                        ('0' if last_date_obj.month< 10 else '') + str(last_date_obj.month) + \
+                        ('0' if last_date_obj.day < 10 else '') + str(last_date_obj.day)
             last_date = datetime.datetime.strptime(last_date, '%Y%m%d')
             last_date = last_date
 
@@ -74,8 +76,9 @@ class SayaDaily:
                     swaps = [target_ymd]
 
                     for key in data:
-                        rates.append(data[key][0])
-                        swaps.append(data[key][1])
+                        rate_value, swap_value = data[key][0], data[key][1]
+                        rates.append(rate_value)
+                        swaps.append(swap_value)
 
                     # SQL実行
                     is_sql = cnx.insert(columns, [rates], TARGET_TABLES[0])
@@ -115,10 +118,13 @@ class SayaDaily:
                 for i in range(1, len(curs)):
                     cols = curs[i].split(',')
 
-                    if 0 <= cols[3].find('/USD'):
+                    currency_pair = cols[3]
+                    if 0 <= currency_pair.find('/USD'):
                         break
 
-                    data[cols[3]] = [cols[14], cols[16]]
+                    close_price = cols[14]
+                    swap_points = cols[16]
+                    data[currency_pair] = [close_price, swap_points]
 
         except Exception as e:
             com.log('365日足取得(' + target_ymd + ')エラー発生: ' + str(e), 'E')

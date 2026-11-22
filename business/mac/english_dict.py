@@ -20,15 +20,16 @@ from selenium.webdriver.common.keys import Keys
 
 IS_HEADLESS = True
 
-FUNCTIONS = [
-    ['基本マスタ', '_create_master', 'Master', 'csv'],
-    ['Weblio', '_get_weblio', 'Weblio', 'json'],
-    ['英ナビ', '_get_Einavi', 'Einavi', 'json'],
-    ['Google', '_get_google', 'Google', 'json'],
-    ['MP3取得', '_get_mp3', 'Content', 'js'],
-    ['辞書', '_merge_content', 'Content', 'json'],
-    ['フレーズ集', '_create_phrases', 'Phrase', 'csv'],
-]
+FUNCTIONS = {
+    'basic_master': {'name': '基本マスタ', 'method': '_create_master', 'file': 'Master', 'ext': 'csv'},
+    'weblio': {'name': 'Weblio', 'method': '_get_weblio', 'file': 'Weblio', 'ext': 'json'},
+    'einavi': {'name': '英ナビ', 'method': '_get_Einavi', 'file': 'Einavi', 'ext': 'json'},
+    'google': {'name': 'Google', 'method': '_get_google', 'file': 'Google', 'ext': 'json'},
+    'mp3': {'name': 'MP3取得', 'method': '_get_mp3', 'file': 'Content', 'ext': 'js'},
+    'dict': {'name': '辞書', 'method': '_merge_content', 'file': 'Content', 'ext': 'json'},
+    'phrase': {'name': 'フレーズ集', 'method': '_create_phrases', 'file': 'Phrase', 'ext': 'csv'},
+}
+FUNCTION_KEYS = ['basic_master', 'weblio', 'einavi', 'google', 'mp3', 'dict', 'phrase']
 OTHER_START = 5
 PHRASE_SUFFIX = ['able', 'ful', 'ness', 'less', 'ress', 'lity', 'rity', 'ment']
 IGNORE_MEANINGS = ['関係代名詞', '現在完了', '過去完了', '未来完了']
@@ -41,15 +42,23 @@ class EnglishDict:
         self.myjob = job
 
     def do(self):
-        layout = [[FUNCTIONS[i][0] + '_' + str(k)
-                   for k in range(1, int(cst.ENGLISH_MASTER_LEVEL / (2 if i in [4] else 1)) + 1)] +
-                  [FUNCTIONS[i][0] + '_追加' if i in [1, 2, 3] else
-                   FUNCTIONS[i][0] + '_マージ' if i in [0] else None]
-                  for i in range(0, len(FUNCTIONS) - 2)]
-        layout.append([FUNCTIONS[i][0] for i in range(5, len(FUNCTIONS))])
+        layout = []
+        for i, key in enumerate(FUNCTION_KEYS[:-2]):
+            func = FUNCTIONS[key]
+            func_name = func['name']
+            level_range = int(cst.ENGLISH_MASTER_LEVEL / (2 if key == 'mp3' else 1))
+            row = [func_name + '_' + str(k) for k in range(1, level_range + 1)]
+            if key in ['weblio', 'einavi', 'google']:
+                row.append(func_name + '_追加')
+            elif key == 'basic_master':
+                row.append(func_name + '_マージ')
+            else:
+                row.append(None)
+            layout.append(row)
+        layout.append([FUNCTIONS[key]['name'] for key in FUNCTION_KEYS[OTHER_START:]])
 
         selects = com.dialog_cols('不要なものは外してください。', layout,
-                                  ['l' for _ in range(0, len(FUNCTIONS))], '工程選択', obj='check')
+                                  ['l' for _ in range(len(FUNCTION_KEYS))], '工程選択', obj='check')
         if 0 == len(selects):
             return
         total_time = 0
@@ -57,22 +66,25 @@ class EnglishDict:
         others = selects[len(selects) - 1].copy()
         selects[len(selects) - 1] = []
 
-        for i in range(OTHER_START, len(FUNCTIONS)):
-            if FUNCTIONS[i][0] in others:
-
+        for i in range(OTHER_START, len(FUNCTION_KEYS)):
+            key = FUNCTION_KEYS[i]
+            func = FUNCTIONS[key]
+            func_name = func['name']
+            if func_name in others:
                 if OTHER_START == i:
                     selects[len(selects) - 1] = [others[0]]
                 else:
-                    selects.append([FUNCTIONS[i][0]])
+                    selects.append([func_name])
             elif OTHER_START != i:
                 selects.append([])
 
-        for i in range(0, len(FUNCTIONS)):
+        for i, key in enumerate(FUNCTION_KEYS):
             if 0 == len(selects[i]):
                 continue
 
+            func = FUNCTIONS[key]
             start_time = com.time_start()
-            is_run = getattr(self, FUNCTIONS[i][1])(selects[i])
+            is_run = getattr(self, func['method'])(selects[i])
 
             if is_run is None:
                 com.dialog('中断しました。', self.myjob)
@@ -82,7 +94,7 @@ class EnglishDict:
 
             run_time = com.time_end(start_time)
             total_time += run_time
-            com.log(FUNCTIONS[i][0] + ': 完了(' + com.conv_time_str(run_time) + ')')
+            com.log(func['name'] + ': 完了(' + com.conv_time_str(run_time) + ')')
 
         com.log(self.myjob + ': 全終了(' + com.conv_time_str(total_time) + ')')
         com.dialog('完了しました。(' + com.conv_time_str(total_time) + ')', self.myjob)
@@ -195,13 +207,16 @@ class EnglishDict:
 
     # Master.csv作成
     def _merge_master(self, fnc):
+        func = FUNCTIONS['basic_master']
+        file_base = func['file']
+        file_ext = func['ext']
 
-        merge_file = cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[fnc][2] + '.' + FUNCTIONS[fnc][3]
+        merge_file = cst.TEMP_PATH[cst.PC] + 'English/' + file_base + '.' + file_ext
         datas = []
 
         for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
             data = pd.read_csv(merge_file.replace(
-                FUNCTIONS[fnc][2] + '.', FUNCTIONS[fnc][2] + '_' + str(lv) + '.'), header=None)
+                file_base + '.', file_base + '_' + str(lv) + '.'), header=None)
 
             rows = []
             for i in range(0, len(data)):
@@ -907,19 +922,22 @@ class EnglishDict:
 
     # Content.json作成
     def _merge_content(self, _):
+        einavi_func = FUNCTIONS['einavi']
+        weblio_func = FUNCTIONS['weblio']
+        google_func = FUNCTIONS['google']
 
-        base_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[2][2] + '.' + FUNCTIONS[2][3]
-        plus_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[1][2] + '.' + FUNCTIONS[1][3]
-        google_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + FUNCTIONS[3][2] + '.' + FUNCTIONS[3][3]
+        base_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + einavi_func['file'] + '.' + einavi_func['ext']
+        plus_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + weblio_func['file'] + '.' + weblio_func['ext']
+        google_file = cst.TEMP_PATH[cst.PC] + 'English/dict/' + google_func['file'] + '.' + google_func['ext']
 
         merges = {}
         out_counts = [0 for _ in range(0, int(cst.ENGLISH_MASTER_LEVEL / 2))]
 
         plus = {}
         for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
-
+            weblio_file_base = weblio_func['file']
             file = open(plus_file.replace(
-                FUNCTIONS[1][2] + '.', FUNCTIONS[1][2] + '_' + str(lv) + '.'), encoding='utf8').read()
+                weblio_file_base + '.', weblio_file_base + '_' + str(lv) + '.'), encoding='utf8').read()
 
             file = json.loads(file)
             for col in file:
@@ -929,9 +947,9 @@ class EnglishDict:
 
         google = {}
         for lv in range(0, cst.ENGLISH_MASTER_LEVEL + 1):
-
+            google_file_base = google_func['file']
             file = open(google_file.replace(
-                FUNCTIONS[3][2] + '.', FUNCTIONS[3][2] + '_' + str(lv) + '.'), encoding='utf8').read()
+                google_file_base + '.', google_file_base + '_' + str(lv) + '.'), encoding='utf8').read()
             file = json.loads(file)
 
             for col in file:
@@ -939,8 +957,9 @@ class EnglishDict:
                     for key in file[col][i]:
                         google[key] = file[col][i][key]
 
+        einavi_file_base = einavi_func['file']
         insert_file = open(base_file.replace(
-            FUNCTIONS[2][2] + '.', FUNCTIONS[2][2] + '_0.'), 'r', encoding='utf8').read()
+            einavi_file_base + '.', einavi_file_base + '_0.'), 'r', encoding='utf8').read()
         insert_file = json.loads(insert_file)
 
         rows = []
@@ -951,7 +970,7 @@ class EnglishDict:
         for lv in range(1, cst.ENGLISH_MASTER_LEVEL + 1):
 
             file = pd.read_json(base_file.replace(
-                FUNCTIONS[2][2] + '.', FUNCTIONS[2][2] + '_' + str(lv) + '.'), encoding='utf8')
+                einavi_file_base + '.', einavi_file_base + '_' + str(lv) + '.'), encoding='utf8')
             for key in file:
                 rows.append(file[key])
 
@@ -1876,7 +1895,8 @@ class EnglishDict:
         derivative = {}
         phrase_max = 0
 
-        with open(cst.TEMP_PATH[cst.PC] + 'English/' + FUNCTIONS[6][2] + '.' + FUNCTIONS[6][3], 'r') as in_file:
+        phrase_func = FUNCTIONS['phrase']
+        with open(cst.TEMP_PATH[cst.PC] + 'English/' + phrase_func['file'] + '.' + phrase_func['ext'], 'r') as in_file:
             in_file = in_file.read().split('\n')
             for row in in_file:
 

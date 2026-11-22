@@ -16,9 +16,12 @@ class MySql:
         info = cst.MENU_CSV['Sql']
         info = info[(dbname == info['DBNAME'])]
 
-        host = info['HOST'].values[0]
-        user = info['USER'].values[0]
-        pw = info['PASS'].values[0]
+        host_series = info['HOST'].values
+        user_series = info['USER'].values
+        pw_series = info['PASS'].values
+        host = host_series[0]
+        user = user_series[0]
+        pw = pw_series[0]
 
         try:
             cnx = db.connect(host=host, user=user, password=pw, auth_plugin='mysql_native_password')
@@ -88,8 +91,8 @@ class MySql:
             com.log('SQLエラー: ' + sql_desc.replace('\n', ' ') + ', ' + str(e), 'E')
             return '', ''
 
-        cols = [[col[0] for col in show_cols]]
-        res = [[row for row in rows] for rows in result]
+        cols = [[col_tuple[0] for col_tuple in show_cols]]
+        res = [[value for value in row] for row in result]
         cols.append(res)
         return cols
 
@@ -109,7 +112,8 @@ class MySql:
         try:
             cursor = self.cnx.cursor()
             # 複数行の場合は executemany を使用
-            if isinstance(values[0], (list, tuple)):
+            first_value = values[0]
+            if isinstance(first_value, (list, tuple)):
                 cursor.executemany(sql, values)
             else:
                 cursor.execute(sql, values)

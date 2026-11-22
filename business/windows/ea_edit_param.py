@@ -53,15 +53,16 @@ def _edit_setfiles():
 
     # リストからファイルの読み込み
     for path in prm_lists:
-        files = os.listdir(PRM_PATH + path[0])
+        folder_name = path[0]
+        files = os.listdir(PRM_PATH + folder_name)
         read_file = []
 
         for file in files:
             try:
-                read_file.append(open(PRM_PATH + path[0] + "/" + file, "r").read())
+                read_file.append(open(PRM_PATH + folder_name + "/" + file, "r").read())
 
             except Exception as e:
-                err_msg += "\n　" + path[0] + file + "\n　　" + str(e)
+                err_msg += "\n　" + folder_name + file + "\n　　" + str(e)
                 com.log(str(e), "W")
 
         read_files.append(read_file)
@@ -285,16 +286,16 @@ def _edit_htmfiles():
     for i in range(0, len(tf)):
         cur_file = []
 
-        for k in range(0, len(cst.CURRENCIES_EA[0])):
+        for k in range(0, len(cst.CURRENCIES_EA['list'])):
             trade_file = []
 
             for file in htm_lists:
                 if file.find("_" + tf[i] + "_") < 0:
                     continue
                 if (
-                    "GOLD" != cst.CURRENCIES_EA[0][k]
-                    and file.find(cst.CURRENCIES_EA[0][k]) < 0
-                ) or ("GOLD" == cst.CURRENCIES_EA[0][k] and file.find("XAU") < 0):
+                    "GOLD" != cst.CURRENCIES_EA['list'][k]
+                    and file.find(cst.CURRENCIES_EA['list'][k]) < 0
+                ) or ("GOLD" == cst.CURRENCIES_EA['list'][k] and file.find("XAU") < 0):
                     continue
                 try:
                     trade_file.append(open(file, "r", encoding="utf16").read())
@@ -317,7 +318,7 @@ def _edit_htmfiles():
     prm = {}
     result = {tf[i]: {} for i in range(0, len(tf))}
     for i in range(0, len(tf)):
-        for k in range(0, len(cst.CURRENCIES_EA[0])):
+        for k in range(0, len(cst.CURRENCIES_EA['list'])):
             cur_data = {}
 
             for m in range(0, len(read_files)):
@@ -334,10 +335,10 @@ def _edit_htmfiles():
                             continue
 
                         if (
-                            "GOLD" != cst.CURRENCIES_EA[0][k]
-                            and title[0].find(cst.CURRENCIES_EA[0][k]) < 0
+                            "GOLD" != cst.CURRENCIES_EA['list'][k]
+                            and title[0].find(cst.CURRENCIES_EA['list'][k]) < 0
                         ) or (
-                            "GOLD" == cst.CURRENCIES_EA[0][k]
+                            "GOLD" == cst.CURRENCIES_EA['list'][k]
                             and title[0].find("XAU") < 0
                         ):
                             continue

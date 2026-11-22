@@ -32,9 +32,11 @@ class EditHistory:
             for i in range(0, len(files)):
                 data = open(files[i], 'r').read().split('\n')
 
-                window = com.progress('H1データ作成中', [files[i].split('/')[len(files[i].split('/')) - 1], len(files)], interrupt=True)
+                file_parts = files[i].split('/')
+                file_name = file_parts[len(file_parts) - 1]
+                window = com.progress('H1データ作成中', [file_name, len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
-                window[files[i].split('/')[len(files[i].split('/')) - 1] + '_'].update(i)
+                window[file_name + '_'].update(i)
                 start_time = com.time_start()
 
                 out = ''
@@ -45,14 +47,20 @@ class EditHistory:
                 for k in range(1, len(data)):
                     rows = data[k].split(',')
 
-                    op = (rows[2] if 0 == count else op)
-                    hi = max(float(rows[3]), hi)
-                    lo = min(float(rows[4]), lo)
+                    open_price = rows[2]
+                    high_price = float(rows[3])
+                    low_price = float(rows[4])
+                    close_price = rows[5]
+                    op = (open_price if 0 == count else op)
+                    hi = max(high_price, hi)
+                    lo = min(low_price, lo)
                     count += 1
 
                     if k == len(data) - 2 or str(data[k + 1].split(',')[1].split(':')[0]) != str(rows[1].split(':')[0]):
-                        out += str(rows[0]) + ',' + str(rows[1].split(':')[0]) + ','
-                        out += str(op) + ',' + str(hi) + ',' + str(lo) + ',' + rows[5] + '\n'
+                        date_value = rows[0]
+                        hour_value = rows[1].split(':')[0]
+                        out += str(date_value) + ',' + str(hour_value) + ','
+                        out += str(op) + ',' + str(hi) + ',' + str(lo) + ',' + close_price + '\n'
 
                         if k == len(data) - 2:
                             break
@@ -64,7 +72,7 @@ class EditHistory:
 
                 run_time = com.time_end(start_time)
                 total_time += run_time
-                com.log(files[i].split('/')[len(files[i].split('/')) - 1] +
+                com.log(file_name +
                         '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
                 window.close()
         finally:
@@ -93,8 +101,12 @@ class EditHistory:
             for i in range(0, len(files)):
                 data = open(files[i], 'r').read().split('\n')
 
-                window[files[0].split('/')[len(files[i].split('/')) - 1]].update(files[i].split('/')[len(files[i].split('/')) - 1])
-                window[files[0].split('/')[len(files[i].split('/')) - 1] + '_'].update(i)
+                file_parts = files[i].split('/')
+                file_name = file_parts[len(file_parts) - 1]
+                first_file_parts = files[0].split('/')
+                first_file_name = first_file_parts[len(first_file_parts) - 1]
+                window[first_file_name].update(file_name)
+                window[first_file_name + '_'].update(i)
 
                 start_time = com.time_start()
 
@@ -111,30 +123,37 @@ class EditHistory:
                 for k in range(1, len(data)):
                     rows = data[k].split(',')
 
-                    op_hour_h4 = (rows[1] if 0 == count_h4 else op_hour_h4)
-                    op_h4 = (rows[2] if 0 == count_h4 else op_h4)
-                    hi_h4 = max(float(rows[3]), hi_h4)
-                    lo_h4 = min(float(rows[4]), lo_h4)
+                    date_value = rows[0]
+                    hour_value = rows[1]
+                    open_price = rows[2]
+                    high_price = float(rows[3])
+                    low_price = float(rows[4])
+                    close_price = rows[5]
+
+                    op_hour_h4 = (hour_value if 0 == count_h4 else op_hour_h4)
+                    op_h4 = (open_price if 0 == count_h4 else op_h4)
+                    hi_h4 = max(high_price, hi_h4)
+                    lo_h4 = min(low_price, lo_h4)
                     count_h4 += 1
 
-                    op_hour_d1 = (rows[1] if 0 == count_d1 else op_hour_d1)
-                    op_d1 = (rows[2] if 0 == count_d1 else op_d1)
-                    hi_d1 = max(float(rows[3]), hi_d1)
-                    lo_d1 = min(float(rows[4]), lo_d1)
+                    op_hour_d1 = (hour_value if 0 == count_d1 else op_hour_d1)
+                    op_d1 = (open_price if 0 == count_d1 else op_d1)
+                    hi_d1 = max(high_price, hi_d1)
+                    lo_d1 = min(low_price, lo_d1)
                     count_d1 += 1
 
                     if k == len(data) - 2 or 0 == int(data[k + 1].split(',')[1]) % 4:
-                        out_h4 += str(rows[0]) + ',' + str(op_hour_h4) + ','
-                        out_h4 += str(op_h4) + ',' + str(hi_h4) + ',' + str(lo_h4) + ',' + rows[5] + '\n'
+                        out_h4 += str(date_value) + ',' + str(op_hour_h4) + ','
+                        out_h4 += str(op_h4) + ',' + str(hi_h4) + ',' + str(lo_h4) + ',' + close_price + '\n'
                         if k == len(data) - 2:
                             break
                         count_h4 = 0
                         hi_h4 = 0
                         lo_h4 = 9999999
 
-                    if k == len(data) - 2 or int(rows[0]) != int(data[k + 1].split(',')[0]):
-                        out_d1 += str(rows[0]) + ',-,'
-                        out_d1 += str(op_d1) + ',' + str(hi_d1) + ',' + str(lo_d1) + ',' + rows[5] + '\n'
+                    if k == len(data) - 2 or int(date_value) != int(data[k + 1].split(',')[0]):
+                        out_d1 += str(date_value) + ',-,'
+                        out_d1 += str(op_d1) + ',' + str(hi_d1) + ',' + str(lo_d1) + ',' + close_price + '\n'
                         if k == len(data) - 2:
                             break
                         count_d1 = 0
@@ -146,7 +165,7 @@ class EditHistory:
 
                 run_time = com.time_end(start_time)
                 total_time += run_time
-                com.log(files[i].split('/')[len(files[i].split('/')) - 1] +
+                com.log(file_name +
                         '作成完了(' + com.conv_time_str(run_time) + ') ' + files[i])
 
             window.close()
@@ -173,31 +192,50 @@ class EditHistory:
                 for i in range(0, len(files)):
                     data = open(files[i], 'r').read().split('\n')
 
-                    window[files[0].split('/')[len(files[0].split('/')) - 1]].update(files[i].split('/')[len(files[i].split('/')) - 1])
-                    window[files[0].split('/')[len(files[0].split('/')) - 1] + '_'].update(i)
+                    file_parts = files[i].split('/')
+                    file_name = file_parts[len(file_parts) - 1]
+                    first_file_parts = files[0].split('/')
+                    first_file_name = first_file_parts[len(first_file_parts) - 1]
+                    window[first_file_name].update(file_name)
+                    window[first_file_name + '_'].update(i)
                     start_time = com.time_start()
 
                     out = ''
 
-                    for k in range(int(inputs[1][len(inputs[1]) - 1]) + 1, len(data) - 1):
+                    max_ma_period = int(inputs[1][len(inputs[1]) - 1])
+                    for k in range(max_ma_period + 1, len(data) - 1):
                         rows = data[k].split(',')
 
+                        date_str = rows[0]
+                        hour_value = rows[1]
+                        open_price = float(rows[2])
+                        high_price = float(rows[3])
+                        low_price = float(rows[4])
+                        close_price = float(rows[5])
+
                         ma_lists = []
-                        cl = float(rows[5])
 
                         for m in range(1, len(MTF_INPUTS[0])):
 
                             count = 0.0
                             total = 0.0
 
-                            for n in range(0, int(inputs[1][m - 1])):
-                                total += float(data[k - n].split(',')[5])
+                            ma_period = int(inputs[1][m - 1])
+                            for n in range(0, ma_period):
+                                price = float(data[k - n].split(',')[5])
+                                total += price
                                 count += 1
 
-                            ma_lists.append(total / count)
+                            ma_value = total / count
+                            ma_lists.append(ma_value)
 
-                        out += rows[0][:4] + ',' + rows[0][4: -2] + ',' + rows[0][-2:] + ',' + str(rows[1]) + ','
-                        out += str(cl) + ',' + str(float(rows[3]) - float(rows[4])) + ',' + str(float(rows[5]) - float(rows[2])) + ','
+                        year = date_str[:4]
+                        month = date_str[4: -2]
+                        day = date_str[-2:]
+                        range_value = high_price - low_price
+                        body_value = close_price - open_price
+                        out += year + ',' + month + ',' + day + ',' + str(hour_value) + ','
+                        out += str(close_price) + ',' + str(range_value) + ',' + str(body_value) + ','
                         out += ",".join(['{:.6f}'.format(ma) for ma in ma_lists]) + '\n'
 
                     open(files[i].split('Trender/')[0] + 'Trender/Calc/' +
@@ -205,7 +243,7 @@ class EditHistory:
 
                     run_time = com.time_end(start_time)
                     total_time += run_time
-                    com.log(files[i].split('/')[len(files[i].split('/')) - 1] +
+                    com.log(file_name +
                             '編集完了(' + com.conv_time_str(run_time) + ') ' + files[i])
                 window.close()
         finally:
@@ -293,7 +331,9 @@ class EditHistory:
             for path in PATHS:
                 files = glob.glob(cst.HST_PATH[cst.PC].replace('history', 'Trender/Calc/') + path.replace('MTF/', '') + '*.csv')
 
-                cur_name = files[0].split('/')[len(files[0].split('/')) - 1].replace('.csv', '')[3:]
+                first_file_parts = files[0].split('/')
+                first_file_name = first_file_parts[len(first_file_parts) - 1]
+                cur_name = first_file_name.replace('.csv', '')[3:]
                 window = com.progress('判定データ作成中', ['H1', len(PATHS)], [cur_name, len(files)], interrupt=True)
                 event, values = window.read(timeout=0)
 
@@ -302,7 +342,9 @@ class EditHistory:
                 for i in range(0, len(files)):
                     data = open(files[i], 'r').read().split('\n')
 
-                    window[cur_name].update(files[i].split('/')[len(files[i].split('/')) - 1])
+                    file_parts = files[i].split('/')
+                    file_name = file_parts[len(file_parts) - 1]
+                    window[cur_name].update(file_name)
                     window[cur_name + '_'].update(i)
                     start_time = com.time_start()
 
@@ -484,7 +526,7 @@ class EditHistory:
 
                     run_time = com.time_end(start_time)
                     total_time += run_time
-                    com.log(files[i].split('/')[len(files[i].split('/')) - 1] +
+                    com.log(file_name +
                             '判定完了(' + com.conv_time_str(run_time) + ') ' + files[i])
                 window.close()
         finally:

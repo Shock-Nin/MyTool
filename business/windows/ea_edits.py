@@ -70,7 +70,7 @@ def prm_list():
         for path in paths:
 
             # 並び順でなければパス
-            if path != cst.EA_PATHS[key1][0]:
+            if path != cst.EA_PATHS[key1]['base']:
                 continue
             # フォルダでなければパス
             if not os.path.isdir(PRM_PATH + path):
@@ -79,7 +79,7 @@ def prm_list():
             files = os.listdir(PRM_PATH + path)
             set_file = []
 
-            for key2 in cst.CURRENCIES_EA[0]:
+            for key2 in cst.CURRENCIES_EA['list']:
                 for file in files:
                     # 並び順でなければパス
                     if file.find(key2) < 0:
@@ -98,17 +98,17 @@ def sort_paths(is_out):
     paths = []
     get_paths = os.listdir(cst.TEST_UNIT[cst.PC])
 
-    for key1 in cst.CURRENCIES_EA[0]:
+    for key1 in cst.CURRENCIES_EA['list']:
         for key2 in cst.EA_PATHS:
 
             for get_path in get_paths:
 
                 if 1 == len(cst.EA_PATHS[key2]):
-                    is_key = (get_path == cst.EA_PATHS[key2][0])
-                    path = cst.TEST_UNIT[cst.PC] + cst.EA_PATHS[key2][0]
+                    is_key = (get_path == cst.EA_PATHS[key2]['base'])
+                    path = cst.TEST_UNIT[cst.PC] + cst.EA_PATHS[key2]['base']
                 else:
-                    is_key = (get_path == cst.EA_PATHS[key2][1] + key1)
-                    path = cst.TEST_UNIT[cst.PC] + cst.EA_PATHS[key2][1] + key1
+                    is_key = (get_path == cst.EA_PATHS[key2]['prefix'] + key1)
+                    path = cst.TEST_UNIT[cst.PC] + cst.EA_PATHS[key2]['prefix'] + key1
 
                 # 並び順でなければパス
                 if not is_key:
@@ -134,7 +134,7 @@ def name_list(lists):
         datas = pd.read_html(lists, encoding='utf8', header=0, na_values=0)[0]
         for i in range(0, len(datas)):
 
-            name = datas.at[i, cst.EA_DATA_NAMES[0]].split('_')[0]
+            name = datas.at[i, cst.EA_DATA_NAMES['individual']].split('_')[0]
             if name not in names:
                 names.append(name)
 

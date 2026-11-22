@@ -51,17 +51,18 @@ class AnomalyData:
             tables = con.free('SHOW TABLES')
 
             db_datas = {}
-            for i in range(len(tables)):
+            for idx, table_tuple in enumerate(tables):
+                table_name = table_tuple[0]  # テーブル名を取得
 
-                info = tables[i][0] + ' ' + str(i) + ' / ' + str(len(tables))
+                info = table_name + ' ' + str(idx) + ' / ' + str(len(tables))
                 window = com.progress('データ抽出中 ' + tf, [info, len(tables)], interrupt=True)
                 event, values = window.read(timeout=0)
-                window[info + '_'].update(i)
+                window[info + '_'].update(idx)
 
-                db_datas[tables[i][0]] = con.free(
-                    'SELECT * FROM ' + tables[i][0]
+                db_datas[table_name] = con.free(
+                    'SELECT * FROM ' + table_name
                     + ' WHERE \'' + str(year_target - int(inputs[1][1]) - 2) + '-01-01\' <= Time'
-                    + ' AND Time <= \'' + str(year_target - 1) + '-12-31\'')
+                    + ' AND Time <= \'' + str(year_target - 1) + '-12-31\'', as_dict=True)
 
                 # 中断イベント
                 if _is_interrupt(window, event):
@@ -105,27 +106,27 @@ class AnomalyData:
                             return
 
                         data = db_datas[table][i]
-                        if str(data[0])[:len_date] == str(old_date)[:len_date]:
+                        if str(data['Time'])[:len_date] == str(old_date)[:len_date]:
                             continue
 
-                        old_date = data[0]
-                        op = data[1]
-                        hi = data[2]
-                        lo = data[3]
+                        old_date = data['Time']
+                        op = data['Open']
+                        hi = data['High']
+                        lo = data['Low']
 
                         for k in range(i + 1, len(db_datas[table])):
                             rows = db_datas[table][k]
 
-                            if str(rows[0])[:len_date] != str(old_date)[:len_date]:
+                            if str(rows['Time'])[:len_date] != str(old_date)[:len_date]:
                                 break
 
                             if '3' == inputs[1][2]:
-                                if str(old_date)[5:7] != str(rows[0])[5:7]:
+                                if str(old_date)[5:7] != str(rows['Time'])[5:7]:
                                     break
 
-                            hi = max(rows[2], hi)
-                            lo = min(rows[3], lo)
-                            cl = rows[4]
+                            hi = max(rows['High'], hi)
+                            lo = min(rows['Low'], lo)
+                            cl = rows['Close']
 
                         rates.append([datetime.datetime(
                             int(str(old_date)[:4]), int(str(old_date)[5:7]),
@@ -256,25 +257,26 @@ class AnomalyData:
         cols = ''
         curs = []
 
-        for col in dfs[0][0].keys():
-            if col in ['Time'] or 0 <= col.find('_Vola') or 0 <= col.find('_UpDn'):
-                continue
+        # dfs[0][0] の最初のDataFrameから列名を取得
+        first_df = dfs[0][0] if dfs and len(dfs[0]) > 0 else None
+        if first_df is not None:
+            for col in first_df.keys():
+                if col in ['Time'] or 0 <= col.find('_Vola') or 0 <= col.find('_UpDn'):
+                    continue
 
-            curs.append(col)
-            cur_col = col + ',' + col + '_VolaAvg,' + col + '_VolaMax,' + col + '_VolaMin,' + col + '_UpDnAvg,'
-            cur_col += col + '_Win,' + col + '_Lose,' + col + '_WinPc,' + col + '_LosePc,'
-            cur_col += col + '_WinAvg,' + col + '_LoseAvg,'
+                curs.append(col)
+                cur_col = col + ',' + col + '_VolaAvg,' + col + '_VolaMax,' + col + '_VolaMin,' + col + '_UpDnAvg,'
+                cur_col += col + '_Win,' + col + '_Lose,' + col + '_WinPc,' + col + '_LosePc,'
+                cur_col += col + '_WinAvg,' + col + '_LoseAvg,'
 
-            if 0 == len(cols):
-                cols = cur_col.replace(col, 'USD')
-            cols += cur_col.replace('USD', '')
+                if 0 == len(cols):
+                    cols = cur_col.replace(col, 'USD')
+                cols += cur_col.replace('USD', '')
 
         try:
-            for i in range(len(dfs)):
-
-                data_d = dfs[i][1]
-                data_m = dfs[i][2]
-                data_w = dfs[i][3]
+            for df_set in dfs:
+                # df_setは [df0, data_d, data_m, data_w] の構造
+                _, data_d, data_m, data_w = df_set[0], df_set[1], df_set[2], df_set[3]
 
                 str_out = ''
 

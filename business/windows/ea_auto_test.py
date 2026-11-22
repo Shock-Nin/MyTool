@@ -47,7 +47,7 @@ class EaAutoTest:
                     ea_name = checks[i][k].split('_')[0]
                     if len(checks) - 1 == i:
                         try:
-                            file_path = PRM_PATH + cst.EA_PATHS[ea_name][0] + '/' + checks[i][k] + '.set'
+                            file_path = PRM_PATH + cst.EA_PATHS[ea_name]['base'] + '/' + checks[i][k] + '.set'
                             with open(file_path, 'r') as f:
                                 read_files.append(f.read())
                         except Exception as e:
@@ -266,7 +266,7 @@ class EaAutoTest:
                             start_time = com.time_start()
                             com.sleep(5)
 
-                            path = cst.EA_PATHS[ea_name.split('_')[0]][0]
+                            path = cst.EA_PATHS[ea_name.split('_')[0]]['base']
                             file = ea_name
 
                             com.log('テスト開始: ' + ea_name + ', ' + logic)

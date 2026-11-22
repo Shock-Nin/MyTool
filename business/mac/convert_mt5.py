@@ -272,8 +272,8 @@ class ConvertMt5:
                     h1_path = self._get_output_path(pair, OUT_H1_PATH, is_others)
                     with open(h1_path, 'w', encoding='utf-8', newline='') as f:
                         f.write('DateTime,Close\n')
-                        for row in h1_data:
-                            f.write(row[0] + ',' + row[1] + '\n')
+                        for dt_str, close_val in h1_data:
+                            f.write(dt_str + ',' + close_val + '\n')
                     com.log('H1出力: ' + h1_path + ' (' + str(len(h1_data)) + '行)')
 
                     # D1: 日足終値 (日毎の最終行を取得)

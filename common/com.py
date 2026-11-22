@@ -35,7 +35,11 @@ shot_grab = matching.shot_grab
 # 日時を文字型で取得
 def str_time(msec=False):
     stf = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S,%f')
-    return stf[:-3] if msec else stf.split(',')[0]
+    if msec:
+        return stf[:-3]
+    else:
+        date_parts = stf.split(',')
+        return date_parts[0]
 
 
 # 時間計測開始
@@ -94,8 +98,9 @@ if not os.path.exists(cst.TEMP_PATH[cst.PC] + 'Log'):
 files = os.listdir(cst.TEMP_PATH[cst.PC] + 'Log')
 files.sort()
 for i in range(0, len(files) - cst.KEEP_LOG):
-    os.remove(cst.TEMP_PATH[cst.PC] + 'Log/' + files[i])
-    log('ログ削除: ' + files[i])
+    target_file = files[i]
+    os.remove(cst.TEMP_PATH[cst.PC] + 'Log/' + target_file)
+    log('ログ削除: ' + target_file)
 
 
 # メール送信(デフォルトアカウントはブログ)

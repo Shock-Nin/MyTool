@@ -82,43 +82,48 @@ class MyAsset:
                 for col in payment_type[rows]) for rows in reversed(payment_type))
 
             summary = self.cnx.select('*', TARGET_TABLES[0], '', '')
-            summary[0] = '　　 '.join(['　　 ' + summary[0][i] for i in range(len(summary[0]))])
+            summary_cols, summary_rows = summary[0], summary[1]
+            summary_header = '　　 '.join(['　　 ' + summary_cols[i] for i in range(len(summary_cols))])
 
             # 最新日のデータ取得
-            before = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1')
-            before = [before[0], before[1][0]]
+            before_result = self.cnx.select('*', TARGET_TABLES[2], '', 'ORDER BY 日付 DESC LIMIT 1')
+            before_cols, before_row = before_result[0], before_result[1][0]
+            before = [before_cols, before_row]
 
             str_summary = ''
-            half = math.ceil(len(summary[1]) / 2)
+            half = math.ceil(len(summary_rows) / 2)
             for i in range(half):
+                row = summary_rows[i]
                 str_summary += '　'.join(
-                    [('' if k != len(summary[1][i]) - 1 else '   ' if 0 < float(summary[1][i][k].replace('%', '')) < 10 else '')
-                     + (''.join(['  ' + ('' if len(str(int(summary[1][i][k]))) < 6 else ' ')
-                               for _ in range(len(str(int(summary[1][i][k]))) + int(len(str(int(summary[1][i][k]))) / 3), 10) ])
-                      if 0 < k < len(summary[1][i]) - 1 else '') + (format(int(str(summary[1][i][k]).replace('.0', '  ')), ',')
-                      if 0 < k < len(summary[1][i]) - 1 else str(summary[1][i][k])) + ('\t' if 0 == k else '')
-                     for k in range(len(summary[1][i]))]).replace('0%', '　    0%').replace('10　    0%', '    100%')
-                try: str_summary += '　：　' + '　'.join(
-                    [('' if k != len(summary[1][i]) - 1 else '   ' if 0 < float(summary[1][i + half][k].replace('%', '')) < 10 else '')
-                     + (''.join(['  ' + ('' if len(str(int(summary[1][i + half][k]))) < 6 else ' ')
-                               for _ in range(len(str(int(summary[1][i + half][k]))) + int(len(str(int(summary[1][i + half][k]))) / 3), 10)])
-                      if 0 < k < len(summary[1][i + half]) - 1 else '') + (format(int(str(summary[1][i + half][k]).replace('.0', '  ')), ',')
-                      if 0 < k < len(summary[1][i + half]) - 1 else str(summary[1][i + half][k])) + ('\t' if 0 == k else '')
-                     for k in range(len(summary[1][i + half]))]).replace('0%', '　    0%').replace('10　    0%', '    100%')
+                    [('' if k != len(row) - 1 else '   ' if 0 < float(row[k].replace('%', '')) < 10 else '')
+                     + (''.join(['  ' + ('' if len(str(int(row[k]))) < 6 else ' ')
+                               for _ in range(len(str(int(row[k]))) + int(len(str(int(row[k]))) / 3), 10) ])
+                      if 0 < k < len(row) - 1 else '') + (format(int(str(row[k]).replace('.0', '  ')), ',')
+                      if 0 < k < len(row) - 1 else str(row[k])) + ('\t' if 0 == k else '')
+                     for k in range(len(row))]).replace('0%', '　    0%').replace('10　    0%', '    100%')
+                try:
+                    row_half = summary_rows[i + half]
+                    str_summary += '　：　' + '　'.join(
+                        [('' if k != len(row) - 1 else '   ' if 0 < float(row_half[k].replace('%', '')) < 10 else '')
+                         + (''.join(['  ' + ('' if len(str(int(row_half[k]))) < 6 else ' ')
+                                   for _ in range(len(str(int(row_half[k]))) + int(len(str(int(row_half[k]))) / 3), 10)])
+                          if 0 < k < len(row_half) - 1 else '') + (format(int(str(row_half[k]).replace('.0', '  ')), ',')
+                          if 0 < k < len(row_half) - 1 else str(row_half[k])) + ('\t' if 0 == k else '')
+                         for k in range(len(row_half))]).replace('0%', '　    0%').replace('10　    0%', '    100%')
                 except (IndexError, KeyError, ValueError) as e:
                     com.log(f'サマリー処理エラー: {str(e)}', 'W')
                 str_summary += '\n'
 
-            str_summary = '   ：　'.join(''.join(summary[0][i] for i in range(len(summary[0]))) for _ in range(2)) + '\n' + str_summary \
-                          + '\n楽天カード支払　' + format(before[1][6], ',') + ' | '+ format(before[1][7], ',') \
+            str_summary = '   ：　'.join(''.join(summary_cols[i] for i in range(len(summary_cols))) for _ in range(2)) + '\n' + str_summary \
+                          + '\n楽天カード支払　' + format(before_row[6], ',') + ' | '+ format(before_row[7], ',') \
 
             # 本日のデータ取得済みなら中断
-            if com.str_time()[:10] == datetime.datetime.strftime(before[1][0], '%Y-%m-%d'):
+            if com.str_time()[:10] == datetime.datetime.strftime(before_row[0], '%Y-%m-%d'):
                 layout = [[], [], ['　　'], [], []]
                 for i in range(len(BANKS)):
                     num = (3 if BANKS[i].find('カード') < 0 else 0)
                     layout[num + 0].append(BANKS[i])
-                    layout[num + 1].append(format(before[1][i + 1 + (0 if i < 4 else 4)], ','))
+                    layout[num + 1].append(format(before_row[i + 1 + (0 if i < 4 else 4)], ','))
 
                 com.dialog_cols(str_payment + '\n\n' + str_summary + '　　本日は取得済です。',
                     layout, ['l', 'r', 'c', 'l', 'r'], self.myjob, lv='W')

@@ -124,15 +124,24 @@ def run(model_type, currency, df, forecast, interval, count, middle, dropout, ep
 
         # 呼び出しモデルがない場合は、Lossチャートを作成
         if loaded_result is None:
-            best_loss = [0, loss[0], 0, val_loss[0]]
+            best_loss_epoch = 0
+            best_loss_value = loss[0]
+            best_val_loss_epoch = 0
+            best_val_loss_value = val_loss[0]
+            best_loss = [best_loss_epoch, best_loss_value, best_val_loss_epoch, best_val_loss_value]
+
             for i in range(1, len(val_loss)):
-                if loss[i] < best_loss[1]:
-                    best_loss[0] = i
-                    best_loss[1] = loss[i]
-                if val_loss[i] < best_loss[3]:
-                    best_loss[2] = i
-                    best_loss[3] = val_loss[i]
-            str_loss = f'loss {best_loss[0]}: {str(round(best_loss[1], 7))}, val_loss {best_loss[2]}: {str(round(best_loss[3], 7))}'
+                if loss[i] < best_loss_value:
+                    best_loss_epoch = i
+                    best_loss_value = loss[i]
+                    best_loss[0] = best_loss_epoch
+                    best_loss[1] = best_loss_value
+                if val_loss[i] < best_val_loss_value:
+                    best_val_loss_epoch = i
+                    best_val_loss_value = val_loss[i]
+                    best_loss[2] = best_val_loss_epoch
+                    best_loss[3] = best_val_loss_value
+            str_loss = f'loss {best_loss_epoch}: {str(round(best_loss_value, 7))}, val_loss {best_val_loss_epoch}: {str(round(best_val_loss_value, 7))}'
             msg += f' | {str_loss}'
 
             fig2, (ax2) = plt.subplots(1, 1, figsize=(int (cst.FIG_SIZE[0] * 0.5), int(cst.FIG_SIZE[1] * 0.5)), sharex=True)

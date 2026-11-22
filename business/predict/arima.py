@@ -61,7 +61,9 @@ def optimize_Arima(currency, df, pdq):
 
         for i in range(len(orders)):
 
-            pdq = (int(orders[i][0]), int(orders[i][1]), int(orders[i][2]))
+            order = orders[i]
+            p, d, q = int(order[0]), int(order[1]), int(order[2])
+            pdq = (p, d, q)
             try:
                 window[currency].update(
                     f'{currency}[{com.conv_time_str(total_time)}] {str(pdq)} {str(i)} / {str(len(orders))}')
@@ -89,7 +91,8 @@ def optimize_Arima(currency, df, pdq):
 
         # AIC低い順でソート、PDQの抽出
         result_df = result_df.sort_values(by='AIC')
-        pdq = list(result_df['(p,d,q)'])[0]
+        pdq_list = list(result_df['(p,d,q)'])
+        pdq = pdq_list[0]
 
         model = _create_model(eq, 'ARIMA', pdq)
 
@@ -144,15 +147,17 @@ def optimize_Ar(currency, df, lag):
 
         for i in range(len(orders)):
             try:
+                order = orders[i]
+                lag_value = int(order[0])
                 window[currency].update(
-                    f'{currency}[{com.conv_time_str(total_time)}] {str(orders[i][0])} {str(i)} / {str(len(orders))}')
+                    f'{currency}[{com.conv_time_str(total_time)}] {str(lag_value)} {str(i)} / {str(len(orders))}')
                 window[currency + '_'].update(i)
 
                 if 0 == i % 5:
                     com.log(f'AutoReg[{com.conv_time_str(total_time)}] {str(i)} / {str(len(orders))}')
-                model = _create_model(eq, 'AutoReg', int(orders[i][0]))
+                model = _create_model(eq, 'AutoReg', lag_value)
 
-                results.append([int(orders[i][0]), model.aic, model.bic, model.hqic])
+                results.append([lag_value, model.aic, model.bic, model.hqic])
                 model.remove_data()
             except:
                 continue
@@ -170,7 +175,8 @@ def optimize_Ar(currency, df, lag):
 
         # AIC低い順でソート、ラグの抽出
         result_df = result_df.sort_values(by='AIC')
-        lag = list(result_df['lag'])[0]
+        lag_list = list(result_df['lag'])
+        lag = lag_list[0]
 
         model = _create_model(eq, 'AutoReg', lag)
 
@@ -215,9 +221,12 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
         df = df[:-forecast].rename(columns={'Close': currency})
         df_all = df_all.rename(columns={'Close': currency})
 
-        pdq = str_pdq.split(',')
-        if 3 == len(pdq):
-            pdq = (int(pdq[0]), int(pdq[1]), int(pdq[2]))
+        pdq_parts = str_pdq.split(',')
+        if 3 == len(pdq_parts):
+            p, d, q = int(pdq_parts[0]), int(pdq_parts[1]), int(pdq_parts[2])
+            pdq = (p, d, q)
+        else:
+            pdq = pdq_parts
 
         # 学習・テストデータ作成
         split_len = int(np.ceil(len(df)))
@@ -260,8 +269,10 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
                 actual_predictions = np.append(actual_predictions, np_array(actual_prediction))
 
                 for k in range(4):
-                    refit_summaries[k].append(refit_summary[k])
-                    actual_summaries[k].append(actual_summary[k])
+                    refit_metric = refit_summary[k]
+                    actual_metric = actual_summary[k]
+                    refit_summaries[k].append(refit_metric)
+                    actual_summaries[k].append(actual_metric)
 
                 # model = ARIMA(history, order=(1, 2, 0))
                 # model_fit = model.fit(disp=0)
@@ -285,11 +296,11 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
             predict_data.loc[:, 'refit'] = refit_predictions
             predict_data.loc[:, 'actual'] = actual_predictions
 
-            refit_summaries = [float(round(np.mean(refit_summaries[k]), 5)) for k in range(4)] \
-                + [round(sqrt(mean_squared_error(predict_data['test'], predict_data['refit'])), 5)]
+            refit_rmse = round(sqrt(mean_squared_error(predict_data['test'], predict_data['refit'])), 5)
+            refit_summaries = [float(round(np.mean(refit_summaries[k]), 5)) for k in range(4)] + [refit_rmse]
 
-            actual_summaries = [float(round(np.mean(actual_summaries[k]), 5)) for k in range(4)] \
-                + [round(sqrt(mean_squared_error(predict_data['test'], predict_data['actual'])), 5)]
+            actual_rmse = round(sqrt(mean_squared_error(predict_data['test'], predict_data['actual'])), 5)
+            actual_summaries = [float(round(np.mean(actual_summaries[k]), 5)) for k in range(4)] + [actual_rmse]
 
             model_prediction, model_summary = _predict_model(train_data, 'AutoReg', lag, split_len, forecast,
                                                              f'{model_path}_{currency}_AR({str(lag)})')
@@ -298,11 +309,12 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
             model_predictions = np.reshape(model_predictions, (model_predictions.shape[0], 1))
             predict_data.loc[:, 'normal'] = model_predictions
 
-            model_summaries = [round(np.mean(model_summary[k]), 5) for k in range(4)] \
-                + [round(sqrt(mean_squared_error(predict_data['test'], predict_data['normal'])), 5)]
+            model_rmse = round(sqrt(mean_squared_error(predict_data['test'], predict_data['normal'])), 5)
+            model_summaries = [round(np.mean(model_summary[k]), 5) for k in range(4)] + [model_rmse]
 
+            metric_names = ['AIC', 'BIC', 'HQIC', 'BSE', 'RMSE']
             ar_summary = ['AutoReg: [Normal, Refit, Predict]\n' + '\n'.join(
-                              [['AIC', 'BIC', 'HQIC', 'BSE', 'RMSE'][k] + ': ['
+                              [metric_names[k] + ': ['
                                + f'{model_summaries[k]}, {refit_summaries[k]}, {actual_summaries[k]}]'
                                for k in range(5)]), model_summary[-1]]
 
@@ -359,8 +371,10 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
                 actual_predictions = np.append(actual_predictions, np_array(actual_prediction))
 
                 for k in range(4):
-                    refit_summaries[k].append(refit_summary[k])
-                    actual_summaries[k].append(actual_summary[k])
+                    refit_metric = refit_summary[k]
+                    actual_metric = actual_summary[k]
+                    refit_summaries[k].append(refit_metric)
+                    actual_summaries[k].append(actual_metric)
 
                 train_start += interval
 
@@ -374,11 +388,11 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
             forecast_data.loc[:, 'refit'] = refit_predictions
             forecast_data.loc[:, 'actual'] = actual_predictions
 
-            refit_summaries = [float(round(np.mean(refit_summaries[k]), 5)) for k in range(4)] \
-                              + [round(sqrt(mean_squared_error(forecast_data['test'], forecast_data['refit'])), 5)]
+            refit_rmse = round(sqrt(mean_squared_error(forecast_data['test'], forecast_data['refit'])), 5)
+            refit_summaries = [float(round(np.mean(refit_summaries[k]), 5)) for k in range(4)] + [refit_rmse]
 
-            actual_summaries = [float(round(np.mean(actual_summaries[k]), 5)) for k in range(4)] \
-                               + [round(sqrt(mean_squared_error(forecast_data['test'], forecast_data['actual'])), 5)]
+            actual_rmse = round(sqrt(mean_squared_error(forecast_data['test'], forecast_data['actual'])), 5)
+            actual_summaries = [float(round(np.mean(actual_summaries[k]), 5)) for k in range(4)] + [actual_rmse]
 
             model_prediction, model_summary = _predict_model(train_data, 'ARIMA', pdq, split_len, forecast,
                                                              f'{model_path}_{currency}_AR({str(pdq)})')
@@ -387,11 +401,12 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
             model_predictions = np.reshape(model_predictions, (model_predictions.shape[0], 1))
             forecast_data.loc[:, 'normal'] = model_predictions
 
-            model_summaries = [round(np.mean(model_summary[k]), 5) for k in range(4)] \
-                              + [round(sqrt(mean_squared_error(forecast_data['test'], forecast_data['normal'])), 5)]
+            model_rmse = round(sqrt(mean_squared_error(forecast_data['test'], forecast_data['normal'])), 5)
+            model_summaries = [round(np.mean(model_summary[k]), 5) for k in range(4)] + [model_rmse]
 
+            metric_names = ['AIC', 'BIC', 'HQIC', 'BSE', 'RMSE']
             arima_summary = ['ARIMA: [Normal, Refit, Predict]\n' + '\n'.join(
-                                 [['AIC', 'BIC', 'HQIC', 'BSE', 'RMSE'][k] + ': ['
+                                 [metric_names[k] + ': ['
                                   + f'{model_summaries[k]}, {refit_summaries[k]}, {actual_summaries[k]}]'
                                   for k in range(5)]), model_summary[-1]]
 
@@ -456,7 +471,9 @@ def run(currency, df, forecast, interval, str_pdq, lag, loaded_result=None):
 def _predict_model(df, arima_type, prm, cnt, interval, model_path=None):
 
         model = _create_model(df, arima_type, prm, model_path)
-        prediction = model.predict(cnt, cnt + interval - 1)
+        start_idx = cnt
+        end_idx = cnt + interval - 1
+        prediction = model.predict(start_idx, end_idx)
         summary = [model.aic, model.bic, model.hqic, model.bse, model.summary()]
         model.remove_data()
 

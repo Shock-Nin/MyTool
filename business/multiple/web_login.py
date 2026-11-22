@@ -36,11 +36,13 @@ class WebLogin:
             com.sleep(1)
             try:
                 if name in ['FXブロード365', '外為オンライン365']:
-                    com.clip_copy(str(menu['ID1'].values[0]))
+                    user_id = str(menu['ID1'].values[0])
+                    com.clip_copy(user_id)
                     if com.question('IDに貼り付け「はい」、パスワードに貼り付け「ログイン」', name, '') <= 0:
                         return self.wd.close()
 
-                    com.clip_copy(str(menu['PASS'].values[0]))
+                    user_password = str(menu['PASS'].values[0])
+                    com.clip_copy(user_password)
                     return self.wd
                 # 事前画面あり
                 if name in ['ガス']:
@@ -53,10 +55,13 @@ class WebLogin:
 
                     for _ in range(0, 5):
                         try:
-                            web_driver.find_element(self.wd, id1[1]).send_keys('')
-                            web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                            id_field = id1[1]
+                            id_value = menu[id1[0]].values[0]
+                            web_driver.find_element(self.wd, id_field).send_keys('')
+                            web_driver.find_element(self.wd, id_field).send_keys(id_value)
+                            password_value = menu['PASS'].values[0]
                             web_driver.find_element(self.wd, pw).send_keys('')
-                            web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                            web_driver.find_element(self.wd, pw).send_keys(password_value)
                             web_driver.find_element(self.wd, btn).click()
 
                             com.sleep(1)
@@ -72,13 +77,16 @@ class WebLogin:
                 elif name in ['楽天カード']:
 
                     try:
-                        web_driver.find_element(self.wd, id1[1]).send_keys('')
-                        web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                        id_field = id1[1]
+                        id_value = menu[id1[0]].values[0]
+                        web_driver.find_element(self.wd, id_field).send_keys('')
+                        web_driver.find_element(self.wd, id_field).send_keys(id_value)
                         web_driver.find_element(self.wd, 'cta001').click()
                         com.sleep(2)
 
+                        password_value = menu['PASS'].values[0]
                         web_driver.find_element(self.wd, pw).send_keys('')
-                        web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                        web_driver.find_element(self.wd, pw).send_keys(password_value)
                         web_driver.find_element(self.wd, 'cta011').click()
 
                         # web_driver.find_element(self.wd, 'loginInner_birthday').send_keys('')
@@ -91,8 +99,10 @@ class WebLogin:
                 elif name in ['PayPayカード']:
 
                     try:
-                        web_driver.find_element(self.wd, id1[1]).send_keys('')
-                        web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                        id_field = id1[1]
+                        id_value = menu[id1[0]].values[0]
+                        web_driver.find_element(self.wd, id_field).send_keys('')
+                        web_driver.find_element(self.wd, id_field).send_keys(id_value)
                         web_driver.find_element(self.wd, '//*[@id="content"]/div[1]/div/form/div[1]/div[1]/div[2]/div/button').click()
                         com.sleep(2)
 
@@ -111,15 +121,20 @@ class WebLogin:
                     elif '三井住友' == name:
                         web_driver.find_element(self.wd, 'tab-switchB02').click()
 
-                    web_driver.find_element(self.wd, id1[1]).send_keys('')
-                    web_driver.find_element(self.wd, id1[1]).send_keys(menu[id1[0]].values[0])
+                    id_field = id1[1]
+                    id_value = menu[id1[0]].values[0]
+                    web_driver.find_element(self.wd, id_field).send_keys('')
+                    web_driver.find_element(self.wd, id_field).send_keys(id_value)
 
                     if name in ['三井住友', 'e-Staffing']:
-                        web_driver.find_element(self.wd, id1[1]).send_keys('')
-                        web_driver.find_element(self.wd, id2[1]).send_keys(menu[id2[0]].values[0])
+                        id2_field = id2[1]
+                        id2_value = menu[id2[0]].values[0]
+                        web_driver.find_element(self.wd, id_field).send_keys('')
+                        web_driver.find_element(self.wd, id2_field).send_keys(id2_value)
 
+                    password_value = menu['PASS'].values[0]
                     web_driver.find_element(self.wd, pw).send_keys('')
-                    web_driver.find_element(self.wd, pw).send_keys(menu['PASS'].values[0])
+                    web_driver.find_element(self.wd, pw).send_keys(password_value)
 
                     if '三井住友' == name:
                         for i in range(3, 5):
@@ -152,20 +167,23 @@ class WebLogin:
 
                         try:
                             com.sleep(1)
-                            account = menu['ID2'].values[0].split('_')
+                            account_info = menu['ID2'].values[0].split('_')
+                            branch_code = account_info[0]
                             select = web_driver.find_element(self.wd, 'j_id_1i:INPUT_BRANCH_CODE')
 
                             options = Select(select).options
                             num = -1
                             for k in range(len(options)):
-                                if options[k].text.endswith(account[0]):
+                                option_text = options[k].text
+                                if option_text.endswith(branch_code):
                                     num = k
                                     break
                             Select(select).select_by_index(num)
 
+                            account_number = account_info[1]
                             elm = '//*[@id="j_id_1i"]/section[2]/div[1]/div/fieldset[2]/label/input'
                             web_driver.find_element(self.wd, elm).send_keys('')
-                            web_driver.find_element(self.wd, elm).send_keys(account[1])
+                            web_driver.find_element(self.wd, elm).send_keys(account_number)
 
                             elm = '//*[@id="j_id_1i"]/section[2]/div[2]/div/fieldset[1]/input'
                             web_driver.find_element(self.wd, elm).send_keys('')
@@ -216,11 +234,18 @@ class WebLogin:
 
 
 def _get_info(name):
-    info = [], [], '', ''
+    id1_info = []
+    id2_info = []
+    pw_info = ''
+    btn_info = ''
 
     # 資産
     if 'ViewCard' == name:
-        info = ['ID1', 'id'], ['', ''], 'pass', '//input[@alt=\'ログイン\']'
+        id1_info = ['ID1', 'id']
+        id2_info = ['', '']
+        pw_info = 'pass'
+        btn_info = '//input[@alt=\'ログイン\']'
+        info = id1_info, id2_info, pw_info, btn_info
     elif '楽天カード' == name:
         info = ['ID1', 'user_id'], ['', ''], 'password_current', ''
     elif 'PayPayカード' == name:

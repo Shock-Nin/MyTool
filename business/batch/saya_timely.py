@@ -85,8 +85,11 @@ class SayaTimely:
             err_count = 0
 
             for i in range(0, len(cst.CURRENCIES_365) * 2):
-                if len(rates[i]) <= 2:
-                    errs += (', ' if 0 < err_count else '') + cst.CURRENCIES_365[int(round((i + 1) / 2))] + '("－")'
+                rate_value = rates[i]
+                if len(rate_value) <= 2:
+                    currency_index = int(round((i + 1) / 2))
+                    currency_name = cst.CURRENCIES_365[currency_index]
+                    errs += (', ' if 0 < err_count else '') + currency_name + '("－")'
                     err_count += 1
 
             if 0 < err_count:
@@ -103,10 +106,11 @@ class SayaTimely:
             buys = [com.str_time()]
 
             for i in range(0, len(rates)):
+                rate_value = rates[i]
                 if i % 2 == 0:
-                    sells.append(rates[i])
+                    sells.append(rate_value)
                 else:
-                    buys.append(rates[i])
+                    buys.append(rate_value)
 
             # SQL実行
             cnx = my_sql.MySql('fx_saya365')

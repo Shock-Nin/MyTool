@@ -78,59 +78,67 @@ def input_box(msg, title, forms, obj='', cancel=False):
     if 'spin' == obj:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
-                 sg.Spin(values=[k for k in range(forms[i][1], forms[i][2] + 1)],
+                [sg.Text(form_item[0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
+                 sg.Spin(values=[k for k in range(form_item[1], form_item[2] + 1)],
                          font=('', 16), size=(12, 1), readonly=True)]
-            ])] for i in range(0, len(forms))], background_color='#77CCFF'
+            ])] for form_item in forms], background_color='#77CCFF'
         )]
     elif 'input' == obj:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                [sg.Text(form_item[0], font=('', 16), size=((0, 0) if 0 == len(form_item[0]) else (len(form_item[0]) * 2, 1)),
                          text_color='#000000', background_color='#77CCFF'),
-                sg.InputText(default_text=forms[i][1], font=('', 16), size=(len(forms[i][0]) * 2, 1))]
-            ])] for i in range(0, len(forms))], background_color='#77CCFF'
+                sg.InputText(default_text=form_item[1], font=('', 16), size=(len(form_item[0]) * 2, 1))]
+            ])] for form_item in forms], background_color='#77CCFF'
         )]
     elif 'combo' == obj:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], key='act', font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                [sg.Text(form_item[0], key='act', font=('', 16), size=((0, 0) if 0 == len(form_item[0]) else (len(form_item[0]) * 2, 1)),
                          text_color='#000000', background_color='#77CCFF'),
-                sg.Combo(forms[i][1], font=('', 16), size=((len(forms[i][1][0]) if 0 == len(forms[i][0]) else len(forms[i][0])) * 2, 1),
-                          default_value=forms[i][2], readonly=True)]
-            ])] for i in range(0, len(forms))], background_color='#77CCFF'
+                sg.Combo(form_item[1], font=('', 16), size=((len(form_item[1][0]) if 0 == len(form_item[0]) else len(form_item[0])) * 2, 1),
+                          default_value=form_item[2], readonly=True)]
+            ])] for form_item in forms], background_color='#77CCFF'
         )]
     else:
         layout = [sg.Column([[
             sg.Frame('', background_color='#77CCFF', layout=[
-                [(sg.Text(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1), text_color='#000000', background_color='#77CCFF')
-                  if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1)))]
-                 for k in range(0, len(forms[i]))
-            ])] for i in range(0, len(forms))], background_color='#77CCFF'
+                [(sg.Text(field_value, font=('', 16), size=(len(form_item[0]) * 2, 1), text_color='#000000', background_color='#77CCFF')
+                  if k == 0 else sg.Input(field_value, font=('', 16), size=(len(form_item[0]) * 2, 1)))
+                 for k, field_value in enumerate(form_item)]
+            ])] for form_item in forms], background_color='#77CCFF'
         )]
 
-    for i in range(0, len(forms)):
+    for form_item in forms:
         if 'spin' == obj:
+            label = form_item[0]
+            start_val = form_item[1]
+            end_val = form_item[2]
             layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
-                 sg.Spin(values=[k for k in range(forms[i][1], forms[i][2] + 1)],
-                         font=('', 16), size=(12, 1), readonly=True)] for i in range(0, len(forms))])]]
+                [sg.Text(label, font=('', 16), size=(12, 1), text_color='#000000', background_color='#77CCFF'),
+                 sg.Spin(values=[k for k in range(start_val, end_val + 1)],
+                         font=('', 16), size=(12, 1), readonly=True)] for form_item in forms])]]
         elif 'input' == obj:
+            label = form_item[0]
+            default_text = form_item[1]
             layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                [sg.Text(label, font=('', 16), size=((0, 0) if 0 == len(label) else (len(label) * 2, 1)),
                          text_color='#000000', background_color='#77CCFF'),
-                 sg.InputText(default_text=forms[i][1], font=('', 16), size=(len(forms[i][0]) * 2, 1))] for i in range(0, len(forms))])]]
+                 sg.InputText(default_text=default_text, font=('', 16), size=(len(label) * 2, 1))] for form_item in forms])]]
         elif 'combo' == obj:
+            label = form_item[0]
+            combo_values = form_item[1]
+            default_value = form_item[2]
             layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [sg.Text(forms[i][0], key='act', font=('', 16), size=((0, 0) if 0 == len(forms[i][0]) else (len(forms[i][0]) * 2, 1)),
+                [sg.Text(label, key='act', font=('', 16), size=((0, 0) if 0 == len(label) else (len(label) * 2, 1)),
                          text_color='#000000', background_color='#77CCFF'),
-                 sg.Combo(forms[i][1], font=('', 16), size=((len(forms[i][1][0]) if 0 == len(forms[i][0]) else len(forms[i][0])) * 2, 1),
-                          default_value=forms[i][2], readonly=True)] for i in range(0, len(forms))])]]
+                 sg.Combo(combo_values, font=('', 16), size=((len(combo_values[0]) if 0 == len(label) else len(label)) * 2, 1),
+                          default_value=default_value, readonly=True)] for form_item in forms])]]
         else:
             layout = [[sg.Frame('', background_color='#77CCFF', layout=[
-                [(sg.Text(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1), text_color='#000000', background_color='#77CCFF')
-                  if 0 == k else sg.Input(forms[i][k], font=('', 16), size=(len(forms[i][0]) * 2, 1)))
-                for k in range(0, len(forms[i]))] for i in range(0, len(forms))])]]
+                [(sg.Text(field_value, font=('', 16), size=(len(form_item[0]) * 2, 1), text_color='#000000', background_color='#77CCFF')
+                  if k == 0 else sg.Input(field_value, font=('', 16), size=(len(form_item[0]) * 2, 1)))
+                for k, field_value in enumerate(form_item)] for form_item in forms])]]
 
     layout = [sg.Column(layout, background_color='#77CCFF')]
 
@@ -169,9 +177,9 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
             sg.Column([[
                 sg.Text('', key='', background_color=color) if row is None else
                 sg.Checkbox(row, True, key=row, checkbox_color='#FFFFFF', background_color=color,
-                            text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))] for row in cols[i]],
-                      element_justification=aligns[i], background_color=color, vertical_alignment='bottom')
-            for i in range(0, len(cols))]
+                            text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))] for row in col_data],
+                      element_justification=align, background_color=color, vertical_alignment='bottom')
+            for col_data, align in zip(cols, aligns)]
         btn = [sg.Button('全て外す', key='check_out', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3]),
                sg.Button('開始', key='Start', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3]),
                sg.Button('キャンセル', key='Cancel', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3])]
@@ -179,8 +187,8 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
         center = [
             sg.Column([[
                 sg.Text(row, background_color=color, text_color='#000000', pad=((0, 0), (0, 0)), font=('', 16))]
-                for row in cols[i]], element_justification=aligns[i], background_color=color)
-            for i in range(0, len(cols))]
+                for row in col_data], element_justification=align, background_color=color)
+            for col_data, align in zip(cols, aligns)]
         btn = [sg.Button('OK', key='OK', font=prms[0], pad=prms[1], size=prms[2], button_color=prms[3])]
 
     window = sg.Window(title, keep_on_top=True, modal=True, background_color=color,
@@ -197,16 +205,16 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
 
         # 全チェック外し
         if 'check_out' == event:
-            [[window[row].update(False) for row in cols[i] if row is not None] for i in range(0, len(cols))]
+            [[window[row].update(False) for row in col_data if row is not None] for col_data in cols]
 
         elif event in ['Start']:
 
             # チェックなしでは進めない
             is_check = False
-            for i in range(0, len(cols)):
-                for k in range(0, len(cols[i])):
+            for col_data in cols:
+                for item in col_data:
                     try:
-                        if values[cols[i][k]]:
+                        if values[item]:
                             is_check = True
                     except: pass
 
@@ -214,7 +222,7 @@ def dialog_cols(msg, cols, aligns, title, obj='', lv=''):
                 continue
 
             window.close()
-            return [[row for row in cols[i] if row is not None and values[row]] for i in range(0, len(cols))]
+            return [[row for row in col_data if row is not None and values[row]] for col_data in cols]
 
         if event in [sg.WIN_CLOSED, 'OK', 'Cancel']:
             break
@@ -236,9 +244,9 @@ def progress(title, bar1, bar2=None, bar3=None, interrupt=False):
     layout = [
         [sg.Text('', background_color=color, text_color='#000000', font=('', 0), pad=((0, 0), (0, 0))) if 0 == len(title) else
          sg.Text(title, background_color=color, text_color='#000000', font=('', 16), pad=((10, 10), (20, 10)))], [[
-            [sg.Text(bar[0], key=bar[0], background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (5, 5)))],
-            [sg.ProgressBar(key=bar[0] + '_', max_value=bar[1], bar_color='#008000', size=(30, 20), pad=((15, 15), (5, 5)))]]
-            for bar in lists]
+            [sg.Text(bar_label, key=bar_label, background_color=color, text_color='#000000', font=('', 16), pad=((20, 20), (5, 5)))],
+            [sg.ProgressBar(key=bar_label + '_', max_value=bar_max, bar_color='#008000', size=(30, 20), pad=((15, 15), (5, 5)))]]
+            for bar_label, bar_max in lists]
     ]
     # 中断ボタン interrupt = (event in [sg.WIN_CLOSED, 'interrupt'])
     if interrupt:
@@ -260,7 +268,10 @@ def close(is_event):
         return -1
     # エラーの場合、エラーダイアログ
     elif type(is_event) == list:
-        dialog(is_event[0], is_event[1], is_event[2])
+        error_msg = is_event[0]
+        error_title = is_event[1]
+        error_level = is_event[2]
+        dialog(error_msg, error_title, error_level)
         return 1
 
     # 正常終了の場合、完了ダイアログ

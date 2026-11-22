@@ -56,10 +56,16 @@ class Base:
         if inputs[0] <= 0:
             return
 
-        self.period = inputs[1][0]
-        self.currency = inputs[1][1]
-        self.years = [str(int(inputs[1][2]) - int(inputs[1][3]) + 1), str(int(inputs[1][2]) + 1)]
-        self.model = inputs[1][4]
+        selected_period = inputs[1][0]
+        selected_currency = inputs[1][1]
+        end_year = inputs[1][2]
+        term_years = inputs[1][3]
+        selected_model = inputs[1][4]
+
+        self.period = selected_period
+        self.currency = selected_currency
+        self.years = [str(int(end_year) - int(term_years) + 1), str(int(end_year) + 1)]
+        self.model = selected_model
 
         self._get_data()
 
@@ -72,7 +78,9 @@ class Base:
 
                 if inputs[0] <= 0:
                     return
-                self._open_chart(inputs[1][0].split(','), int(inputs[1][1]))
+                ma_periods = inputs[1][0].split(',')
+                seasonal_period = int(inputs[1][1])
+                self._open_chart(ma_periods, seasonal_period)
 
             case 'AUTO_ARIMA':
                 inputs = com.input_box('最適化範囲を設定してください。', '最適化範囲選択', [
@@ -82,8 +90,9 @@ class Base:
                 if inputs[0] <= 0:
                     return
 
+                pdq_range = inputs[1][0].split(',')
                 from business.predict import arima
-                arima.optimize_Arima(self.currency, self.df, inputs[1][0].split(','))
+                arima.optimize_Arima(self.currency, self.df, pdq_range)
             case 'AutoReg':
                 inputs = com.input_box('最適化範囲を設定してください。', '最適化範囲選択', [
                     ['ARラグ　　　　　　　　　　　', ','.join([str(lag) for lag in range(5, 205, 5)])],
@@ -92,8 +101,9 @@ class Base:
                 if inputs[0] <= 0:
                     return
 
+                ar_lag_range = inputs[1][0].split(',')
                 from business.predict import arima
-                arima.optimize_Ar(self.currency, self.df, inputs[1][0].split(','))
+                arima.optimize_Ar(self.currency, self.df, ar_lag_range)
 
     def _analytics(self):
         inputs = com.input_box('選択してください。', '分析選択', [
@@ -107,10 +117,16 @@ class Base:
         if inputs[0] <= 0:
             return
 
-        self.period = inputs[1][0]
-        self.currency = inputs[1][1]
-        self.years = [str(int(inputs[1][2]) - int(inputs[1][3]) + 1), str(int(inputs[1][2]) + 1)]
-        self.model = inputs[1][4]
+        selected_period = inputs[1][0]
+        selected_currency = inputs[1][1]
+        end_year = inputs[1][2]
+        term_years = inputs[1][3]
+        selected_model = inputs[1][4]
+
+        self.period = selected_period
+        self.currency = selected_currency
+        self.years = [str(int(end_year) - int(term_years) + 1), str(int(end_year) + 1)]
+        self.model = selected_model
 
         self._get_data()
 
@@ -128,9 +144,16 @@ class Base:
                 if inputs[0] <= 0:
                     return
 
+                forecast = int(inputs[1][0])
+                interval = int(inputs[1][1])
+                count = int(inputs[1][2])
+                middle = int(inputs[1][3])
+                dropout = float(inputs[1][4])
+                epochs = int(inputs[1][5])
+
                 from business.predict import keras_models
-                keras_models.run(self.model, self.currency, self.df, int(inputs[1][0]), int(inputs[1][1]),
-                                 int(inputs[1][2]), int(inputs[1][3]), float(inputs[1][4]), int(inputs[1][5]))
+                keras_models.run(self.model, self.currency, self.df, forecast, interval,
+                                 count, middle, dropout, epochs)
 
             case 'ARIMA':
                 inputs = com.input_box('パラメータを設定してください。', 'パラメータ選択', [
@@ -145,12 +168,17 @@ class Base:
                 if inputs[0] <= 0:
                     return
 
+                forecast = int(inputs[1][0])
+                interval = int(inputs[1][1])
+                str_pdq = inputs[1][2]
+                ar_lag = int(inputs[1][3])
+
                 from business.predict import arima
                 arima.run(self.currency, self.df,
-                          int(inputs[1][0]),
-                          int(inputs[1][1]),
-                          inputs[1][2],
-                          int(inputs[1][3]),
+                          forecast,
+                          interval,
+                          str_pdq,
+                          ar_lag,
                           # ('-' if 'AutoReg' == self.model else int(inputs[1][2])),
                           # ('-' if 'AutoReg' == self.model else inputs[1][3]),
                           # int(inputs[1][1 if 'AutoReg' == self.model else 4]),
@@ -200,14 +228,21 @@ class Base:
             return
 
 
-        path += f'/{inputs[1][0].split('/')[0].replace(' ', '')}/{inputs[1][0][inputs[1][0].find('/') + 1:]}'
-        save_path = inputs[1][0].split('/')[1]
+        selected_model_path = inputs[1][0]
+        model_type = selected_model_path.split('/')[0].replace(' ', '')
+        model_timestamp = selected_model_path[selected_model_path.find('/') + 1:]
+        path += f'/{model_type}/{model_timestamp}'
+        save_path = selected_model_path.split('/')[1]
         self.period = inputs[1][1]
         self.currency = inputs[1][2]
+        start_year = inputs[1][3]
+        start_month = inputs[1][4]
+        start_day = inputs[1][5]
         forecast = inputs[1][6]
+        display_years = inputs[1][7]
 
-        train_end = [inputs[1][3], inputs[1][4], inputs[1][5]]
-        train_start = [int(inputs[1][3]) - int(inputs[1][7]), inputs[1][4], inputs[1][5]]
+        train_end = [start_year, start_month, start_day]
+        train_start = [int(start_year) - int(display_years), start_month, start_day]
         test_days = _get_test_days(train_end, forecast)
         print(train_start, train_end)
         self._get_data(train_start, test_days)
@@ -256,9 +291,14 @@ class Base:
             if inputs[0] <= 0:
                 return
 
+            interval = int(inputs[1][0])
+            count = int(inputs[1][1])
+            middle_layer = int(inputs[1][2])
+            dropout_rate = float(inputs[1][3])
+
             from business.predict import keras_models
-            keras_models.run(model_type, self.currency, self.df, forecast, int(inputs[1][0]),
-                             int(inputs[1][1]), int(inputs[1][2]), float(inputs[1][3]), 0, loaded_result, save_path)
+            keras_models.run(model_type, self.currency, self.df, forecast, interval,
+                             count, middle_layer, dropout_rate, 0, loaded_result, save_path)
 
         elif path.endswith('.pkl'):
 
@@ -291,13 +331,16 @@ class Base:
             if inputs[0] <= 0:
                 return
 
+            interval = int(inputs[1][0])
+
             from business.predict import arima
             # if 'SARIMAX' == model_type:
             if 'ARIMA' == model_type:
-                arima.run(self.currency, self.df, forecast, int(inputs[1][0]),# int(inputs[1][1]),
-                          str_pdq.replace(' ', '')[1: -1], '', loaded_result=loaded_result)
+                pdq_params = str_pdq.replace(' ', '')[1: -1]
+                arima.run(self.currency, self.df, forecast, interval,# int(inputs[1][1]),
+                          pdq_params, '', loaded_result=loaded_result)
             else:
-                arima.run(self.currency, self.df, forecast, int(inputs[1][0]),
+                arima.run(self.currency, self.df, forecast, interval,
                           '-', str_model, loaded_result=loaded_result)
 
             # if 2 == sample[0].count('-'):
@@ -331,7 +374,8 @@ class Base:
 
                 for currency in cst.MODEL_CURRENCIES:
 
-                    df = pd.read_csv(cst.HST_PATH[cst.PC].replace('\\', '/') + ('_d1/' if 'D1' == period else '_h1/') + currency + '.csv', header=None)
+                    csv_path = cst.HST_PATH[cst.PC].replace('\\', '/') + ('_d1/' if 'D1' == period else '_h1/') + currency + '.csv'
+                    df = pd.read_csv(csv_path, header=None)
                     df.columns = (['Time'] if 'D1' == period else ['Time', 'Hour']) + ['1', '2', '3', 'Close']
 
                     df['Time'] = df['Time'].astype(str)
@@ -365,7 +409,8 @@ class Base:
                         com.log('H1: ' + str(time))
                     for currency in dict_df:
                         close = dict_df[currency][(time == dict_df[currency]['Time'])]['Close']
-                        cur_close[currency].append('' if 0 == len(close) else str(list(close)[0]))
+                        close_values = list(close)
+                        cur_close[currency].append('' if 0 == len(close) else str(close_values[0]))
                     year = dt.year
 
                 pd.DataFrame(cur_close).to_csv(cst.HST_PATH[cst.PC].replace('\\', '/').replace('history', '') + period + '.csv', index=False)
