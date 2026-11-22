@@ -13,6 +13,9 @@ import optuna
 
 from neuralprophet import NeuralProphet
 from sklearn.metrics import mean_absolute_error
+from statsmodels.graphics.tsaplots import plot_predict
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 DAYWEEKS = ['Week', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri']
 
@@ -181,7 +184,7 @@ def apply_arima_model(df, title, order):
     # モデルの結果のサマリーを表示
     print(model_fit.summary())
     # プロット
-    model_fit.plot_predict(dynamic=False)
+    plot_predict(model_fit, dynamic=False)   # statsmodels 0.14 では結果オブジェクトに plot_predict が無い
     plt.title('ARIMA ' + title)
     plt.show()
 
