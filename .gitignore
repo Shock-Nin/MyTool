@@ -181,3 +181,9 @@ nul
 # SSH 鍵はコミットしない
 id_ed25519*
 *.pem
+
+### llm 実行時に作られるもの ###
+llm/multi/answers/
+llm/multi/queue/
+llm/multi/runs9/
+llm/export/remote_diff.txt

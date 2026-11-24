@@ -31,6 +31,7 @@ import sys
 import time
 import urllib.request
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
 
 from chat_memory import (EXPORT_DIR, MEMORY_FILE, build_system_prompt, load_memory,
@@ -120,7 +121,8 @@ def _remote_system(host: str, name: str) -> Optional[str]:
 
 
 def _norm(text: str) -> str:
-    return " ".join(text.split())
+    # 空白の違いは無視して比べる（Windows の Ollama は全角スペースを落とすことがあるため）
+    return "".join(text.split())
 
 
 def _notify(message: str) -> None:
@@ -130,6 +132,24 @@ def _notify(message: str) -> None:
     subprocess.run(["osascript", "-e",
                     f'display notification "{msg}" with title "ローカルLLMの記憶" sound name "Basso"'],
                    capture_output=True)
+
+
+DIFF_FILE = EXPORT_DIR / "remote_diff.txt"   # data/ に置くと自動同期（data を見張っている）がまた動くため export/ に置く
+
+
+def _save_diff(label: str, mac: str, remote: str) -> None:
+    """記憶が違うとき、最初に食い違う箇所を export/remote_diff.txt に残す（原因調べ用）"""
+    a, b = _norm(mac), _norm(remote)
+    i = next((k for k in range(min(len(a), len(b))) if a[k] != b[k]), min(len(a), len(b)))
+    lines = [f"[{datetime.now():%Y-%m-%d %H:%M:%S}] {label}",
+             f"  長さ: Mac {len(a)} / {label} {len(b)}  最初の食い違い: {i}文字目",
+             f"  Mac : …{a[max(0, i - 60):i + 80]}",
+             f"  {label}: …{b[max(0, i - 60):i + 80]}", ""]
+    try:
+        with DIFF_FILE.open("a", encoding="utf-8") as f:
+            f.write("\n".join(lines) + "\n")
+    except OSError:
+        pass
 
 
 def check_remotes() -> list:
@@ -151,6 +171,7 @@ def check_remotes() -> list:
             problems.append(f"{label}: Ollamaモデル「{name}」がありません")
         elif _norm(remote) != _norm(prompt):
             problems.append(f"{label}: 記憶が Mac と異なります")
+            _save_diff(label, prompt, remote)
     if problems:
         print("⚠️ [警告] VM・VPS の記憶が Mac と一致していません")
         for line in problems:

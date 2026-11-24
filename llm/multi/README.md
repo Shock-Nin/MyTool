@@ -41,6 +41,11 @@ Ollama (11434) と LM Studio (1234) で動いているモデルを自動検出�
 （ClaudeのMac側シェルは Linux コンテナで、Macの localhost には届かない。
   この queue 経由なら、ファイルのやりとりだけで成立する。）
 
+watch.sh は `profile/update_profile.py --watch` も子プロセスとして常駐させる。
+MyAI/profile の PDF・Excel を保存すると、数秒後にプロフィールが作り直される
+（落ちたら60秒おきに起動し直す。止めたいときは `PROFILE_WATCH=0`）。
+ログはどちらも `watch.log` に出る。
+
 ---
 
 ## ② デスクトップアプリ操作
